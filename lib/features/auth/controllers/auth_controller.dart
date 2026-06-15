@@ -44,6 +44,8 @@ class AuthController extends GetxController {
 
         await _storage.write(key: 'auth_token', value: token);
         await _storage.write(key: 'user_data', value: jsonEncode(userData));
+        await _storage.write(key: 'username', value: username);
+        await _storage.write(key: 'password', value: password);
 
         user.value = userData;
         Get.offAllNamed('/home');
