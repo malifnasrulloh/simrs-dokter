@@ -8,6 +8,7 @@ class RekamMedisController extends GetxController {
   final _api = ApiClient();
   final isLoading = false.obs;
   final activeTab = 0.obs;
+  final showDetails = false.obs;
 
   // Pasien info
   final pasienData = Rxn<Map<String, dynamic>>();
@@ -39,6 +40,16 @@ class RekamMedisController extends GetxController {
   String get noRawat => pasienData.value?['no_rawat'] ?? '';
   String get noRkmMedis => pasienData.value?['no_rkm_medis'] ?? pasienData.value?['no_rm'] ?? '';
   String get tipeRawat => pasienData.value?['_type'] ?? 'RANAP';
+
+  String get alergiInfo {
+    for (var item in riwayatMedis.reversed) {
+      final allergyVal = item['alergi']?.toString().trim() ?? '';
+      if (allergyVal.isNotEmpty && allergyVal != '-') {
+        return allergyVal;
+      }
+    }
+    return '';
+  }
 
   @override
   void onInit() {
@@ -72,7 +83,7 @@ class RekamMedisController extends GetxController {
         _fetchObat(),
         _fetchLaboratorium(),
         _fetchRadiologi(),
-        _fetchDicomStudies(),
+        // _fetchDicomStudies(),
         _fetchBillingInfo(),
         _fetchSbarList(),
         _fetchDpjpList(),
@@ -257,7 +268,10 @@ class RekamMedisController extends GetxController {
         for (var group in listData) {
           final periksaList = group['periksa'] as List? ?? [];
           for (var periksa in periksaList) {
-            final nmPerawatan = periksa['nm_perawatan'] ?? '';
+            final String nmPerawatan = periksa['nm_perawatan']?.toString() ?? '';
+            if (nmPerawatan.toUpperCase().contains('BHP')) {
+              continue;
+            }
             final nilaiList = periksa['nilai'] as List? ?? [];
             
             final List<Map<String, dynamic>> items = [];
@@ -321,22 +335,22 @@ class RekamMedisController extends GetxController {
     } catch (_) {}
   }
 
-  Future<void> _fetchDicomStudies() async {
-    try {
-      isLoadingDicom.value = true;
-      final res = await _api.dio.get('/orthanc/studies', queryParameters: {'no_rkm_medis': noRkmMedis});
-      if (res.statusCode == 200 && res.data != null && res.data['success'] == true) {
-        final data = res.data['data'] as List? ?? [];
-        dicomStudies.value = List<Map<String, dynamic>>.from(data);
-      } else {
-        dicomStudies.clear();
-      }
-    } catch (_) {
-      dicomStudies.clear();
-    } finally {
-      isLoadingDicom.value = false;
-    }
-  }
+  // Future<void> _fetchDicomStudies() async {
+  //   try {
+  //     isLoadingDicom.value = true;
+  //     final res = await _api.dio.get('/orthanc/studies', queryParameters: {'no_rkm_medis': noRkmMedis});
+  //     if (res.statusCode == 200 && res.data != null && res.data['success'] == true) {
+  //       final data = res.data['data'] as List? ?? [];
+  //       dicomStudies.value = List<Map<String, dynamic>>.from(data);
+  //     } else {
+  //       dicomStudies.clear();
+  //     }
+  //   } catch (_) {
+  //     dicomStudies.clear();
+  //   } finally {
+  //     isLoadingDicom.value = false;
+  //   }
+  // }
 
   Future<void> _fetchBillingInfo() async {
     try {

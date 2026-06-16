@@ -26,7 +26,7 @@ class SimrsDokterApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GetMaterialApp(
-      title: 'SIMRS Dokter',
+      title: 'CareDoc EMR',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       initialBinding: BindingsBuilder(() {

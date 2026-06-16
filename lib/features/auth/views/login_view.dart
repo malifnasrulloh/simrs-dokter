@@ -108,6 +108,7 @@ class _LoginViewState extends State<LoginView> with TickerProviderStateMixin {
         Container(
           width: 68,
           height: 68,
+          padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
             gradient: AppTheme.primaryGradient,
             borderRadius: BorderRadius.circular(20),
@@ -119,11 +120,14 @@ class _LoginViewState extends State<LoginView> with TickerProviderStateMixin {
               ),
             ],
           ),
-          child: const Icon(Icons.local_hospital_rounded, color: Colors.white, size: 36),
+          child: Image.asset(
+            'assets/images/CareDoc_EMR.png',
+            fit: BoxFit.contain,
+          ),
         ),
         const SizedBox(height: 18),
         Text(
-          'SIMRS DOKTER',
+          'CAREDOC EMR',
           style: GoogleFonts.outfit(
             fontSize: 26,
             fontWeight: FontWeight.w900,
@@ -324,7 +328,7 @@ class _LoginViewState extends State<LoginView> with TickerProviderStateMixin {
       final settingName = _authCtrl.setting.value?['nama_instansi'];
       final footerText = settingName != null && settingName.isNotEmpty
           ? 'v1.1.0 • $settingName © 2026'
-          : 'v1.1.0 • SIMRS © 2026';
+          : 'v1.1.0 • CareDoc EMR © 2026';
       return Text(
         footerText,
         style: GoogleFonts.outfit(fontSize: 11, color: AppTheme.textMuted, fontWeight: FontWeight.w600),

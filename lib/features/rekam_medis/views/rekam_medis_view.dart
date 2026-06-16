@@ -18,7 +18,9 @@ class RekamMedisView extends StatelessWidget {
       backgroundColor: AppTheme.bgDark,
       body: SafeArea(
         child: Obx(() {
-          final pasien = ctrl.pasienData.value ?? Get.arguments as Map<String, dynamic>? ?? {};
+          final pasien = ctrl.pasienData.value ??
+              Get.arguments as Map<String, dynamic>? ??
+              {};
           return Column(
             children: [
               _buildAppBar(pasien),
@@ -26,7 +28,9 @@ class RekamMedisView extends StatelessWidget {
               _buildTabBar(ctrl),
               Expanded(
                 child: ctrl.pasienData.value == null
-                    ? const Center(child: CircularProgressIndicator(color: AppTheme.accent))
+                    ? const Center(
+                        child:
+                            CircularProgressIndicator(color: AppTheme.accent))
                     : _buildTabContent(context, ctrl),
               ),
             ],
@@ -50,7 +54,8 @@ class RekamMedisView extends StatelessWidget {
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: AppTheme.divider),
               ),
-              child: const Icon(Icons.arrow_back_ios_new_rounded, color: AppTheme.textPrimary, size: 15),
+              child: const Icon(Icons.arrow_back_ios_new_rounded,
+                  color: AppTheme.textPrimary, size: 15),
             ),
           ),
           const SizedBox(width: 14),
@@ -95,13 +100,16 @@ class RekamMedisView extends StatelessWidget {
         children: [
           Text(
             label,
-            style: GoogleFonts.outfit(fontSize: 10, color: Colors.white70, fontWeight: FontWeight.w700),
+            style: GoogleFonts.outfit(
+                fontSize: 9.5,
+                color: Colors.white70,
+                fontWeight: FontWeight.w700),
           ),
-          const SizedBox(height: 3),
+          const SizedBox(height: 2),
           Text(
             value,
             style: GoogleFonts.robotoMono(
-              fontSize: 12.5,
+              fontSize: 12,
               fontWeight: FontWeight.w800,
               color: Colors.white,
             ),
@@ -115,7 +123,8 @@ class RekamMedisView extends StatelessWidget {
 
   Widget _billingItemSelisih(String label, double selisih) {
     final isNegative = selisih < 0;
-    final color = isNegative ? const Color(0xFFFFD2D2) : const Color(0xFFD2FFD2);
+    final color =
+        isNegative ? const Color(0xFFFFD2D2) : const Color(0xFFD2FFD2);
     final valueStr = _formatRupiah(selisih);
 
     return Expanded(
@@ -124,13 +133,16 @@ class RekamMedisView extends StatelessWidget {
         children: [
           Text(
             label,
-            style: GoogleFonts.outfit(fontSize: 10, color: Colors.white70, fontWeight: FontWeight.w700),
+            style: GoogleFonts.outfit(
+                fontSize: 9.5,
+                color: Colors.white70,
+                fontWeight: FontWeight.w700),
           ),
-          const SizedBox(height: 3),
+          const SizedBox(height: 2),
           Text(
             valueStr,
             style: GoogleFonts.robotoMono(
-              fontSize: 12.5,
+              fontSize: 12,
               fontWeight: FontWeight.w900,
               color: color,
             ),
@@ -142,20 +154,21 @@ class RekamMedisView extends StatelessWidget {
     );
   }
 
-  Widget _buildPatientCard(Map<String, dynamic> pasien, RekamMedisController ctrl) {
+  Widget _buildPatientCard(
+      Map<String, dynamic> pasien, RekamMedisController ctrl) {
     final penjamin = pasien['png_jawab']?.toString() ?? 'Umum';
     final isBpjs = penjamin.toUpperCase().contains('BPJS');
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      padding: const EdgeInsets.all(18),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
         gradient: AppTheme.primaryGradient,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: AppTheme.primary.withOpacity(0.25),
-            blurRadius: 16,
-            offset: const Offset(0, 8),
+            color: AppTheme.primary.withOpacity(0.2),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
           ),
         ],
       ),
@@ -165,8 +178,8 @@ class RekamMedisView extends StatelessWidget {
           Row(
             children: [
               Container(
-                width: 46,
-                height: 46,
+                width: 36,
+                height: 36,
                 decoration: BoxDecoration(
                   color: Colors.white.withOpacity(0.2),
                   shape: BoxShape.circle,
@@ -175,14 +188,14 @@ class RekamMedisView extends StatelessWidget {
                   child: Text(
                     (pasien['nm_pasien'] ?? 'P')[0].toUpperCase(),
                     style: GoogleFonts.outfit(
-                      fontSize: 18,
+                      fontSize: 14,
                       fontWeight: FontWeight.w800,
                       color: Colors.white,
                     ),
                   ),
                 ),
               ),
-              const SizedBox(width: 14),
+              const SizedBox(width: 10),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -190,7 +203,7 @@ class RekamMedisView extends StatelessWidget {
                     Text(
                       pasien['nm_pasien'] ?? '-',
                       style: GoogleFonts.outfit(
-                        fontSize: 15,
+                        fontSize: 14.5,
                         fontWeight: FontWeight.w800,
                         color: Colors.white,
                         letterSpacing: -0.3,
@@ -198,28 +211,29 @@ class RekamMedisView extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 3),
+                    const SizedBox(height: 2),
                     Row(
                       children: [
                         Text(
                           pasien['no_rm'] ?? pasien['no_rkm_medis'] ?? '-',
                           style: GoogleFonts.robotoMono(
-                            fontSize: 12,
+                            fontSize: 11,
                             fontWeight: FontWeight.w600,
                             color: Colors.white.withOpacity(0.9),
                           ),
                         ),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: 6),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 6, vertical: 1.5),
                           decoration: BoxDecoration(
                             color: Colors.white.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(6),
+                            borderRadius: BorderRadius.circular(5),
                           ),
                           child: Text(
                             isBpjs ? 'BPJS' : 'UMUM',
                             style: GoogleFonts.outfit(
-                              fontSize: 9,
+                              fontSize: 8,
                               fontWeight: FontWeight.w800,
                               color: Colors.white,
                             ),
@@ -227,171 +241,240 @@ class RekamMedisView extends StatelessWidget {
                         ),
                       ],
                     ),
+                    Obx(() {
+                      final alergi = ctrl.alergiInfo;
+                      if (alergi.isEmpty) {
+                        return const SizedBox.shrink();
+                      }
+                      return Container(
+                        margin: const EdgeInsets.only(top: 4),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFD2D2),
+                          borderRadius: BorderRadius.circular(5),
+                          border: Border.all(
+                              color: const Color(0xFFFF8B8B), width: 0.8),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.warning_rounded,
+                                color: Color(0xFFD32F2F), size: 10),
+                            const SizedBox(width: 4),
+                            Flexible(
+                              child: Text(
+                                'ALERGI: $alergi',
+                                style: GoogleFonts.outfit(
+                                  fontSize: 8.5,
+                                  fontWeight: FontWeight.w900,
+                                  color: const Color(0xFFD32F2F),
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }),
+                    if (ctrl.tipeRawat == 'RANAP') ...[
+                      const SizedBox(height: 3),
+                      Obx(() {
+                        if (ctrl.isLoadingDpjp.value) {
+                          return const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 2),
+                            child: SizedBox(
+                              width: 10,
+                              height: 10,
+                              child: CircularProgressIndicator(
+                                  color: Colors.white, strokeWidth: 1),
+                            ),
+                          );
+                        }
+                        final authCtrl = Get.find<AuthController>();
+                        final myNip = authCtrl.user.value?['nip'];
+                        final isAlreadyDpjp =
+                            ctrl.dpjpList.any((d) => d['kd_dokter']?.toString() == myNip);
+                        final names = ctrl.dpjpList
+                            .map((d) => d['nm_dokter']?.toString() ?? '-')
+                            .join(', ');
+
+                        return Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                'DPJP: ${names.isNotEmpty ? names : 'Belum ditentukan'}',
+                                style: GoogleFonts.outfit(
+                                  fontSize: 10.5,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white.withOpacity(0.95),
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            if (!isAlreadyDpjp && myNip != null) ...[
+                              const SizedBox(width: 6),
+                              GestureDetector(
+                                onTap: () async {
+                                  final success = await ctrl.setAsDpjp();
+                                  if (success) {
+                                    Get.snackbar('Sukses',
+                                        'Anda telah terdaftar sebagai DPJP pasien ini',
+                                        backgroundColor: Colors.white,
+                                        colorText: AppTheme.primary,
+                                        snackPosition: SnackPosition.BOTTOM);
+                                  }
+                                },
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 6, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: Text(
+                                    '+ DPJP SAYA',
+                                    style: GoogleFonts.outfit(
+                                      fontSize: 8,
+                                      fontWeight: FontWeight.w900,
+                                      color: AppTheme.primary,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ],
+                        );
+                      }),
+                    ],
                   ],
                 ),
               ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Divider(color: Colors.white.withOpacity(0.2), height: 1, thickness: 1),
-          const SizedBox(height: 14),
-          Row(
-            children: [
-              _infoChip(Icons.badge_rounded, 'No. Rawat', pasien['no_rawat'] ?? '-'),
-              const SizedBox(width: 20),
-              _infoChip(Icons.bed_rounded, 'Kamar/Poli', pasien['nm_ruang'] ?? pasien['nm_poli'] ?? pasien['kamar'] ?? '-'),
+              const SizedBox(width: 10),
+              Obx(() => GestureDetector(
+                onTap: () => ctrl.showDetails.toggle(),
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.15),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    ctrl.showDetails.value
+                        ? Icons.keyboard_arrow_up_rounded
+                        : Icons.keyboard_arrow_down_rounded,
+                    color: Colors.white,
+                    size: 18,
+                  ),
+                ),
+              )),
             ],
           ),
           Obx(() {
-            if (ctrl.isLoadingBilling.value) {
-              return const Padding(
-                padding: EdgeInsets.only(top: 14),
-                child: Center(
-                  child: SizedBox(
-                    width: 14,
-                    height: 14,
-                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 1.5),
-                  ),
-                ),
-              );
+            if (!ctrl.showDetails.value) {
+              return const SizedBox.shrink();
             }
-            final total = ctrl.totalBilling.value;
-            final hasPerkiraan = ctrl.hasPerkiraan.value;
-            final perkiraan = ctrl.perkiraanBiaya.value;
-            final selisih = ctrl.selisihBiaya.value;
-
-            if (total == 0 && !hasPerkiraan) return const SizedBox.shrink();
-
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SizedBox(height: 14),
-                Divider(color: Colors.white.withOpacity(0.2), height: 1, thickness: 1),
-                const SizedBox(height: 14),
-                if (!isBpjs) ...[
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Total Billing',
-                        style: GoogleFonts.outfit(fontSize: 11.5, color: Colors.white.withOpacity(0.85), fontWeight: FontWeight.w700),
-                      ),
-                      Text(
-                        _formatRupiah(total),
-                        style: GoogleFonts.robotoMono(fontSize: 13.5, color: Colors.white, fontWeight: FontWeight.w800),
-                      ),
-                    ],
-                  ),
-                ] else ...[
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      _billingItem('Total Billing', _formatRupiah(total)),
-                      const SizedBox(width: 16),
-                      if (hasPerkiraan) ...[
-                        _billingItem('Estimasi Tarif', _formatRupiah(perkiraan)),
-                        const SizedBox(width: 16),
-                        _billingItemSelisih('Selisih', selisih),
-                      ] else ...[
-                        _billingItem('Estimasi Tarif', '-'),
-                        const SizedBox(width: 16),
-                        _billingItem('Selisih', '-'),
-                      ],
-                    ],
-                  ),
-                ],
-              ],
-            );
-          }),
-          Obx(() {
-            if (ctrl.tipeRawat != 'RANAP') return const SizedBox.shrink();
-            if (ctrl.isLoadingDpjp.value) {
-              return const Padding(
-                padding: EdgeInsets.only(top: 14),
-                child: Center(
-                  child: SizedBox(
-                    width: 14,
-                    height: 14,
-                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 1.5),
-                  ),
-                ),
-              );
-            }
-
-            final authCtrl = Get.find<AuthController>();
-            final myNip = authCtrl.user.value?['nip'];
-            final isAlreadyDpjp = ctrl.dpjpList.any((d) => d['kd_dokter']?.toString() == myNip);
-
-            final names = ctrl.dpjpList.map((d) => d['nm_dokter']?.toString() ?? '-').join(', ');
-
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 14),
-                Divider(color: Colors.white.withOpacity(0.2), height: 1, thickness: 1),
-                const SizedBox(height: 12),
+                const SizedBox(height: 10),
+                Divider(
+                    color: Colors.white.withOpacity(0.2), height: 1, thickness: 1),
+                const SizedBox(height: 10),
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Dokter DPJP',
-                            style: GoogleFonts.outfit(fontSize: 10, color: Colors.white70, fontWeight: FontWeight.w700),
-                          ),
-                          const SizedBox(height: 3),
-                          Text(
-                            names.isNotEmpty ? names : 'Belum ditentukan',
-                            style: GoogleFonts.outfit(
-                              fontSize: 12.5,
-                              fontWeight: FontWeight.w800,
-                              color: Colors.white,
-                            ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
-                      ),
-                    ),
-                    if (!isAlreadyDpjp && myNip != null) ...[
-                      const SizedBox(width: 12),
-                      ElevatedButton(
-                        onPressed: () async {
-                          final success = await ctrl.setAsDpjp();
-                          if (success) {
-                            Get.snackbar('Sukses', 'Anda telah terdaftar sebagai DPJP pasien ini',
-                                backgroundColor: Colors.white,
-                                colorText: AppTheme.primary,
-                                snackPosition: SnackPosition.BOTTOM);
-                          }
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          foregroundColor: AppTheme.primary,
-                          elevation: 0,
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                          minimumSize: Size.zero,
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                        child: Text(
-                          'Jadikan DPJP Saya',
-                          style: GoogleFonts.outfit(
-                            fontSize: 10.5,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                      ),
-                    ],
+                    _infoChip(
+                        Icons.badge_rounded, 'No. Rawat', pasien['no_rawat'] ?? '-'),
+                    const SizedBox(width: 12),
+                    _infoChip(
+                        Icons.bed_rounded,
+                        'Kamar/Poli',
+                        pasien['nm_ruang'] ??
+                            pasien['nm_poli'] ??
+                            pasien['kamar'] ??
+                            '-'),
                   ],
                 ),
+                Obx(() {
+                  if (ctrl.isLoadingBilling.value) {
+                    return const Padding(
+                      padding: EdgeInsets.only(top: 10),
+                      child: Center(
+                        child: SizedBox(
+                          width: 14,
+                          height: 14,
+                          child: CircularProgressIndicator(
+                              color: Colors.white, strokeWidth: 1.5),
+                        ),
+                      ),
+                    );
+                  }
+                  final total = ctrl.totalBilling.value;
+                  final hasPerkiraan = ctrl.hasPerkiraan.value;
+                  final perkiraan = ctrl.perkiraanBiaya.value;
+                  final selisih = ctrl.selisihBiaya.value;
+
+                  if (total == 0 && !hasPerkiraan) {
+                    return const SizedBox.shrink();
+                  }
+
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: 10),
+                      Divider(
+                          color: Colors.white.withOpacity(0.2),
+                          height: 1,
+                          thickness: 1),
+                      const SizedBox(height: 10),
+                      if (!isBpjs) ...[
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Total Billing',
+                              style: GoogleFonts.outfit(
+                                  fontSize: 11,
+                                  color: Colors.white.withOpacity(0.85),
+                                  fontWeight: FontWeight.w700),
+                            ),
+                            Text(
+                              _formatRupiah(total),
+                              style: GoogleFonts.robotoMono(
+                                  fontSize: 13,
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w800),
+                            ),
+                          ],
+                        ),
+                      ] else ...[
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            _billingItem('Total Billing', _formatRupiah(total)),
+                            const SizedBox(width: 12),
+                            if (hasPerkiraan) ...[
+                              _billingItem(
+                                  'Estimasi Tarif', _formatRupiah(perkiraan)),
+                              const SizedBox(width: 12),
+                              _billingItemSelisih('Selisih', selisih),
+                            ] else ...[
+                              _billingItem('Estimasi Tarif', '-'),
+                              const SizedBox(width: 12),
+                              _billingItem('Selisih', '-'),
+                            ],
+                          ],
+                        ),
+                      ],
+                    ],
+                  );
+                }),
               ],
             );
           }),
+          const SizedBox.shrink(),
         ],
       ),
     );
@@ -404,19 +487,22 @@ class RekamMedisView extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(icon, size: 13, color: Colors.white70),
-              const SizedBox(width: 5),
+              Icon(icon, size: 12, color: Colors.white70),
+              const SizedBox(width: 4),
               Text(
                 label,
-                style: GoogleFonts.outfit(fontSize: 10, color: Colors.white70, fontWeight: FontWeight.w700),
+                style: GoogleFonts.outfit(
+                    fontSize: 9.5,
+                    color: Colors.white70,
+                    fontWeight: FontWeight.w700),
               ),
             ],
           ),
-          const SizedBox(height: 3),
+          const SizedBox(height: 2),
           Text(
             value,
             style: GoogleFonts.outfit(
-              fontSize: 12,
+              fontSize: 11.5,
               fontWeight: FontWeight.w800,
               color: Colors.white,
             ),
@@ -453,7 +539,9 @@ class RekamMedisView extends StatelessWidget {
                   color: active ? AppTheme.primary : AppTheme.bgCard,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: active ? AppTheme.primaryLight.withOpacity(0.3) : AppTheme.divider,
+                    color: active
+                        ? AppTheme.primaryLight.withOpacity(0.3)
+                        : AppTheme.divider,
                     width: 1,
                   ),
                   boxShadow: active
@@ -486,17 +574,25 @@ class RekamMedisView extends StatelessWidget {
     return Obx(() {
       if (ctrl.isLoading.value) {
         return const Center(
-          child: CircularProgressIndicator(color: AppTheme.accent, strokeWidth: 2),
+          child:
+              CircularProgressIndicator(color: AppTheme.accent, strokeWidth: 2),
         );
       }
       switch (ctrl.activeTab.value) {
-        case 0: return _buildMedisTab(ctrl);
-        case 1: return _buildDiagnosaTab(ctrl);
-        case 2: return _buildObatTab(ctrl);
-        case 3: return _buildLabTab(ctrl);
-        case 4: return _buildRadiologiTab(ctrl);
-        case 5: return _buildSbarTab(context, ctrl);
-        default: return const SizedBox();
+        case 0:
+          return _buildMedisTab(ctrl);
+        case 1:
+          return _buildDiagnosaTab(ctrl);
+        case 2:
+          return _buildObatTab(ctrl);
+        case 3:
+          return _buildLabTab(ctrl);
+        case 4:
+          return _buildRadiologiTab(ctrl);
+        case 5:
+          return _buildSbarTab(context, ctrl);
+        default:
+          return const SizedBox();
       }
     });
   }
@@ -521,8 +617,6 @@ class RekamMedisView extends StatelessWidget {
     );
   }
 
-
-
   Widget _buildDiagnosaTab(RekamMedisController ctrl) {
     if (ctrl.diagnosa.isEmpty) return _emptyState('Belum ada diagnosa');
     return ListView.separated(
@@ -535,7 +629,8 @@ class RekamMedisView extends StatelessWidget {
           icon: Icons.medical_information_rounded,
           iconColor: AppTheme.info,
           title: d['nm_penyakit'] ?? d['kd_penyakit'] ?? '-',
-          subtitle: 'ICD-10: ${d['kd_penyakit'] ?? '-'} • Status: ${d['status'] ?? '-'}',
+          subtitle:
+              'ICD-10: ${d['kd_penyakit'] ?? '-'} • Status: ${d['status'] ?? '-'}',
         );
       },
     );
@@ -543,7 +638,7 @@ class RekamMedisView extends StatelessWidget {
 
   Widget _buildObatTab(RekamMedisController ctrl) {
     if (ctrl.obat.isEmpty) return _emptyState('Belum ada data obat');
-    
+
     final Map<String, List<Map<String, dynamic>>> groups = {};
     for (final o in ctrl.obat) {
       final tgl = o['tgl_perawatan']?.toString() ?? '-';
@@ -554,7 +649,7 @@ class RekamMedisView extends StatelessWidget {
       }
       groups[key]!.add(o);
     }
-    
+
     final sortedKeys = groups.keys.toList()..sort((a, b) => b.compareTo(a));
 
     return ListView.separated(
@@ -567,9 +662,9 @@ class RekamMedisView extends StatelessWidget {
         final tgl = parts[0];
         final jam = parts[1];
         final items = groups[key]!;
-        
+
         final displayTime = jam == '-' ? '' : ' pukul $jam';
-        
+
         return Container(
           decoration: BoxDecoration(
             color: AppTheme.bgCard,
@@ -588,14 +683,16 @@ class RekamMedisView extends StatelessWidget {
             children: [
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 decoration: const BoxDecoration(
                   color: AppTheme.bgSurface,
                   borderRadius: BorderRadius.vertical(top: Radius.circular(17)),
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.receipt_long_rounded, color: AppTheme.success, size: 16),
+                    const Icon(Icons.receipt_long_rounded,
+                        color: AppTheme.success, size: 16),
                     const SizedBox(width: 8),
                     Text(
                       'Resep $tgl$displayTime',
@@ -612,16 +709,18 @@ class RekamMedisView extends StatelessWidget {
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 itemCount: items.length,
-                separatorBuilder: (_, __) => const Divider(height: 1, thickness: 0.5, color: AppTheme.divider),
+                separatorBuilder: (_, __) => const Divider(
+                    height: 1, thickness: 0.5, color: AppTheme.divider),
                 itemBuilder: (context, itemIdx) {
                   final o = items[itemIdx];
                   final signa = o['aturan'] ?? o['signa'] ?? '';
                   final namaObat = o['nama_obat'] ?? o['nm_obat'] ?? '-';
                   final qty = o['jumlah'] ?? '';
                   final unit = o['satuan'] ?? '';
-                  
+
                   return Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 12),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -631,7 +730,8 @@ class RekamMedisView extends StatelessWidget {
                             color: AppTheme.success.withOpacity(0.08),
                             borderRadius: BorderRadius.circular(10),
                           ),
-                          child: const Icon(Icons.medication_rounded, color: AppTheme.success, size: 16),
+                          child: const Icon(Icons.medication_rounded,
+                              color: AppTheme.success, size: 16),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
@@ -676,12 +776,16 @@ class RekamMedisView extends StatelessWidget {
     bool morning = false;
     bool afternoon = false;
     bool night = false;
-    
-    if (s.contains('3x') || s.contains('tiga kali') || (s.contains('pagi') && s.contains('siang') && s.contains('malam'))) {
+
+    if (s.contains('3x') ||
+        s.contains('tiga kali') ||
+        (s.contains('pagi') && s.contains('siang') && s.contains('malam'))) {
       morning = true;
       afternoon = true;
       night = true;
-    } else if (s.contains('2x') || s.contains('dua kali') || (s.contains('pagi') && s.contains('malam'))) {
+    } else if (s.contains('2x') ||
+        s.contains('dua kali') ||
+        (s.contains('pagi') && s.contains('malam'))) {
       morning = true;
       night = true;
     } else if (s.contains('malam') || s.contains('sebelum tidur')) {
@@ -689,18 +793,20 @@ class RekamMedisView extends StatelessWidget {
     } else {
       morning = true; // default
     }
-    
+
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        if (morning) _timingIndicator('Pagi', Icons.light_mode_rounded, Colors.amber),
+        if (morning)
+          _timingIndicator('Pagi', Icons.light_mode_rounded, Colors.amber),
         if (afternoon) ...[
           const SizedBox(width: 4),
           _timingIndicator('Siang', Icons.wb_twilight_rounded, Colors.orange),
         ],
         if (night) ...[
           const SizedBox(width: 4),
-          _timingIndicator('Malam', Icons.dark_mode_rounded, Colors.indigoAccent),
+          _timingIndicator(
+              'Malam', Icons.dark_mode_rounded, Colors.indigoAccent),
         ],
       ],
     );
@@ -719,14 +825,18 @@ class RekamMedisView extends StatelessWidget {
         children: [
           Icon(icon, size: 10, color: color),
           const SizedBox(width: 3),
-          Text(label, style: GoogleFonts.outfit(fontSize: 8.5, color: color, fontWeight: FontWeight.w800)),
+          Text(label,
+              style: GoogleFonts.outfit(
+                  fontSize: 8.5, color: color, fontWeight: FontWeight.w800)),
         ],
       ),
     );
   }
 
   Widget _buildLabTab(RekamMedisController ctrl) {
-    if (ctrl.laboratorium.isEmpty) return _emptyState('Belum ada hasil laboratorium');
+    if (ctrl.laboratorium.isEmpty) {
+      return _emptyState('Belum ada hasil laboratorium');
+    }
     return ListView.separated(
       padding: const EdgeInsets.all(16),
       itemCount: ctrl.laboratorium.length,
@@ -735,7 +845,7 @@ class RekamMedisView extends StatelessWidget {
         final group = ctrl.laboratorium[groupIndex];
         final groupName = group['group_name']?.toString() ?? 'Pemeriksaan Lab';
         final items = group['items'] as List? ?? [];
-        
+
         return Container(
           decoration: BoxDecoration(
             color: AppTheme.bgCard,
@@ -754,7 +864,8 @@ class RekamMedisView extends StatelessWidget {
             children: [
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 decoration: const BoxDecoration(
                   color: AppTheme.bgSurface,
                   borderRadius: BorderRadius.vertical(top: Radius.circular(17)),
@@ -815,7 +926,8 @@ class RekamMedisView extends StatelessWidget {
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 itemCount: items.length,
-                separatorBuilder: (_, __) => const Divider(height: 1, thickness: 0.5, color: AppTheme.divider),
+                separatorBuilder: (_, __) => const Divider(
+                    height: 1, thickness: 0.5, color: AppTheme.divider),
                 itemBuilder: (context, itemIndex) {
                   final l = items[itemIndex] as Map<String, dynamic>;
                   final nmPeriksa = l['pemeriksaan']?.toString() ?? '-';
@@ -823,10 +935,10 @@ class RekamMedisView extends StatelessWidget {
                   final satuan = l['satuan']?.toString() ?? '';
                   final normal = l['nilai_normal']?.toString() ?? '-';
                   final ket = l['keterangan']?.toString().toUpperCase() ?? '';
-                  
+
                   Color hasilColor = AppTheme.textPrimary;
                   FontWeight hasilWeight = FontWeight.w800;
-                  
+
                   if (ket == 'H') {
                     hasilColor = AppTheme.danger;
                   } else if (ket == 'L') {
@@ -835,9 +947,10 @@ class RekamMedisView extends StatelessWidget {
                     hasilColor = AppTheme.danger;
                     hasilWeight = FontWeight.w900;
                   }
-                  
+
                   return Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 12),
                     child: Row(
                       children: [
                         Expanded(
@@ -909,7 +1022,8 @@ class RekamMedisView extends StatelessWidget {
         // Section 1: Hasil Bacaan & Foto
         Row(
           children: [
-            const Icon(Icons.description_rounded, color: AppTheme.primary, size: 18),
+            const Icon(Icons.description_rounded,
+                color: AppTheme.primary, size: 18),
             const SizedBox(width: 8),
             Text(
               'Hasil & Foto Pemeriksaan',
@@ -926,41 +1040,41 @@ class RekamMedisView extends StatelessWidget {
           _emptyStateMini('Belum ada hasil & foto pemeriksaan')
         else
           ...ctrl.radiologi.map((r) => _buildRadiologiCard(r)),
-        
+
         const SizedBox(height: 24),
         const Divider(height: 1, thickness: 1, color: AppTheme.divider),
         const SizedBox(height: 24),
-        
+
         // Section 2: DICOM PACS
-        Row(
-          children: [
-            const Icon(Icons.settings_system_daydream_rounded, color: AppTheme.accentAlt, size: 18),
-            const SizedBox(width: 8),
-            Text(
-              'Integrasi PACS (Orthanc DICOM)',
-              style: GoogleFonts.outfit(
-                fontSize: 14,
-                fontWeight: FontWeight.w800,
-                color: AppTheme.textPrimary,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        Obx(() {
-          if (ctrl.isLoadingDicom.value) {
-            return const Padding(
-              padding: EdgeInsets.symmetric(vertical: 24),
-              child: Center(child: CircularProgressIndicator(color: AppTheme.accent)),
-            );
-          }
-          if (ctrl.dicomStudies.isEmpty) {
-            return _emptyStateMini('Tidak ada data DICOM ditemukan di server PACS');
-          }
-          return Column(
-            children: ctrl.dicomStudies.map((study) => _buildDicomCard(ctrl, study)).toList(),
-          );
-        }),
+        // Row(
+        //   children: [
+        //     const Icon(Icons.settings_system_daydream_rounded, color: AppTheme.accentAlt, size: 18),
+        //     const SizedBox(width: 8),
+        //     Text(
+        //       'Integrasi PACS (Orthanc DICOM)',
+        //       style: GoogleFonts.outfit(
+        //         fontSize: 14,
+        //         fontWeight: FontWeight.w800,
+        //         color: AppTheme.textPrimary,
+        //       ),
+        //     ),
+        //   ],
+        // ),
+        // const SizedBox(height: 12),
+        // Obx(() {
+        //   if (ctrl.isLoadingDicom.value) {
+        //     return const Padding(
+        //       padding: EdgeInsets.symmetric(vertical: 24),
+        //       child: Center(child: CircularProgressIndicator(color: AppTheme.accent)),
+        //     );
+        //   }
+        //   if (ctrl.dicomStudies.isEmpty) {
+        //     return _emptyStateMini('Tidak ada data DICOM ditemukan di server PACS');
+        //   }
+        //   return Column(
+        //     children: ctrl.dicomStudies.map((study) => _buildDicomCard(ctrl, study)).toList(),
+        //   );
+        // }),
       ],
     );
   }
@@ -970,154 +1084,165 @@ class RekamMedisView extends StatelessWidget {
     final expertise = r['keterangan']?.toString() ?? '-';
     final fotoUrl = r['foto']?.toString();
     final cleanExpertise = _cleanHtml(expertise);
-    
-    return Builder(
-      builder: (context) {
-        return Container(
-          margin: const EdgeInsets.only(bottom: 16),
-          decoration: BoxDecoration(
-            color: AppTheme.bgCard,
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: AppTheme.divider),
-            boxShadow: [
-              BoxShadow(
-                color: AppTheme.textPrimary.withOpacity(0.02),
-                blurRadius: 16,
-                offset: const Offset(0, 8),
-              )
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                decoration: const BoxDecoration(
-                  color: AppTheme.bgSurface,
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(17)),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.image_search_rounded, color: AppTheme.primary, size: 16),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        title,
-                        style: GoogleFonts.outfit(
-                          fontSize: 12.5,
-                          fontWeight: FontWeight.w800,
-                          color: AppTheme.textPrimary,
-                        ),
+
+    return Builder(builder: (context) {
+      return Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        decoration: BoxDecoration(
+          color: AppTheme.bgCard,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: AppTheme.divider),
+          boxShadow: [
+            BoxShadow(
+              color: AppTheme.textPrimary.withOpacity(0.02),
+              blurRadius: 16,
+              offset: const Offset(0, 8),
+            )
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: const BoxDecoration(
+                color: AppTheme.bgSurface,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(17)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.image_search_rounded,
+                      color: AppTheme.primary, size: 16),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      title,
+                      style: GoogleFonts.outfit(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w800,
+                        color: AppTheme.textPrimary,
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
+            ),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Expertise / Bacaan Dokter:',
+                    style: GoogleFonts.outfit(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                      color: AppTheme.textMuted,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    cleanExpertise,
+                    style: GoogleFonts.outfit(
+                      fontSize: 12.5,
+                      color: AppTheme.textPrimary,
+                      fontWeight: FontWeight.w600,
+                      height: 1.4,
+                    ),
+                  ),
+                  if (fotoUrl != null &&
+                      fotoUrl.isNotEmpty &&
+                      fotoUrl != '-') ...[
+                    const SizedBox(height: 16),
                     Text(
-                      'Expertise / Bacaan Dokter:',
+                      'Foto Radiologi:',
                       style: GoogleFonts.outfit(
                         fontSize: 11,
                         fontWeight: FontWeight.w800,
                         color: AppTheme.textMuted,
                       ),
                     ),
-                    const SizedBox(height: 6),
-                    Text(
-                      cleanExpertise,
-                      style: GoogleFonts.outfit(
-                        fontSize: 12.5,
-                        color: AppTheme.textPrimary,
-                        fontWeight: FontWeight.w600,
-                        height: 1.4,
+                    const SizedBox(height: 8),
+                    GestureDetector(
+                      onTap: () => _showImageDialog(context, fotoUrl, title),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: Stack(
+                          alignment: Alignment.bottomRight,
+                          children: [
+                            CachedNetworkImage(
+                              imageUrl: fotoUrl,
+                              height: 160,
+                              width: double.infinity,
+                              fit: BoxFit.cover,
+                              placeholder: (context, url) => Container(
+                                color: AppTheme.bgSurface,
+                                height: 160,
+                                child: const Center(
+                                  child: CircularProgressIndicator(
+                                      color: AppTheme.primary),
+                                ),
+                              ),
+                              errorWidget: (context, url, error) => Container(
+                                color: AppTheme.bgSurface,
+                                height: 160,
+                                child: const Icon(Icons.broken_image,
+                                    color: AppTheme.textMuted, size: 40),
+                              ),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: Colors.black.withOpacity(0.6),
+                                borderRadius: const BorderRadius.only(
+                                    topLeft: Radius.circular(12)),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(Icons.zoom_in,
+                                      color: Colors.white, size: 14),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    'Perbesar Foto',
+                                    style: GoogleFonts.outfit(
+                                      color: Colors.white,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                    if (fotoUrl != null && fotoUrl.isNotEmpty && fotoUrl != '-') ...[
-                      const SizedBox(height: 16),
-                      Text(
-                        'Foto Radiologi:',
-                        style: GoogleFonts.outfit(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w800,
-                          color: AppTheme.textMuted,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      GestureDetector(
-                        onTap: () => _showImageDialog(context, fotoUrl, title),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(12),
-                          child: Stack(
-                            alignment: Alignment.bottomRight,
-                            children: [
-                              CachedNetworkImage(
-                                imageUrl: fotoUrl,
-                                height: 160,
-                                width: double.infinity,
-                                fit: BoxFit.cover,
-                                placeholder: (context, url) => Container(
-                                  color: AppTheme.bgSurface,
-                                  height: 160,
-                                  child: const Center(
-                                    child: CircularProgressIndicator(color: AppTheme.primary),
-                                  ),
-                                ),
-                                errorWidget: (context, url, error) => Container(
-                                  color: AppTheme.bgSurface,
-                                  height: 160,
-                                  child: const Icon(Icons.broken_image, color: AppTheme.textMuted, size: 40),
-                                ),
-                              ),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                                decoration: BoxDecoration(
-                                  color: Colors.black.withOpacity(0.6),
-                                  borderRadius: const BorderRadius.only(topLeft: Radius.circular(12)),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    const Icon(Icons.zoom_in, color: Colors.white, size: 14),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      'Perbesar Foto',
-                                      style: GoogleFonts.outfit(
-                                        color: Colors.white,
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.w800,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
                   ],
-                ),
+                ],
               ),
-            ],
-          ),
-        );
-      }
-    );
+            ),
+          ],
+        ),
+      );
+    });
   }
 
-  Widget _buildDicomCard(RekamMedisController ctrl, Map<String, dynamic> study) {
-    final studyDesc = study['studyDescription']?.toString() ?? 'Pemeriksaan PACS';
+  /*
+  Widget _buildDicomCard(
+      RekamMedisController ctrl, Map<String, dynamic> study) {
+    final studyDesc =
+        study['studyDescription']?.toString() ?? 'Pemeriksaan PACS';
     final studyDateRaw = study['studyDate']?.toString() ?? '-';
     String formattedDate = studyDateRaw;
     if (studyDateRaw.length == 8) {
-      formattedDate = '${studyDateRaw.substring(6, 8)}/${studyDateRaw.substring(4, 6)}/${studyDateRaw.substring(0, 4)}';
+      formattedDate =
+          '${studyDateRaw.substring(6, 8)}/${studyDateRaw.substring(4, 6)}/${studyDateRaw.substring(0, 4)}';
     }
     final modalityList = study['modality'] as List? ?? [];
-    final modality = modalityList.isNotEmpty ? modalityList.join(', ') : 'unknown';
+    final modality =
+        modalityList.isNotEmpty ? modalityList.join(', ') : 'unknown';
     final seriesCount = study['seriesCount'] ?? 0;
     final studyId = study['studyId']?.toString() ?? '';
 
@@ -1186,7 +1311,8 @@ class RekamMedisView extends StatelessWidget {
                     }
                   },
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     decoration: BoxDecoration(
                       color: AppTheme.primary,
                       borderRadius: BorderRadius.circular(10),
@@ -1201,7 +1327,8 @@ class RekamMedisView extends StatelessWidget {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.zoom_out_map_rounded, color: Colors.white, size: 14),
+                        const Icon(Icons.zoom_out_map_rounded,
+                            color: Colors.white, size: 14),
                         const SizedBox(width: 6),
                         Text(
                           'Buka DICOM Viewer',
@@ -1222,6 +1349,7 @@ class RekamMedisView extends StatelessWidget {
       ),
     );
   }
+  */
 
   void _showImageDialog(BuildContext context, String imageUrl, String title) {
     showDialog(
@@ -1236,8 +1364,12 @@ class RekamMedisView extends StatelessWidget {
                 maxScale: 4.0,
                 child: CachedNetworkImage(
                   imageUrl: imageUrl,
-                  placeholder: (context, url) => const CircularProgressIndicator(color: Colors.white),
-                  errorWidget: (context, url, error) => const Icon(Icons.broken_image, color: Colors.white, size: 40),
+                  placeholder: (context, url) =>
+                      const CircularProgressIndicator(color: Colors.white),
+                  errorWidget: (context, url, error) => const Icon(
+                      Icons.broken_image,
+                      color: Colors.white,
+                      size: 40),
                 ),
               ),
             ),
@@ -1255,7 +1387,10 @@ class RekamMedisView extends StatelessWidget {
               right: 24,
               child: Text(
                 title,
-                style: GoogleFonts.outfit(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w700),
+                style: GoogleFonts.outfit(
+                    color: Colors.white,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700),
                 textAlign: TextAlign.center,
               ),
             ),
@@ -1286,7 +1421,8 @@ class RekamMedisView extends StatelessWidget {
       ),
       child: Column(
         children: [
-          Icon(Icons.info_outline_rounded, size: 24, color: AppTheme.textMuted.withOpacity(0.6)),
+          Icon(Icons.info_outline_rounded,
+              size: 24, color: AppTheme.textMuted.withOpacity(0.6)),
           const SizedBox(height: 8),
           Text(
             message,
@@ -1381,7 +1517,8 @@ class RekamMedisView extends StatelessWidget {
               shape: BoxShape.circle,
               border: Border.all(color: AppTheme.divider),
             ),
-            child: Icon(Icons.inventory_2_outlined, size: 40, color: AppTheme.textMuted.withOpacity(0.6)),
+            child: Icon(Icons.inventory_2_outlined,
+                size: 40, color: AppTheme.textMuted.withOpacity(0.6)),
           ),
           const SizedBox(height: 16),
           Text(
@@ -1409,7 +1546,8 @@ class RekamMedisView extends StatelessWidget {
   Widget _buildSbarTab(BuildContext context, RekamMedisController ctrl) {
     return Obx(() {
       if (ctrl.isLoadingSbar.value) {
-        return const Center(child: CircularProgressIndicator(color: AppTheme.accent));
+        return const Center(
+            child: CircularProgressIndicator(color: AppTheme.accent));
       }
       final list = ctrl.sbarList;
       if (list.isEmpty) return _emptyState('Belum ada handover SBAR');
@@ -1482,14 +1620,20 @@ class RekamMedisView extends StatelessWidget {
                         children: [
                           Text(
                             'Dilaporkan oleh: ${sbar['petugas']?['nama'] ?? '-'}',
-                            style: GoogleFonts.outfit(fontSize: 11, color: AppTheme.textSecondary, fontWeight: FontWeight.w600),
+                            style: GoogleFonts.outfit(
+                                fontSize: 11,
+                                color: AppTheme.textSecondary,
+                                fontWeight: FontWeight.w600),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
                           const SizedBox(height: 2),
                           Text(
                             'Dokter: ${sbar['dokter']?['nama'] ?? '-'}',
-                            style: GoogleFonts.outfit(fontSize: 11, color: AppTheme.textMuted, fontWeight: FontWeight.w500),
+                            style: GoogleFonts.outfit(
+                                fontSize: 11,
+                                color: AppTheme.textMuted,
+                                fontWeight: FontWeight.w500),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -1498,16 +1642,19 @@ class RekamMedisView extends StatelessWidget {
                     ),
                     if (isValidated) ...[
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 5),
                         decoration: BoxDecoration(
                           color: AppTheme.success.withOpacity(0.08),
                           borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: AppTheme.success.withOpacity(0.2)),
+                          border: Border.all(
+                              color: AppTheme.success.withOpacity(0.2)),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.check_circle_rounded, color: AppTheme.success, size: 14),
+                            const Icon(Icons.check_circle_rounded,
+                                color: AppTheme.success, size: 14),
                             const SizedBox(width: 4),
                             Text(
                               'Verified',
@@ -1520,14 +1667,17 @@ class RekamMedisView extends StatelessWidget {
                           ],
                         ),
                       )
-                    ] else if (sbar['dokter']?['nik']?.toString() == Get.find<AuthController>().user.value?['nip']) ...[
+                    ] else if (sbar['dokter']?['nik']?.toString() ==
+                        Get.find<AuthController>().user.value?['nip']) ...[
                       ElevatedButton(
-                        onPressed: () => _confirmValidasiSbar(context, ctrl, tgl, jam),
+                        onPressed: () =>
+                            _confirmValidasiSbar(context, ctrl, tgl, jam),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppTheme.primary,
                           foregroundColor: Colors.white,
                           elevation: 0,
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 14, vertical: 8),
                           minimumSize: Size.zero,
                           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                           shape: RoundedRectangleBorder(
@@ -1544,16 +1694,19 @@ class RekamMedisView extends StatelessWidget {
                       )
                     ] else ...[
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 5),
                         decoration: BoxDecoration(
                           color: AppTheme.warning.withOpacity(0.08),
                           borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: AppTheme.warning.withOpacity(0.2)),
+                          border: Border.all(
+                              color: AppTheme.warning.withOpacity(0.2)),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.pending_actions_rounded, color: AppTheme.warning, size: 14),
+                            const Icon(Icons.pending_actions_rounded,
+                                color: AppTheme.warning, size: 14),
                             const SizedBox(width: 4),
                             Text(
                               'Belum Diverifikasi',
@@ -1578,7 +1731,9 @@ class RekamMedisView extends StatelessWidget {
   }
 
   Widget _sbarSection(String title, dynamic content) {
-    final text = (content == null || content.toString().isEmpty || content.toString() == '-')
+    final text = (content == null ||
+            content.toString().isEmpty ||
+            content.toString() == '-')
         ? '-'
         : content.toString();
     return Column(
@@ -1606,25 +1761,29 @@ class RekamMedisView extends StatelessWidget {
     );
   }
 
-  void _confirmValidasiSbar(BuildContext context, RekamMedisController ctrl, String tgl, String jam) {
+  void _confirmValidasiSbar(
+      BuildContext context, RekamMedisController ctrl, String tgl, String jam) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: AppTheme.bgCard,
         title: Text(
           'Verifikasi DPJP',
-          style: GoogleFonts.outfit(fontWeight: FontWeight.w800, color: AppTheme.textPrimary),
+          style: GoogleFonts.outfit(
+              fontWeight: FontWeight.w800, color: AppTheme.textPrimary),
         ),
         content: Text(
           'Apakah Anda yakin ingin melakukan verifikasi DPJP untuk instruksi SBAR ini?',
-          style: GoogleFonts.outfit(color: AppTheme.textSecondary, fontSize: 13.5),
+          style:
+              GoogleFonts.outfit(color: AppTheme.textSecondary, fontSize: 13.5),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: Text(
               'Batal',
-              style: GoogleFonts.outfit(color: AppTheme.textSecondary, fontWeight: FontWeight.w700),
+              style: GoogleFonts.outfit(
+                  color: AppTheme.textSecondary, fontWeight: FontWeight.w700),
             ),
           ),
           ElevatedButton(
@@ -1632,7 +1791,8 @@ class RekamMedisView extends StatelessWidget {
               Navigator.pop(context);
               final success = await ctrl.validasiSbar(tgl, jam);
               if (success) {
-                Get.snackbar('Sukses', 'Instruksi SBAR berhasil diverifikasi oleh DPJP',
+                Get.snackbar(
+                    'Sukses', 'Instruksi SBAR berhasil diverifikasi oleh DPJP',
                     backgroundColor: AppTheme.success.withOpacity(0.1),
                     colorText: AppTheme.success,
                     snackPosition: SnackPosition.BOTTOM);
@@ -1743,7 +1903,8 @@ class _SoapTileState extends State<_SoapTile> {
               color: AppTheme.primary.withOpacity(0.08),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Icon(Icons.sticky_note_2_rounded, color: AppTheme.primary, size: 20),
+            child: const Icon(Icons.sticky_note_2_rounded,
+                color: AppTheme.primary, size: 20),
           ),
           title: Text(
             'Catatan SOAP $formattedDate$timeStr',
@@ -1770,11 +1931,15 @@ class _SoapTileState extends State<_SoapTile> {
             const SizedBox(height: 10),
             _clinicalSection('Anamnesis', [
               _row('Keluhan Utama', data['keluhan_utama']),
-              if (_hasVal('rps')) _row('Riwayat Penyakit Sekarang (RPS)', data['rps']),
-              if (_hasVal('rpd')) _row('Riwayat Penyakit Dahulu (RPD)', data['rpd']),
-              if (_hasVal('rpk')) _row('Riwayat Penyakit Keluarga (RPK)', data['rpk']),
+              if (_hasVal('rps'))
+                _row('Riwayat Penyakit Sekarang (RPS)', data['rps']),
+              if (_hasVal('rpd'))
+                _row('Riwayat Penyakit Dahulu (RPD)', data['rpd']),
+              if (_hasVal('rpk'))
+                _row('Riwayat Penyakit Keluarga (RPK)', data['rpk']),
               if (_hasVal('rpo')) _row('Riwayat Pengobatan (RPO)', data['rpo']),
-              if (_hasVal('hubungan')) _row('Diceritakan Oleh', data['hubungan']),
+              if (_hasVal('hubungan'))
+                _row('Diceritakan Oleh', data['hubungan']),
               _row('Alergi', data['alergi']),
             ]),
 
@@ -1784,7 +1949,11 @@ class _SoapTileState extends State<_SoapTile> {
             _soapLabel('O', 'Objektif', AppTheme.accent),
             const SizedBox(height: 10),
             _clinicalSection('Tanda Vital', [_vitalGrid(data)]),
-            if (_hasVal('keadaan') || _hasVal('kesadaran') || _hasVal('gcs') || _hasVal('bb') || _hasVal('tb')) ...[
+            if (_hasVal('keadaan') ||
+                _hasVal('kesadaran') ||
+                _hasVal('gcs') ||
+                _hasVal('bb') ||
+                _hasVal('tb')) ...[
               const SizedBox(height: 12),
               _clinicalSection('Keadaan Umum', [
                 if (_hasVal('keadaan')) _row('Keadaan Umum', data['keadaan']),
@@ -1849,11 +2018,14 @@ class _SoapTileState extends State<_SoapTile> {
           ),
           child: Text(
             letter,
-            style: GoogleFonts.robotoMono(fontSize: 14, fontWeight: FontWeight.w900, color: color),
+            style: GoogleFonts.robotoMono(
+                fontSize: 14, fontWeight: FontWeight.w900, color: color),
           ),
         ),
         const SizedBox(width: 10),
-        Text(label, style: GoogleFonts.outfit(fontSize: 13.5, fontWeight: FontWeight.w800, color: color)),
+        Text(label,
+            style: GoogleFonts.outfit(
+                fontSize: 13.5, fontWeight: FontWeight.w800, color: color)),
       ],
     );
   }
@@ -1875,7 +2047,9 @@ class _SoapTileState extends State<_SoapTile> {
             const SizedBox(width: 8),
             Text(title,
                 style: GoogleFonts.outfit(
-                    fontSize: 13, fontWeight: FontWeight.w800, color: AppTheme.textPrimary)),
+                    fontSize: 13,
+                    fontWeight: FontWeight.w800,
+                    color: AppTheme.textPrimary)),
           ],
         ),
         const SizedBox(height: 12),
@@ -1893,19 +2067,26 @@ class _SoapTileState extends State<_SoapTile> {
       mainAxisSpacing: 10,
       childAspectRatio: 1.15,
       children: [
-        _vitalCard('Tekanan Darah', data['td'], 'mmHg', Icons.speed_rounded, _evalTensi(data['td'])),
-        _vitalCard('Nadi', data['nadi'], 'x/mnt', Icons.favorite_rounded, _evalNadi(data['nadi'])),
-        _vitalCard('Respirasi (RR)', data['rr'], 'x/mnt', Icons.air_rounded, _evalRR(data['rr'])),
-        _vitalCard('Suhu Tubuh', data['suhu'], '°C', Icons.thermostat_rounded, _evalSuhu(data['suhu'])),
-        _vitalCard('SpO₂', data['spo'], '%', Icons.bloodtype_rounded, _evalSpo(data['spo'])),
+        _vitalCard('Tekanan Darah', data['td'], 'mmHg', Icons.speed_rounded,
+            _evalTensi(data['td'])),
+        _vitalCard('Nadi', data['nadi'], 'x/mnt', Icons.favorite_rounded,
+            _evalNadi(data['nadi'])),
+        _vitalCard('Respirasi (RR)', data['rr'], 'x/mnt', Icons.air_rounded,
+            _evalRR(data['rr'])),
+        _vitalCard('Suhu Tubuh', data['suhu'], '°C', Icons.thermostat_rounded,
+            _evalSuhu(data['suhu'])),
+        _vitalCard('SpO₂', data['spo'], '%', Icons.bloodtype_rounded,
+            _evalSpo(data['spo'])),
       ],
     );
   }
 
-  Widget _vitalCard(String label, dynamic value, String unit, IconData icon, Color statusColor) {
-    final displayValue = (value == null || value.toString().isEmpty || value.toString() == '-')
-        ? '-'
-        : value.toString();
+  Widget _vitalCard(String label, dynamic value, String unit, IconData icon,
+      Color statusColor) {
+    final displayValue =
+        (value == null || value.toString().isEmpty || value.toString() == '-')
+            ? '-'
+            : value.toString();
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
       decoration: BoxDecoration(
@@ -1923,18 +2104,24 @@ class _SoapTileState extends State<_SoapTile> {
               Icon(icon, size: 14, color: statusColor),
               Text(unit,
                   style: GoogleFonts.outfit(
-                      fontSize: 9, color: AppTheme.textSecondary, fontWeight: FontWeight.w700)),
+                      fontSize: 9,
+                      color: AppTheme.textSecondary,
+                      fontWeight: FontWeight.w700)),
             ],
           ),
           const SizedBox(height: 4),
           Text(displayValue,
               style: GoogleFonts.robotoMono(
-                  fontSize: 14, fontWeight: FontWeight.w800, color: AppTheme.textPrimary),
+                  fontSize: 14,
+                  fontWeight: FontWeight.w800,
+                  color: AppTheme.textPrimary),
               maxLines: 1,
               overflow: TextOverflow.ellipsis),
           Text(label,
               style: GoogleFonts.outfit(
-                  fontSize: 8.5, color: AppTheme.textSecondary, fontWeight: FontWeight.w700),
+                  fontSize: 8.5,
+                  color: AppTheme.textSecondary,
+                  fontWeight: FontWeight.w700),
               maxLines: 1,
               overflow: TextOverflow.ellipsis),
         ],
@@ -1953,11 +2140,16 @@ class _SoapTileState extends State<_SoapTile> {
         children: [
           Text(label,
               style: GoogleFonts.outfit(
-                  fontSize: 10.5, color: AppTheme.textMuted, fontWeight: FontWeight.w800)),
+                  fontSize: 10.5,
+                  color: AppTheme.textMuted,
+                  fontWeight: FontWeight.w800)),
           const SizedBox(height: 4),
           Text(value.toString(),
               style: GoogleFonts.outfit(
-                  fontSize: 13, color: AppTheme.textPrimary, fontWeight: FontWeight.w600, height: 1.4)),
+                  fontSize: 13,
+                  color: AppTheme.textPrimary,
+                  fontWeight: FontWeight.w600,
+                  height: 1.4)),
         ],
       ),
     );
@@ -1965,7 +2157,8 @@ class _SoapTileState extends State<_SoapTile> {
 
   Color _evalTensi(dynamic td) {
     if (td == null) return AppTheme.textMuted;
-    final sys = int.tryParse(td.toString().split('/')[0].replaceAll(RegExp(r'[^0-9]'), ''));
+    final sys = int.tryParse(
+        td.toString().split('/')[0].replaceAll(RegExp(r'[^0-9]'), ''));
     if (sys != null) {
       if (sys >= 140) return AppTheme.danger;
       if (sys >= 130) return AppTheme.warning;
@@ -1978,20 +2171,25 @@ class _SoapTileState extends State<_SoapTile> {
   Color _evalNadi(dynamic val) {
     if (val == null) return AppTheme.textMuted;
     final n = int.tryParse(val.toString().replaceAll(RegExp(r'[^0-9]'), ''));
-    if (n != null) return (n > 100 || n < 60) ? AppTheme.warning : AppTheme.success;
+    if (n != null) {
+      return (n > 100 || n < 60) ? AppTheme.warning : AppTheme.success;
+    }
     return AppTheme.success;
   }
 
   Color _evalRR(dynamic val) {
     if (val == null) return AppTheme.textMuted;
     final rr = int.tryParse(val.toString().replaceAll(RegExp(r'[^0-9]'), ''));
-    if (rr != null) return (rr > 22 || rr < 12) ? AppTheme.warning : AppTheme.success;
+    if (rr != null) {
+      return (rr > 22 || rr < 12) ? AppTheme.warning : AppTheme.success;
+    }
     return AppTheme.success;
   }
 
   Color _evalSuhu(dynamic val) {
     if (val == null) return AppTheme.textMuted;
-    final s = double.tryParse(val.toString().replaceAll(RegExp(r'[^0-9.]'), ''));
+    final s =
+        double.tryParse(val.toString().replaceAll(RegExp(r'[^0-9.]'), ''));
     if (s != null) {
       if (s > 37.8 || s < 35.5) return AppTheme.danger;
       if (s > 37.2) return AppTheme.warning;
@@ -2059,7 +2257,8 @@ class _DicomViewerPageState extends State<DicomViewerPage> {
         iconTheme: const IconThemeData(color: Colors.white),
         title: Text(
           widget.title,
-          style: GoogleFonts.outfit(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w700),
+          style: GoogleFonts.outfit(
+              color: Colors.white, fontSize: 14, fontWeight: FontWeight.w700),
         ),
       ),
       body: Stack(

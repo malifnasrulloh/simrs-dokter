@@ -242,7 +242,7 @@ class ProfileView extends StatelessWidget {
     return Column(
       children: [
         Text(
-          'SIMRS Dokter v1.0.0',
+          'CareDoc EMR v1.0.0',
           style: GoogleFonts.outfit(
             fontSize: 10.5,
             color: AppTheme.textMuted,
