@@ -10,6 +10,7 @@ class AuthController extends GetxController {
   final isLoading = false.obs;
   final errorMsg = ''.obs;
   final user = Rxn<Map<String, dynamic>>();
+  final setting = Rxn<Map<String, dynamic>>();
 
   @override
   void onInit() {
@@ -17,9 +18,36 @@ class AuthController extends GetxController {
     _checkToken();
   }
 
+  Future<void> fetchSetting() async {
+    try {
+      final response = await _api.dio.get('/setting');
+      if (response.data != null && response.data['success'] == true) {
+        setting.value = Map<String, dynamic>.from(response.data['data']);
+        await _storage.write(key: 'setting_data', value: jsonEncode(setting.value));
+      }
+    } catch (_) {
+      try {
+        final cached = await _storage.read(key: 'setting_data');
+        if (cached != null) {
+          setting.value = Map<String, dynamic>.from(jsonDecode(cached));
+        }
+      } catch (_) {}
+    }
+  }
+
   Future<void> _checkToken() async {
     final token = await _storage.read(key: 'auth_token');
     final userData = await _storage.read(key: 'user_data');
+    final cachedSetting = await _storage.read(key: 'setting_data');
+
+    if (cachedSetting != null) {
+      try {
+        setting.value = Map<String, dynamic>.from(jsonDecode(cachedSetting));
+      } catch (_) {}
+    }
+
+    fetchSetting();
+
     if (token != null && userData != null) {
       try {
         user.value = Map<String, dynamic>.from(jsonDecode(userData));
@@ -48,6 +76,7 @@ class AuthController extends GetxController {
         await _storage.write(key: 'password', value: password);
 
         user.value = userData;
+        await fetchSetting();
         Get.offAllNamed('/home');
       } else {
         errorMsg.value = response.data['message'] ?? 'Login gagal';
@@ -62,6 +91,7 @@ class AuthController extends GetxController {
   Future<void> logout() async {
     await _storage.deleteAll();
     user.value = null;
+    setting.value = null;
     Get.offAllNamed('/login');
   }
 }

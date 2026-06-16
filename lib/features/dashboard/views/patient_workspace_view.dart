@@ -111,13 +111,18 @@ class _PatientWorkspaceViewState extends State<PatientWorkspaceView> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Obx(() => Text(
-                      auth.user.value?['departemen'] ?? 'RSI Aminah Blitar',
-                      style: GoogleFonts.outfit(
-                          fontSize: 11,
-                          color: AppTheme.textSecondary,
-                          fontWeight: FontWeight.w800),
-                    )),
+                Obx(() {
+                  final settingName = auth.setting.value?['nama_instansi'];
+                  final displayText = settingName ?? auth.user.value?['departemen'] ?? '';
+                  if (displayText.isEmpty) return const SizedBox.shrink();
+                  return Text(
+                    displayText,
+                    style: GoogleFonts.outfit(
+                        fontSize: 11,
+                        color: AppTheme.textSecondary,
+                        fontWeight: FontWeight.w800),
+                  );
+                }),
                 const SizedBox(height: 2),
                 Row(
                   children: [

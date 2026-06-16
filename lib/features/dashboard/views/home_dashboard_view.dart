@@ -57,7 +57,11 @@ class HomeDashboardView extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
       decoration: const BoxDecoration(
-        color: Color(0xFF1E293B), // Premium Dark Slate Header
+        gradient: LinearGradient(
+          colors: [AppTheme.primaryDark, AppTheme.primary],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
         borderRadius: BorderRadius.only(
           bottomLeft: Radius.circular(24),
           bottomRight: Radius.circular(24),
@@ -82,15 +86,20 @@ class HomeDashboardView extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Obx(() => Text(
-                        auth.user.value?['departemen'] ?? 'Rumah Sakit Islam Aminah',
-                        style: GoogleFonts.outfit(
-                          fontSize: 11,
-                          color: Colors.white70,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 0.5,
-                        ),
-                      )),
+                  Obx(() {
+                    final settingName = auth.setting.value?['nama_instansi'];
+                    final displayText = settingName ?? auth.user.value?['departemen'] ?? '';
+                    if (displayText.isEmpty) return const SizedBox.shrink();
+                    return Text(
+                      displayText,
+                      style: GoogleFonts.outfit(
+                        fontSize: 11,
+                        color: Colors.white70,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.5,
+                      ),
+                    );
+                  }),
                   const SizedBox(height: 4),
                   Obx(() => Text(
                         auth.user.value?['nama'] ?? 'Dokter Spesialis',

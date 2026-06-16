@@ -131,16 +131,22 @@ class _LoginViewState extends State<LoginView> with TickerProviderStateMixin {
             letterSpacing: -0.5,
           ),
         ),
-        const SizedBox(height: 4),
-        Text(
-          'RS Islam Aminah Blitar',
-          style: GoogleFonts.outfit(
-            fontSize: 13,
-            color: AppTheme.primary,
-            fontWeight: FontWeight.w800,
-            letterSpacing: 0.5,
-          ),
-        ),
+        Obx(() {
+          final settingName = _authCtrl.setting.value?['nama_instansi'];
+          if (settingName == null || settingName.isEmpty) return const SizedBox.shrink();
+          return Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Text(
+              settingName,
+              style: GoogleFonts.outfit(
+                fontSize: 13,
+                color: AppTheme.primary,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 0.5,
+              ),
+            ),
+          );
+        }),
       ],
     );
   }
@@ -314,9 +320,15 @@ class _LoginViewState extends State<LoginView> with TickerProviderStateMixin {
   }
 
   Widget _buildFooter() {
-    return Text(
-      'v1.1.0 • RSI Aminah Blitar © 2026',
-      style: GoogleFonts.outfit(fontSize: 11, color: AppTheme.textMuted, fontWeight: FontWeight.w600),
-    );
+    return Obx(() {
+      final settingName = _authCtrl.setting.value?['nama_instansi'];
+      final footerText = settingName != null && settingName.isNotEmpty
+          ? 'v1.1.0 • $settingName © 2026'
+          : 'v1.1.0 • SIMRS © 2026';
+      return Text(
+        footerText,
+        style: GoogleFonts.outfit(fontSize: 11, color: AppTheme.textMuted, fontWeight: FontWeight.w600),
+      );
+    });
   }
 }

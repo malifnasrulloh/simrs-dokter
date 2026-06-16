@@ -13,38 +13,41 @@ class ProfileView extends StatelessWidget {
     final auth = Get.find<AuthController>();
     final ctrl = Get.find<DashboardController>();
 
-    final user = auth.user.value ?? {};
-    final nama = user['nama'] ?? 'Dokter Spesialis';
-    final nip = user['nip'] ?? '-';
-    final jabatan = user['jabatan'] ?? 'Staf Medik Fungsional';
-    final departemen = user['departemen'] ?? 'RSI Aminah Blitar';
-
     return Scaffold(
       backgroundColor: AppTheme.bgDark,
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            _buildProfileHeader(nama, jabatan),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildSectionTitle('Informasi Akun Medis'),
-                  const SizedBox(height: 8),
-                  _buildProfileDetailsCard(nip, departemen),
-                  const SizedBox(height: 20),
-                  _buildSectionTitle('Statistik Kerja Hari Ini'),
-                  const SizedBox(height: 8),
-                  _buildWorkStats(ctrl),
-                  const SizedBox(height: 24),
-                  _buildBrandingAndLogout(auth),
-                ],
+      body: Obx(() {
+        final user = auth.user.value ?? {};
+        final nama = user['nama'] ?? 'Dokter Spesialis';
+        final nip = user['nip'] ?? '-';
+        final jabatan = user['jabatan'] ?? 'Staf Medik Fungsional';
+        final settingName = auth.setting.value?['nama_instansi'];
+        final departemen = settingName ?? user['departemen'] ?? '';
+
+        return SingleChildScrollView(
+          child: Column(
+            children: [
+              _buildProfileHeader(nama, jabatan),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildSectionTitle('Informasi Akun Medis'),
+                    const SizedBox(height: 8),
+                    _buildProfileDetailsCard(nip, departemen),
+                    const SizedBox(height: 20),
+                    _buildSectionTitle('Statistik Kerja Hari Ini'),
+                    const SizedBox(height: 8),
+                    _buildWorkStats(ctrl),
+                    const SizedBox(height: 24),
+                    _buildBrandingAndLogout(auth, settingName),
+                  ],
+                ),
               ),
-            ),
-          ],
-        ),
-      ),
+            ],
+          ),
+        );
+      }),
     );
   }
 
@@ -53,7 +56,11 @@ class ProfileView extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(20, 36, 20, 24),
       decoration: const BoxDecoration(
-        color: Color(0xFF1E293B),
+        gradient: LinearGradient(
+          colors: [AppTheme.primaryDark, AppTheme.primary],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
         borderRadius: BorderRadius.only(
           bottomLeft: Radius.circular(24),
           bottomRight: Radius.circular(24),
@@ -231,7 +238,7 @@ class ProfileView extends StatelessWidget {
     );
   }
 
-  Widget _buildBrandingAndLogout(AuthController auth) {
+  Widget _buildBrandingAndLogout(AuthController auth, String? settingName) {
     return Column(
       children: [
         Text(
@@ -242,15 +249,17 @@ class ProfileView extends StatelessWidget {
             fontWeight: FontWeight.w600,
           ),
         ),
-        const SizedBox(height: 4),
-        Text(
-          'RSI Aminah Blitar',
-          style: GoogleFonts.outfit(
-            fontSize: 10,
-            color: AppTheme.textMuted,
-            fontWeight: FontWeight.w500,
+        if (settingName != null && settingName.isNotEmpty) ...[
+          const SizedBox(height: 4),
+          Text(
+            settingName,
+            style: GoogleFonts.outfit(
+              fontSize: 10,
+              color: AppTheme.textMuted,
+              fontWeight: FontWeight.w500,
+            ),
           ),
-        ),
+        ],
         const SizedBox(height: 20),
         SizedBox(
           width: double.infinity,
