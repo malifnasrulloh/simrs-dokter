@@ -231,6 +231,14 @@ Jika aplikasi ini membantu Anda atau rumah sakit Anda, Anda bisa memberikan duku
 
 ---
 
+## 🤝 Kustomisasi & Kerja Sama Profesional
+
+Jika membutuhkan kustomisasi tersendiri atau kerja sama profesional, silakan hubungi:
+- **Telepon/WhatsApp:** [085232406085](https://wa.me/6285232406085)
+- **Telegram:** [@m_putra_s](https://t.me/m_putra_s)
+
+---
+
 ## 📄 Lisensi
 
 Proyek ini dikembangkan untuk internal **RS Islam Aminah Blitar**.  
