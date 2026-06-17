@@ -193,7 +193,7 @@ npm run dev
 pm2 start ecosystem.config.js --env production
 ```
 
-Lihat dokumentasi lengkap di [`../BackEnd-Dokter/README.md`](../BackEnd-Dokter/README.md).
+Lihat dokumentasi lengkap di [`../BackEnd-Dokter/README.md`](https://github.com/Putra-S/Backend-Dokter.git).
 
 ---
 
