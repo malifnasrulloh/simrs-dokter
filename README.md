@@ -206,12 +206,8 @@ Lihat dokumentasi lengkap di [`../BackEnd-Dokter/README.md`](https://github.com/
 flutter pub run flutter_launcher_icons
 
 # Build APK
-flutter build apk --release --split-per-abi
+flutter build apk --release
 
-# Output
-build/app/outputs/flutter-apk/
-  app-arm64-v8a-release.apk   ← Install di device modern (64-bit)
-  app-armeabi-v7a-release.apk ← Install di device lama (32-bit)
 ```
 
 ### Update Versi
