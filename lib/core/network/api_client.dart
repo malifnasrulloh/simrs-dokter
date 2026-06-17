@@ -13,8 +13,8 @@ class ApiClient {
   ApiClient._internal() {
     _dio = Dio(BaseOptions(
       baseUrl: AppConfig.baseUrl,
-      connectTimeout: Duration(milliseconds: AppConfig.connectTimeout),
-      receiveTimeout: Duration(milliseconds: AppConfig.receiveTimeout),
+      connectTimeout: const Duration(milliseconds: AppConfig.connectTimeout),
+      receiveTimeout: const Duration(milliseconds: AppConfig.receiveTimeout),
       headers: {'Content-Type': 'application/json'},
     ));
 
@@ -36,8 +36,8 @@ class ApiClient {
               // Perform silent re-login with a clean Dio instance to avoid interceptor loop
               final silentDio = Dio(BaseOptions(
                 baseUrl: AppConfig.baseUrl,
-                connectTimeout: Duration(milliseconds: AppConfig.connectTimeout),
-                receiveTimeout: Duration(milliseconds: AppConfig.receiveTimeout),
+                connectTimeout: const Duration(milliseconds: AppConfig.connectTimeout),
+                receiveTimeout: const Duration(milliseconds: AppConfig.receiveTimeout),
               ));
 
               final loginRes = await silentDio.post('/auth/login', data: {
@@ -55,8 +55,8 @@ class ApiClient {
 
                 final retryDio = Dio(BaseOptions(
                   baseUrl: AppConfig.baseUrl,
-                  connectTimeout: Duration(milliseconds: AppConfig.connectTimeout),
-                  receiveTimeout: Duration(milliseconds: AppConfig.receiveTimeout),
+                  connectTimeout: const Duration(milliseconds: AppConfig.connectTimeout),
+                  receiveTimeout: const Duration(milliseconds: AppConfig.receiveTimeout),
                 ));
                 final response = await retryDio.fetch(requestOptions);
                 return handler.resolve(response);

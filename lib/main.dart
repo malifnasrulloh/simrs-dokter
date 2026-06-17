@@ -7,16 +7,11 @@ import 'features/dashboard/controllers/dashboard_controller.dart';
 import 'features/dashboard/views/dashboard_view.dart';
 import 'features/dashboard/views/patient_list_view.dart';
 import 'features/rekam_medis/views/rekam_medis_view.dart';
-
 import 'core/utils/google_fonts.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   GoogleFonts.config.allowRuntimeFetching = false;
-  try {
-    await dotenv.load(fileName: ".env");
-  } catch (_) {}
   runApp(const SimrsDokterApp());
 }
 
@@ -63,4 +58,3 @@ class SimrsDokterApp extends StatelessWidget {
     );
   }
 }
-
