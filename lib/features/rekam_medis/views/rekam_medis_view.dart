@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../core/utils/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:webview_flutter/webview_flutter.dart';
@@ -2123,22 +2124,62 @@ void _confirmDeleteSoap(BuildContext context, RekamMedisController ctrl, String 
   void _showSoapForm(BuildContext context, RekamMedisController ctrl, {Map<String, dynamic>? existingData}) {
     final isEdit = existingData != null;
     
-    final keluhanCtrl = TextEditingController(text: existingData?['keluhan_utama'] ?? '');
-    final pemeriksaanCtrl = TextEditingController(text: existingData?['pemeriksaan_fisik'] ?? '');
-    final penilaianCtrl = TextEditingController(text: existingData?['diagnosis'] ?? '');
-    final rtlCtrl = TextEditingController(text: existingData?['tata'] ?? '');
-    final instruksiCtrl = TextEditingController(text: existingData?['instruksi'] ?? '');
-    final evaluasiCtrl = TextEditingController(text: existingData?['evaluasi'] ?? '');
+    final draft = !isEdit ? ctrl.soapDraft : <String, String>{};
+
+    final keluhanCtrl = TextEditingController(text: existingData?['keluhan_utama'] ?? draft['keluhan_utama'] ?? '');
+    final pemeriksaanCtrl = TextEditingController(text: existingData?['pemeriksaan_fisik'] ?? draft['pemeriksaan_fisik'] ?? '');
+    final penilaianCtrl = TextEditingController(text: existingData?['diagnosis'] ?? draft['diagnosis'] ?? '');
+    final rtlCtrl = TextEditingController(text: existingData?['tata'] ?? draft['tata'] ?? '');
+    final instruksiCtrl = TextEditingController(text: existingData?['instruksi'] ?? draft['instruksi'] ?? '');
+    final evaluasiCtrl = TextEditingController(text: existingData?['evaluasi'] ?? draft['evaluasi'] ?? '');
     
-    final suhuCtrl = TextEditingController(text: existingData?['suhu']?.toString() ?? '');
-    final tensiCtrl = TextEditingController(text: existingData?['td']?.toString() ?? '');
-    final nadiCtrl = TextEditingController(text: existingData?['nadi']?.toString() ?? '');
-    final respirasiCtrl = TextEditingController(text: existingData?['rr']?.toString() ?? '');
-    final tinggiCtrl = TextEditingController(text: existingData?['tb']?.toString() ?? '');
-    final beratCtrl = TextEditingController(text: existingData?['bb']?.toString() ?? '');
-    final spo2Ctrl = TextEditingController(text: existingData?['spo']?.toString() ?? '');
-    final gcsCtrl = TextEditingController(text: existingData?['gcs']?.toString() ?? '');
-    final kesadaranCtrl = TextEditingController(text: existingData?['kesadaran']?.toString() ?? 'Compos Mentis');
+    final suhuCtrl = TextEditingController(text: existingData?['suhu']?.toString() ?? draft['suhu'] ?? '');
+    final tensiCtrl = TextEditingController(text: existingData?['td']?.toString() ?? draft['td'] ?? '');
+    final nadiCtrl = TextEditingController(text: existingData?['nadi']?.toString() ?? draft['nadi'] ?? '');
+    final respirasiCtrl = TextEditingController(text: existingData?['rr']?.toString() ?? draft['rr'] ?? '');
+    final tinggiCtrl = TextEditingController(text: existingData?['tb']?.toString() ?? draft['tb'] ?? '');
+    final beratCtrl = TextEditingController(text: existingData?['bb']?.toString() ?? draft['bb'] ?? '');
+    final spo2Ctrl = TextEditingController(text: existingData?['spo']?.toString() ?? draft['spo'] ?? '');
+    final gcsCtrl = TextEditingController(text: existingData?['gcs']?.toString() ?? draft['gcs'] ?? '');
+    final kesadaranCtrl = TextEditingController(text: existingData?['kesadaran']?.toString() ?? draft['kesadaran'] ?? 'Compos Mentis');
+
+    if (!isEdit) {
+      void save() {
+        ctrl.saveSoapDraft({
+          'keluhan_utama': keluhanCtrl.text,
+          'pemeriksaan_fisik': pemeriksaanCtrl.text,
+          'diagnosis': penilaianCtrl.text,
+          'tata': rtlCtrl.text,
+          'instruksi': instruksiCtrl.text,
+          'evaluasi': evaluasiCtrl.text,
+          'suhu': suhuCtrl.text,
+          'td': tensiCtrl.text,
+          'nadi': nadiCtrl.text,
+          'rr': respirasiCtrl.text,
+          'tb': tinggiCtrl.text,
+          'bb': beratCtrl.text,
+          'spo': spo2Ctrl.text,
+          'gcs': gcsCtrl.text,
+          'kesadaran': kesadaranCtrl.text,
+        });
+      }
+
+      keluhanCtrl.addListener(save);
+      pemeriksaanCtrl.addListener(save);
+      penilaianCtrl.addListener(save);
+      rtlCtrl.addListener(save);
+      instruksiCtrl.addListener(save);
+      evaluasiCtrl.addListener(save);
+      suhuCtrl.addListener(save);
+      tensiCtrl.addListener(save);
+      nadiCtrl.addListener(save);
+      respirasiCtrl.addListener(save);
+      tinggiCtrl.addListener(save);
+      beratCtrl.addListener(save);
+      spo2Ctrl.addListener(save);
+      gcsCtrl.addListener(save);
+      kesadaranCtrl.addListener(save);
+    }
     
     Get.bottomSheet(
       Container(
@@ -2180,6 +2221,68 @@ void _confirmDeleteSoap(BuildContext context, RekamMedisController ctrl, String 
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    Obx(() {
+                      if (!isEdit && ctrl.soapDraft.isNotEmpty) {
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 16),
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: AppTheme.warning.withOpacity(0.15),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: AppTheme.warning.withOpacity(0.3)),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  'Melanjutkan draft lokal yang belum tersimpan.',
+                                  style: GoogleFonts.outfit(
+                                    fontSize: 12,
+                                    color: AppTheme.warning,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                              TextButton(
+                                style: TextButton.styleFrom(
+                                  padding: EdgeInsets.zero,
+                                  minimumSize: Size.zero,
+                                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                ),
+                                onPressed: () {
+                                  ctrl.clearSoapDraft();
+                                  keluhanCtrl.clear();
+                                  pemeriksaanCtrl.clear();
+                                  penilaianCtrl.clear();
+                                  rtlCtrl.clear();
+                                  instruksiCtrl.clear();
+                                  evaluasiCtrl.clear();
+                                  suhuCtrl.clear();
+                                  tensiCtrl.clear();
+                                  nadiCtrl.clear();
+                                  respirasiCtrl.clear();
+                                  tinggiCtrl.clear();
+                                  beratCtrl.clear();
+                                  spo2Ctrl.clear();
+                                  gcsCtrl.clear();
+                                  kesadaranCtrl.text = 'Compos Mentis';
+                                },
+                                child: Text(
+                                  'Hapus Draft',
+                                  style: GoogleFonts.outfit(
+                                    fontSize: 12,
+                                    color: AppTheme.danger,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }
+                      return const SizedBox.shrink();
+                    }),
                     Text('Tanda Vital & Fisik', style: GoogleFonts.outfit(fontSize: 14, fontWeight: FontWeight.w800, color: AppTheme.primary)),
                     const SizedBox(height: 12),
                     Row(
@@ -2564,6 +2667,51 @@ void _confirmDeleteSoap(BuildContext context, RekamMedisController ctrl, String 
                         ),
                       );
                     }),
+                    Obx(() {
+                      if (ctrl.prescriptionDraft.isNotEmpty) {
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 12),
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: AppTheme.primary.withOpacity(0.12),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: AppTheme.primary.withOpacity(0.25)),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  'Melanjutkan resep draft (${ctrl.prescriptionDraft.length} obat).',
+                                  style: GoogleFonts.outfit(
+                                    fontSize: 12,
+                                    color: AppTheme.primary,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                              TextButton(
+                                style: TextButton.styleFrom(
+                                  padding: EdgeInsets.zero,
+                                  minimumSize: Size.zero,
+                                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                ),
+                                onPressed: () => ctrl.clearPrescriptionDraft(),
+                                child: Text(
+                                  'Kosongkan',
+                                  style: GoogleFonts.outfit(
+                                    fontSize: 12,
+                                    color: AppTheme.danger,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }
+                      return const SizedBox.shrink();
+                    }),
                     Text(
                       'Daftar Obat Resep',
                       style: GoogleFonts.outfit(fontSize: 13.5, fontWeight: FontWeight.w800, color: AppTheme.textPrimary),
@@ -2844,9 +2992,10 @@ void _confirmDeleteSoap(BuildContext context, RekamMedisController ctrl, String 
                               style: GoogleFonts.outfit(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.textSecondary),
                             ),
                             Text(
-                              item['deskripsi_rujukan'],
+                              _stripAttachment(item['deskripsi_rujukan']),
                               style: GoogleFonts.outfit(fontSize: 12.5, color: AppTheme.textPrimary),
                             ),
+                            _buildAttachmentsSection(item['deskripsi_rujukan']),
                             const SizedBox(height: 8),
                           ],
                           if (isAnswered && item['jawaban'] != null) ...[
@@ -2856,9 +3005,10 @@ void _confirmDeleteSoap(BuildContext context, RekamMedisController ctrl, String 
                               style: GoogleFonts.outfit(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.success),
                             ),
                             Text(
-                              item['jawaban'],
+                              _stripAttachment(item['jawaban']),
                               style: GoogleFonts.outfit(fontSize: 12.5, color: AppTheme.textPrimary),
                             ),
+                            _buildAttachmentsSection(item['jawaban']),
                           ],
                           if (!isOutgoing && !isAnswered) ...[
                             const SizedBox(height: 12),
@@ -2907,151 +3057,175 @@ void _confirmDeleteSoap(BuildContext context, RekamMedisController ctrl, String 
   }
 
   void _showConsultationDialog(BuildContext context, RekamMedisController ctrl) {
-  Map<String, dynamic>? selectedDokter;
-  final rujukanCtrl = TextEditingController();
-  final diagnosaCtrl = TextEditingController();
-  final dokterSearchCtrl = TextEditingController();
-  final filteredDokterList = <Map<String, dynamic>>[].obs;
-  
-  filteredDokterList.value = ctrl.dokterList;
-  
-  Get.dialog(
-    AlertDialog(
-      title: Text('Kirim Permintaan Konsultasi', style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 16)),
-      content: SizedBox(
-        width: Get.width * 0.85,
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Pilih Dokter Tujuan', style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.textSecondary)),
-              const SizedBox(height: 6),
-              TextField(
-                controller: dokterSearchCtrl,
-                decoration: const InputDecoration(hintText: 'Cari nama dokter...', prefixIcon: Icon(Icons.search_rounded), isDense: true, contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8)),
-                onChanged: (val) {
-                  if (val.trim().isEmpty) {
-                    filteredDokterList.value = ctrl.dokterList;
-                  } else {
-                    filteredDokterList.value = ctrl.dokterList.where((d) => (d['nm_dokter'] ?? '').toString().toLowerCase().contains(val.toLowerCase())).toList();
-                  }
-                },
-              ),
-              const SizedBox(height: 8),
-              Container(
-                height: 120,
-                decoration: BoxDecoration(border: Border.all(color: AppTheme.divider), borderRadius: BorderRadius.circular(8)),
-                child: Obx(() {
-                  if (filteredDokterList.isEmpty) {
-                    return Center(child: Text('Dokter tidak ditemukan', style: GoogleFonts.outfit(fontSize: 12, color: AppTheme.textMuted)));
-                  }
-                  return ListView.separated(
-                    shrinkWrap: true,
-                    itemCount: filteredDokterList.length,
-                    separatorBuilder: (_, __) => const Divider(height: 1, thickness: 0.5),
-                    itemBuilder: (context, idx) {
-                      final dr = filteredDokterList[idx];
-                      final code = dr['kd_dokter'] ?? '';
-                      final name = dr['nm_dokter'] ?? '';
-                      return Obx(() {
-                        final isSelected = selectedDokter?['kd_dokter'] == code;
-                        return ListTile(
-                          dense: true,
-                          title: Text(name, style: GoogleFonts.outfit(fontSize: 12, fontWeight: isSelected ? FontWeight.bold : FontWeight.normal)),
-                          selected: isSelected,
-                          selectedColor: AppTheme.primary,
-                          onTap: () {
-                            selectedDokter = dr;
-                            dokterSearchCtrl.text = name;
-                            filteredDokterList.refresh();
-                          },
-                        );
-                      });
-                    },
-                  );
-                }),
-              ),
-              const SizedBox(height: 16),
-              Text('Diagnosa Kerja', style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.textSecondary)),
-              const SizedBox(height: 6),
-              TextField(
-                controller: diagnosaCtrl,
-                decoration: const InputDecoration(hintText: 'Tuliskan diagnosa kerja...', isDense: true, contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 10)),
-              ),
-              const SizedBox(height: 16),
-              Text('Isi Permintaan / Rujukan / Keterangan', style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.textSecondary)),
-              const SizedBox(height: 6),
-              TextField(
-                controller: rujukanCtrl,
-                maxLines: 4,
-                decoration: const InputDecoration(hintText: 'Tuliskan deskripsi rujukan/pertanyaan...', isDense: true, contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 10)),
-              ),
-            ],
+    Map<String, dynamic>? selectedDokter;
+    final rujukanCtrl = TextEditingController();
+    final diagnosaCtrl = TextEditingController();
+    final attachmentCtrl = TextEditingController();
+    final dokterSearchCtrl = TextEditingController();
+    final filteredDokterList = <Map<String, dynamic>>[].obs;
+    
+    filteredDokterList.value = ctrl.dokterList;
+    
+    Get.dialog(
+      AlertDialog(
+        title: Text('Kirim Permintaan Konsultasi', style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 16)),
+        content: SizedBox(
+          width: Get.width * 0.85,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Pilih Dokter Tujuan', style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.textSecondary)),
+                const SizedBox(height: 6),
+                TextField(
+                  controller: dokterSearchCtrl,
+                  decoration: const InputDecoration(hintText: 'Cari nama dokter...', prefixIcon: Icon(Icons.search_rounded), isDense: true, contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8)),
+                  onChanged: (val) {
+                    if (val.trim().isEmpty) {
+                      filteredDokterList.value = ctrl.dokterList;
+                    } else {
+                      filteredDokterList.value = ctrl.dokterList.where((d) => (d['nm_dokter'] ?? '').toString().toLowerCase().contains(val.toLowerCase())).toList();
+                    }
+                  },
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  height: 120,
+                  decoration: BoxDecoration(border: Border.all(color: AppTheme.divider), borderRadius: BorderRadius.circular(8)),
+                  child: Obx(() {
+                    if (filteredDokterList.isEmpty) {
+                      return Center(child: Text('Dokter tidak ditemukan', style: GoogleFonts.outfit(fontSize: 12, color: AppTheme.textMuted)));
+                    }
+                    return ListView.separated(
+                      shrinkWrap: true,
+                      itemCount: filteredDokterList.length,
+                      separatorBuilder: (_, __) => const Divider(height: 1, thickness: 0.5),
+                      itemBuilder: (context, idx) {
+                        final dr = filteredDokterList[idx];
+                        final code = dr['kd_dokter'] ?? '';
+                        final name = dr['nm_dokter'] ?? '';
+                        return Obx(() {
+                          final isSelected = selectedDokter?['kd_dokter'] == code;
+                          return ListTile(
+                            dense: true,
+                            title: Text(name, style: GoogleFonts.outfit(fontSize: 12, fontWeight: isSelected ? FontWeight.bold : FontWeight.normal)),
+                            selected: isSelected,
+                            selectedColor: AppTheme.primary,
+                            onTap: () {
+                              selectedDokter = dr;
+                              dokterSearchCtrl.text = name;
+                              filteredDokterList.refresh();
+                            },
+                          );
+                        });
+                      },
+                    );
+                  }),
+                ),
+                const SizedBox(height: 16),
+                Text('Diagnosa Kerja', style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.textSecondary)),
+                const SizedBox(height: 6),
+                TextField(
+                  controller: diagnosaCtrl,
+                  decoration: const InputDecoration(hintText: 'Tuliskan diagnosa kerja...', isDense: true, contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 10)),
+                ),
+                const SizedBox(height: 16),
+                Text('Isi Permintaan / Rujukan / Keterangan', style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.textSecondary)),
+                const SizedBox(height: 6),
+                TextField(
+                  controller: rujukanCtrl,
+                  maxLines: 4,
+                  decoration: const InputDecoration(hintText: 'Tuliskan deskripsi rujukan/pertanyaan...', isDense: true, contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 10)),
+                ),
+                const SizedBox(height: 16),
+                Text('URL Lampiran (Opsional, cth: PACS, Lab PDF)', style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.textSecondary)),
+                const SizedBox(height: 6),
+                TextField(
+                  controller: attachmentCtrl,
+                  decoration: const InputDecoration(hintText: 'http://pacs.link/...', isDense: true, contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 10)),
+                ),
+              ],
+            ),
           ),
         ),
+        actions: [
+          TextButton(onPressed: () => Get.back(), child: Text('Batal', style: GoogleFonts.outfit(color: AppTheme.textSecondary))),
+          ElevatedButton(
+            onPressed: () async {
+              if (selectedDokter == null) {
+                Get.snackbar('Error', 'Silakan pilih dokter tujuan terlebih dahulu', backgroundColor: Colors.white, colorText: AppTheme.danger);
+                return;
+              }
+              if (rujukanCtrl.text.trim().isEmpty) {
+                Get.snackbar('Error', 'Isi rujukan tidak boleh kosong', backgroundColor: Colors.white, colorText: AppTheme.danger);
+                return;
+              }
+              Get.back();
+              
+              String finalUraian = rujukanCtrl.text;
+              if (attachmentCtrl.text.trim().isNotEmpty) {
+                finalUraian += '\n[Attachment: ${attachmentCtrl.text.trim()}]';
+              }
+
+              final success = await ctrl.sendConsultation(
+                targetDokter: selectedDokter!['kd_dokter'],
+                jenis: ctrl.tipeRawat.isEmpty ? 'RALAN' : ctrl.tipeRawat,
+                diagnosa: diagnosaCtrl.text,
+                uraian: finalUraian,
+              );
+              if (success) {
+                Get.snackbar('Sukses', 'Permintaan konsultasi berhasil dikirim', backgroundColor: Colors.white, colorText: AppTheme.primary);
+              }
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primary),
+            child: Text('Kirim', style: GoogleFonts.outfit(color: Colors.white)),
+          ),
+        ],
       ),
-      actions: [
-        TextButton(onPressed: () => Get.back(), child: Text('Batal', style: GoogleFonts.outfit(color: AppTheme.textSecondary))),
-        ElevatedButton(
-          onPressed: () async {
-            if (selectedDokter == null) {
-              Get.snackbar('Error', 'Silakan pilih dokter tujuan terlebih dahulu', backgroundColor: Colors.white, colorText: AppTheme.danger);
-              return;
-            }
-            if (rujukanCtrl.text.trim().isEmpty) {
-              Get.snackbar('Error', 'Isi rujukan tidak boleh kosong', backgroundColor: Colors.white, colorText: AppTheme.danger);
-              return;
-            }
-            Get.back();
-            final success = await ctrl.sendConsultation(
-              targetDokter: selectedDokter!['kd_dokter'],
-              jenis: ctrl.tipeRawat.isEmpty ? 'RALAN' : ctrl.tipeRawat,
-              diagnosa: diagnosaCtrl.text,
-              uraian: rujukanCtrl.text,
-            );
-            if (success) {
-              Get.snackbar('Sukses', 'Permintaan konsultasi berhasil dikirim', backgroundColor: Colors.white, colorText: AppTheme.primary);
-            }
-          },
-          style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primary),
-          child: Text('Kirim', style: GoogleFonts.outfit(color: Colors.white)),
-        ),
-      ],
-    ),
-  );
-}
+    );
+  }
 
 void _showReplyConsultationDialog(BuildContext context, RekamMedisController ctrl, Map<String, dynamic> item) {
   final jawabanCtrl = TextEditingController();
   final diagnosaCtrl = TextEditingController();
+  final attachmentCtrl = TextEditingController();
   
   Get.dialog(
     AlertDialog(
       title: Text('Jawab Konsultasi', style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 16)),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('Dari: ${item['nm_dokter_peminta'] ?? item['kd_dokter_peminta'] ?? '-'}', style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.textSecondary)),
-          const SizedBox(height: 6),
-          Text(item['deskripsi_rujukan'] ?? '-', style: GoogleFonts.outfit(fontSize: 13, color: AppTheme.textPrimary)),
-          const SizedBox(height: 16),
-          Text('Diagnosa Kerja / Hasil Pemeriksaan', style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.textSecondary)),
-          const SizedBox(height: 6),
-          TextField(
-            controller: diagnosaCtrl,
-            decoration: const InputDecoration(hintText: 'Tuliskan diagnosa kerja/hasil...', isDense: true, contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 10)),
-          ),
-          const SizedBox(height: 16),
-          Text('Jawaban / Keterangan', style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.textSecondary)),
-          const SizedBox(height: 6),
-          TextField(
-            controller: jawabanCtrl,
-            maxLines: 4,
-            decoration: const InputDecoration(hintText: 'Tuliskan jawaban...', isDense: true, contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 10)),
-          ),
-        ],
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Dari: ${item['nm_dokter_peminta'] ?? item['kd_dokter_peminta'] ?? '-'}', style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.textSecondary)),
+            const SizedBox(height: 6),
+            Text(item['deskripsi_rujukan'] ?? '-', style: GoogleFonts.outfit(fontSize: 13, color: AppTheme.textPrimary)),
+            const SizedBox(height: 16),
+            Text('Diagnosa Kerja / Hasil Pemeriksaan', style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.textSecondary)),
+            const SizedBox(height: 6),
+            TextField(
+              controller: diagnosaCtrl,
+              decoration: const InputDecoration(hintText: 'Tuliskan diagnosa kerja/hasil...', isDense: true, contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 10)),
+            ),
+            const SizedBox(height: 16),
+            Text('Jawaban / Keterangan', style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.textSecondary)),
+            const SizedBox(height: 6),
+            TextField(
+              controller: jawabanCtrl,
+              maxLines: 4,
+              decoration: const InputDecoration(hintText: 'Tuliskan jawaban...', isDense: true, contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 10)),
+            ),
+            const SizedBox(height: 16),
+            Text('URL Lampiran (Opsional, cth: PACS, Lab PDF)', style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.textSecondary)),
+            const SizedBox(height: 6),
+            TextField(
+              controller: attachmentCtrl,
+              decoration: const InputDecoration(hintText: 'http://pacs.link/...', isDense: true, contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 10)),
+            ),
+          ],
+        ),
       ),
       actions: [
         TextButton(onPressed: () => Get.back(), child: Text('Batal', style: GoogleFonts.outfit(color: AppTheme.textSecondary))),
@@ -3062,10 +3236,16 @@ void _showReplyConsultationDialog(BuildContext context, RekamMedisController ctr
               return;
             }
             Get.back();
+            
+            String finalJawaban = jawabanCtrl.text;
+            if (attachmentCtrl.text.trim().isNotEmpty) {
+              finalJawaban += '\n[Attachment: ${attachmentCtrl.text.trim()}]';
+            }
+
             final success = await ctrl.replyConsultation(
               noPermintaan: item['no_permintaan']?.toString() ?? '',
               diagnosa: diagnosaCtrl.text,
-              uraian: jawabanCtrl.text,
+              uraian: finalJawaban,
             );
             if (success) {
               Get.snackbar('Sukses', 'Konsultasi berhasil dijawab', backgroundColor: Colors.white, colorText: AppTheme.primary);
@@ -3565,4 +3745,108 @@ class _DicomViewerPageState extends State<DicomViewerPage> {
       ),
     );
   }
+}
+
+Widget _buildAttachmentsSection(String content) {
+  final regExp = RegExp(r'\[Attachment:\s*(.*?)\]');
+  final matches = regExp.allMatches(content);
+  if (matches.isEmpty) return const SizedBox.shrink();
+
+  final List<String> urls = [];
+  for (final m in matches) {
+    final matchVal = m.group(1)?.trim();
+    if (matchVal != null && matchVal.isNotEmpty) {
+      urls.addAll(matchVal.split(',').map((s) => s.trim()).where((s) => s.isNotEmpty));
+    }
+  }
+
+  if (urls.isEmpty) return const SizedBox.shrink();
+
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      const SizedBox(height: 8),
+      Text(
+        'Lampiran / Attachments:',
+        style: GoogleFonts.outfit(
+          fontSize: 11,
+          fontWeight: FontWeight.bold,
+          color: AppTheme.primary,
+        ),
+      ),
+      const SizedBox(height: 4),
+      Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: urls.map((url) {
+          final uri = Uri.tryParse(url);
+          final filename = uri != null ? uri.pathSegments.lastOrNull ?? 'File Lampiran' : 'File Lampiran';
+          final isImage = url.toLowerCase().endsWith('.png') ||
+              url.toLowerCase().endsWith('.jpg') ||
+              url.toLowerCase().endsWith('.jpeg') ||
+              url.toLowerCase().endsWith('.webp');
+          final isPdf = url.toLowerCase().endsWith('.pdf');
+
+          return InkWell(
+            onTap: () async {
+              final parsedUri = Uri.tryParse(url);
+              if (parsedUri != null && await canLaunchUrl(parsedUri)) {
+                await launchUrl(parsedUri, mode: LaunchMode.externalApplication);
+              } else {
+                Get.snackbar('Error', 'Tidak dapat membuka lampiran', backgroundColor: Colors.white, colorText: AppTheme.danger);
+              }
+            },
+            borderRadius: BorderRadius.circular(10),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: AppTheme.bgDark,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: AppTheme.divider),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    isImage
+                        ? Icons.image_rounded
+                        : isPdf
+                            ? Icons.picture_as_pdf_rounded
+                            : Icons.attach_file_rounded,
+                    size: 16,
+                    color: AppTheme.primary,
+                  ),
+                  const SizedBox(width: 8),
+                  Flexible(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 180),
+                      child: Text(
+                        filename,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.outfit(
+                          fontSize: 11.5,
+                          color: AppTheme.textPrimary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  const Icon(
+                    Icons.open_in_new_rounded,
+                    size: 12,
+                    color: AppTheme.textMuted,
+                  ),
+                ],
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+    ],
+  );
+}
+
+String _stripAttachment(String content) {
+  return content.replaceAll(RegExp(r'\[Attachment:\s*(.*?)\]'), '').trim();
 }

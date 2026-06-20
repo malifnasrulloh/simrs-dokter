@@ -1,5 +1,8 @@
+import 'dart:convert';
+import 'dart:io';
 import 'package:get/get.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/config/app_config.dart';
 import '../../../core/network/api_client.dart';
 import '../../auth/controllers/auth_controller.dart';
@@ -65,12 +68,15 @@ class RekamMedisController extends GetxController {
     super.onReady();
     if (pasienData.value != null) {
       fetchAllData();
+      initNotificationSse();
+      loadDrafts();
     }
   }
 
   void loadPasien(Map<String, dynamic> data) {
     pasienData.value = data;
     fetchAllData();
+    loadDrafts();
   }
 
   Future<void> fetchAllData() async {
@@ -543,6 +549,9 @@ class RekamMedisController extends GetxController {
 
       if (res.statusCode == 200 || res.statusCode == 201 || (res.data != null && res.data['success'] == true)) {
         await _fetchRiwayatMedis();
+        if (!isEdit) {
+          await clearSoapDraft();
+        }
         return true;
       }
     } catch (e) {
@@ -714,10 +723,12 @@ class RekamMedisController extends GetxController {
         'aturan_pakai': '3x1 tablet',
       });
     }
+    savePrescriptionDraft();
   }
 
   void removeFromPrescription(String kodeBrng) {
     prescriptionDraft.removeWhere((e) => e['kode_brng'] == kodeBrng);
+    savePrescriptionDraft();
   }
 
   Future<bool> submitPrescription() async {
@@ -734,7 +745,7 @@ class RekamMedisController extends GetxController {
         }).toList(),
       });
       if (res.statusCode == 201 || (res.data != null && res.data['success'] == true)) {
-        prescriptionDraft.clear();
+        await clearPrescriptionDraft();
         await Future.wait([
           _fetchObat(),
           fetchResepList(),
@@ -906,5 +917,150 @@ class RekamMedisController extends GetxController {
       isLoading.value = false;
     }
     return false;
+  }
+
+  // Drafts Local Cache
+  final soapDraft = <String, String>{}.obs;
+
+  Future<void> loadDrafts() async {
+    if (noRawat.isEmpty) return;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      
+      // Load SOAP draft
+      final soapRaw = prefs.getString('soap_draft_$noRawat');
+      if (soapRaw != null) {
+        final Map<String, dynamic> decoded = jsonDecode(soapRaw);
+        soapDraft.value = decoded.map((key, value) => MapEntry(key, value.toString()));
+      } else {
+        soapDraft.clear();
+      }
+
+      // Load Prescription draft
+      final resepRaw = prefs.getString('resep_draft_$noRawat');
+      if (resepRaw != null) {
+        final List decoded = jsonDecode(resepRaw);
+        prescriptionDraft.value = List<Map<String, dynamic>>.from(decoded);
+      } else {
+        prescriptionDraft.clear();
+      }
+    } catch (_) {}
+  }
+
+  Future<void> saveSoapDraft(Map<String, String> values) async {
+    if (noRawat.isEmpty) return;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      soapDraft.value = values;
+      await prefs.setString('soap_draft_$noRawat', jsonEncode(values));
+    } catch (_) {}
+  }
+
+  Future<void> clearSoapDraft() async {
+    if (noRawat.isEmpty) return;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      soapDraft.value = {};
+      await prefs.remove('soap_draft_$noRawat');
+    } catch (_) {}
+  }
+
+  Future<void> savePrescriptionDraft() async {
+    if (noRawat.isEmpty) return;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('resep_draft_$noRawat', jsonEncode(prescriptionDraft.toList()));
+    } catch (_) {}
+  }
+
+  Future<void> clearPrescriptionDraft() async {
+    if (noRawat.isEmpty) return;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      prescriptionDraft.clear();
+      await prefs.remove('resep_draft_$noRawat');
+    } catch (_) {}
+  }
+
+  void initNotificationSse() async {
+    _sseRequest?.abort();
+    _sseClient?.close();
+
+    try {
+      const storage = FlutterSecureStorage();
+      final token = await storage.read(key: 'token');
+      if (token == null) return;
+
+      final sseUrl = Uri.parse('${AppConfig.baseUrl}/notifications');
+
+      _sseClient = HttpClient();
+      _sseClient!.connectionTimeout = const Duration(seconds: 10);
+      
+      _sseRequest = await _sseClient!.getUrl(sseUrl);
+      _sseRequest!.headers.set('Authorization', 'Bearer $token');
+      _sseResponse = await _sseRequest!.close();
+
+      if (_sseResponse!.statusCode == 200) {
+        _sseResponse!
+            .transform(utf8.decoder)
+            .transform(const LineSplitter())
+            .listen((line) {
+          _handleSseLine(line);
+        }, onError: (err) {
+          Future.delayed(const Duration(seconds: 10), initNotificationSse);
+        }, onDone: () {
+          Future.delayed(const Duration(seconds: 10), initNotificationSse);
+        });
+      }
+    } catch (_) {
+      Future.delayed(const Duration(seconds: 10), initNotificationSse);
+    }
+  }
+
+  String? _currentEvent;
+
+  void _handleSseLine(String line) {
+    if (line.isEmpty) return;
+    if (line.startsWith('event: ')) {
+      _currentEvent = line.substring(7).trim();
+    } else if (line.startsWith('data: ') && _currentEvent != null) {
+      final dataStr = line.substring(6).trim();
+      if (dataStr != 'keep-alive') {
+        try {
+          final data = jsonDecode(dataStr);
+          _handleSseEvent(_currentEvent!, data);
+        } catch (_) {}
+      }
+      _currentEvent = null;
+    }
+  }
+
+  void _handleSseEvent(String event, dynamic data) {
+    if (event == 'consultation_request') {
+      final drPemberi = data['nm_dokter_pemberi'] ?? 'Rekan Dokter';
+      Get.snackbar(
+        'Konsultasi Baru',
+        'Permintaan konsultasi dari $drPemberi: "${data['diagnosa_kerja'] ?? ''}"',
+        duration: const Duration(seconds: 6),
+        snackPosition: SnackPosition.TOP,
+      );
+      fetchConsultations();
+    } else if (event == 'consultation_response') {
+      final drPenerima = data['nm_dokter_dikonsuli'] ?? 'Rekan Dokter';
+      Get.snackbar(
+        'Konsultasi Dijawab',
+        'Balasan dari $drPenerima untuk permintaan ${data['no_permintaan']}',
+        duration: const Duration(seconds: 6),
+        snackPosition: SnackPosition.TOP,
+      );
+      fetchConsultations();
+    }
+  }
+
+  @override
+  void onClose() {
+    _sseRequest?.abort();
+    _sseClient?.close();
+    super.onClose();
   }
 }
