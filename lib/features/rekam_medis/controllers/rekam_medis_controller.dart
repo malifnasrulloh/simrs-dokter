@@ -988,7 +988,7 @@ class RekamMedisController extends GetxController {
 
     try {
       const storage = FlutterSecureStorage();
-      final token = await storage.read(key: 'token');
+      final token = await storage.read(key: 'auth_token');
       if (token == null) return;
 
       final sseUrl = Uri.parse('${AppConfig.baseUrl}/notifications');
