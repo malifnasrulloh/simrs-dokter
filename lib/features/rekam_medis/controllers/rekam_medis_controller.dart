@@ -87,6 +87,10 @@ class RekamMedisController extends GetxController {
         _fetchBillingInfo(),
         _fetchSbarList(),
         _fetchDpjpList(),
+        fetchProsedur(),
+        fetchConsultations(),
+        fetchDokterList(),
+        fetchResepList(),
       ]);
     } finally {
       isLoading.value = false;
@@ -190,6 +194,7 @@ class RekamMedisController extends GetxController {
       'tanggal': raw['tanggal'] ?? raw['tgl_perawatan'] ?? '-',
       'jam': raw['jam_rawat'] ?? '-',
       'petugas': raw['nm_dokter'] ?? raw['nama'] ?? raw['nip'] ?? '-',
+      'nip': raw['nip'] ?? raw['kd_dokter'] ?? raw['nik'] ?? '-',
       'jabatan': raw['jbtn'] ?? '-',
       // SUBJEKTIF
       'keluhan_utama': raw['keluhan_utama'] ?? raw['keluhan'] ?? '-',
@@ -502,6 +507,403 @@ class RekamMedisController extends GetxController {
       }
     } catch (e) {
       Get.snackbar('Error', 'Gagal mengatur DPJP');
+    }
+    return false;
+  }
+
+  // ─── NEW CLINICAL MODULES METHODS & OBSERVABLES ───
+
+  // Module A: SOAP
+  Future<bool> saveSoap({
+    required Map<String, dynamic> data,
+    bool isEdit = false,
+    String? tglPerawatan,
+    String? jamRawat,
+  }) async {
+    try {
+      isLoading.value = true;
+      final authCtrl = Get.find<AuthController>();
+      final myNip = authCtrl.user.value?['nip'] ?? authCtrl.user.value?['username'] ?? '';
+      
+      final payload = {
+        'no_rawat': noRawat,
+        ...data,
+        'nip': myNip,
+      };
+
+      final path = tipeRawat == 'RANAP' ? '/soap/ranap' : '/soap/ralan';
+      dynamic res;
+      if (isEdit) {
+        payload['tgl_perawatan'] = tglPerawatan;
+        payload['jam_rawat'] = jamRawat;
+        res = await _api.dio.put(path, data: payload);
+      } else {
+        res = await _api.dio.post(path, data: payload);
+      }
+
+      if (res.statusCode == 200 || res.statusCode == 201 || (res.data != null && res.data['success'] == true)) {
+        await _fetchRiwayatMedis();
+        return true;
+      }
+    } catch (e) {
+      Get.snackbar('Error', 'Gagal menyimpan data SOAP');
+    } finally {
+      isLoading.value = false;
+    }
+    return false;
+  }
+
+  Future<bool> deleteSoap(String tgl, String jam) async {
+    try {
+      isLoading.value = true;
+      final path = tipeRawat == 'RANAP' ? '/soap/ranap' : '/soap/ralan';
+      final res = await _api.dio.delete(path, data: {
+        'no_rawat': noRawat,
+        'tgl_perawatan': tgl,
+        'jam_rawat': jam,
+      });
+      if (res.statusCode == 200 || (res.data != null && res.data['success'] == true)) {
+        await _fetchRiwayatMedis();
+        return true;
+      }
+    } catch (e) {
+      Get.snackbar('Error', 'Gagal menghapus data SOAP');
+    } finally {
+      isLoading.value = false;
+    }
+    return false;
+  }
+
+  // Module B: Consultations
+  final incomingConsults = <Map<String, dynamic>>[].obs;
+  final outgoingConsults = <Map<String, dynamic>>[].obs;
+  final dokterList = <Map<String, dynamic>>[].obs;
+  final isLoadingConsult = false.obs;
+
+  Future<void> fetchConsultations() async {
+    try {
+      isLoadingConsult.value = true;
+      final results = await Future.wait([
+        _api.dio.get('/konsultasi/masuk'),
+        _api.dio.get('/konsultasi/keluar'),
+      ]);
+      
+      if (results[0].statusCode == 200 && results[0].data != null && results[0].data['success'] == true) {
+        final list = results[0].data['data'] as List? ?? [];
+        incomingConsults.value = list
+            .map((e) => Map<String, dynamic>.from(e))
+            .where((e) => e['no_rawat'] == noRawat)
+            .toList();
+      }
+      
+      if (results[1].statusCode == 200 && results[1].data != null && results[1].data['success'] == true) {
+        final list = results[1].data['data'] as List? ?? [];
+        outgoingConsults.value = list
+            .map((e) => Map<String, dynamic>.from(e))
+            .where((e) => e['no_rawat'] == noRawat)
+            .toList();
+      }
+    } catch (_) {} finally {
+      isLoadingConsult.value = false;
+    }
+  }
+
+  Future<void> fetchDokterList() async {
+    try {
+      final res = await _api.dio.get('/konsultasi/dokter-list');
+      if (res.statusCode == 200 && res.data != null && res.data['success'] == true) {
+        dokterList.value = List<Map<String, dynamic>>.from(res.data['data'] ?? []);
+      }
+    } catch (_) {}
+  }
+
+  Future<bool> sendConsultation({
+    required String targetDokter,
+    required String jenis,
+    required String diagnosa,
+    required String uraian,
+  }) async {
+    try {
+      isLoadingConsult.value = true;
+      final res = await _api.dio.post('/konsultasi', data: {
+        'no_rawat': noRawat,
+        'kd_dokter_dikonsuli': targetDokter,
+        'jenis_permintaan': jenis,
+        'diagnosa_kerja': diagnosa,
+        'uraian_konsultasi': uraian,
+      });
+      if (res.statusCode == 201 || (res.data != null && res.data['success'] == true)) {
+        await fetchConsultations();
+        return true;
+      }
+    } catch (_) {
+      Get.snackbar('Error', 'Gagal mengirim konsultasi');
+    } finally {
+      isLoadingConsult.value = false;
+    }
+    return false;
+  }
+
+  Future<bool> replyConsultation({
+    required String noPermintaan,
+    required String diagnosa,
+    required String uraian,
+  }) async {
+    try {
+      isLoadingConsult.value = true;
+      final res = await _api.dio.post('/konsultasi/jawab', data: {
+        'no_permintaan': noPermintaan,
+        'diagnosa_kerja': diagnosa,
+        'uraian_jawaban': uraian,
+      });
+      if (res.statusCode == 200 || (res.data != null && res.data['success'] == true)) {
+        await fetchConsultations();
+        return true;
+      }
+    } catch (_) {
+      Get.snackbar('Error', 'Gagal membalas konsultasi');
+    } finally {
+      isLoadingConsult.value = false;
+    }
+    return false;
+  }
+
+  // Module C: E-Prescribing
+  final searchObatResults = <Map<String, dynamic>>[].obs;
+  final prescriptionDraft = <Map<String, dynamic>>[].obs;
+  final resepList = <Map<String, dynamic>>[].obs;
+  final isLoadingObat = false.obs;
+
+  Future<void> fetchResepList() async {
+    try {
+      final res = await _api.dio.get('/resep', queryParameters: {'no_rawat': noRawat});
+      if (res.statusCode == 200 && res.data != null && res.data['success'] == true) {
+        resepList.value = List<Map<String, dynamic>>.from(res.data['data'] ?? []);
+      }
+    } catch (_) {}
+  }
+
+  Future<void> searchObat(String keyword) async {
+    if (keyword.trim().isEmpty) {
+      searchObatResults.clear();
+      return;
+    }
+    try {
+      isLoadingObat.value = true;
+      final res = await _api.dio.get('/resep/obat-list', queryParameters: {'keyword': keyword});
+      if (res.statusCode == 200 && res.data != null && res.data['success'] == true) {
+        final list = res.data['data']['list'] as List? ?? [];
+        searchObatResults.value = List<Map<String, dynamic>>.from(list);
+      }
+    } catch (_) {} finally {
+      isLoadingObat.value = false;
+    }
+  }
+
+  void addToPrescription(Map<String, dynamic> item) {
+    final existing = prescriptionDraft.firstWhereOrNull((e) => e['kode_brng'] == item['kode_brng']);
+    if (existing != null) {
+      existing['jml'] = (existing['jml'] as int) + 1;
+      prescriptionDraft.refresh();
+    } else {
+      prescriptionDraft.add({
+        'kode_brng': item['kode_brng'],
+        'nama_brng': item['nama_brng'],
+        'satuan': item['satuan'],
+        'jml': 1,
+        'aturan_pakai': '3x1 tablet',
+      });
+    }
+  }
+
+  void removeFromPrescription(String kodeBrng) {
+    prescriptionDraft.removeWhere((e) => e['kode_brng'] == kodeBrng);
+  }
+
+  Future<bool> submitPrescription() async {
+    if (prescriptionDraft.isEmpty) return false;
+    try {
+      isLoading.value = true;
+      final res = await _api.dio.post('/resep', data: {
+        'no_rawat': noRawat,
+        'status': tipeRawat.toLowerCase(),
+        'items': prescriptionDraft.map((e) => {
+          'kode_brng': e['kode_brng'],
+          'jml': e['jml'],
+          'aturan_pakai': e['aturan_pakai'],
+        }).toList(),
+      });
+      if (res.statusCode == 201 || (res.data != null && res.data['success'] == true)) {
+        prescriptionDraft.clear();
+        await Future.wait([
+          _fetchObat(),
+          fetchResepList(),
+        ]);
+        return true;
+      }
+    } catch (_) {
+      Get.snackbar('Error', 'Gagal mengirim resep');
+    } finally {
+      isLoading.value = false;
+    }
+    return false;
+  }
+
+  Future<bool> deletePrescription(String noResep) async {
+    try {
+      isLoading.value = true;
+      final res = await _api.dio.delete('/resep/$noResep');
+      if (res.statusCode == 200 || (res.data != null && res.data['success'] == true)) {
+        await Future.wait([
+          _fetchObat(),
+          fetchResepList(),
+        ]);
+        return true;
+      }
+    } catch (_) {
+      Get.snackbar('Error', 'Gagal menghapus resep (sudah diproses farmasi)');
+    } finally {
+      isLoading.value = false;
+    }
+    return false;
+  }
+
+  // Module D: ICD-10 & ICD-9-CM
+  final prosedurList = <Map<String, dynamic>>[].obs;
+  final searchICD10Results = <Map<String, dynamic>>[].obs;
+  final searchICD9Results = <Map<String, dynamic>>[].obs;
+  final isLoadingICD = false.obs;
+
+  Future<void> searchICD10(String keyword) async {
+    if (keyword.trim().isEmpty) {
+      searchICD10Results.clear();
+      return;
+    }
+    try {
+      isLoadingICD.value = true;
+      final res = await _api.dio.get('/diagnosa-prosedur/penyakit', queryParameters: {'keyword': keyword});
+      if (res.statusCode == 200 && res.data != null && res.data['success'] == true) {
+        final list = res.data['data'] as List? ?? [];
+        searchICD10Results.value = List<Map<String, dynamic>>.from(list);
+      }
+    } catch (_) {} finally {
+      isLoadingICD.value = false;
+    }
+  }
+
+  Future<void> searchICD9(String keyword) async {
+    if (keyword.trim().isEmpty) {
+      searchICD9Results.clear();
+      return;
+    }
+    try {
+      isLoadingICD.value = true;
+      final res = await _api.dio.get('/diagnosa-prosedur/icd9', queryParameters: {'keyword': keyword});
+      if (res.statusCode == 200 && res.data != null && res.data['success'] == true) {
+        final list = res.data['data'] as List? ?? [];
+        searchICD9Results.value = List<Map<String, dynamic>>.from(list);
+      }
+    } catch (_) {} finally {
+      isLoadingICD.value = false;
+    }
+  }
+
+  Future<void> fetchProsedur() async {
+    try {
+      final res = await _api.dio.get('/riwayat/pasien/prosedur', queryParameters: {'no_rawat': noRawat});
+      if (res.statusCode == 200 && res.data != null && res.data['success'] == true) {
+        prosedurList.value = List<Map<String, dynamic>>.from(res.data['data'] ?? []);
+      }
+    } catch (_) {}
+  }
+
+  Future<bool> addDiagnosa({
+    required String kdPenyakit,
+    required int prioritas,
+    required String statusPenyakit,
+  }) async {
+    try {
+      isLoading.value = true;
+      final res = await _api.dio.post('/diagnosa-prosedur/diagnosa', data: {
+        'no_rawat': noRawat,
+        'kd_penyakit': kdPenyakit,
+        'status': tipeRawat.toLowerCase(),
+        'prioritas': prioritas,
+        'status_penyakit': statusPenyakit,
+      });
+      if (res.statusCode == 201 || (res.data != null && res.data['success'] == true)) {
+        await _fetchDiagnosa();
+        return true;
+      }
+    } catch (_) {
+      Get.snackbar('Error', 'Gagal menambahkan diagnosa');
+    } finally {
+      isLoading.value = false;
+    }
+    return false;
+  }
+
+  Future<bool> deleteDiagnosa(String kdPenyakit) async {
+    try {
+      isLoading.value = true;
+      final res = await _api.dio.delete('/diagnosa-prosedur/diagnosa', data: {
+        'no_rawat': noRawat,
+        'kd_penyakit': kdPenyakit,
+        'status': tipeRawat.toLowerCase(),
+      });
+      if (res.statusCode == 200 || (res.data != null && res.data['success'] == true)) {
+        await _fetchDiagnosa();
+        return true;
+      }
+    } catch (_) {
+      Get.snackbar('Error', 'Gagal menghapus diagnosa');
+    } finally {
+      isLoading.value = false;
+    }
+    return false;
+  }
+
+  Future<bool> addProsedur({
+    required String kode,
+    required int prioritas,
+  }) async {
+    try {
+      isLoading.value = true;
+      final res = await _api.dio.post('/diagnosa-prosedur/prosedur', data: {
+        'no_rawat': noRawat,
+        'kode': kode,
+        'status': tipeRawat.toLowerCase(),
+        'prioritas': prioritas,
+        'jumlah': 1,
+      });
+      if (res.statusCode == 201 || (res.data != null && res.data['success'] == true)) {
+        await fetchProsedur();
+        return true;
+      }
+    } catch (_) {
+      Get.snackbar('Error', 'Gagal menambahkan prosedur');
+    } finally {
+      isLoading.value = false;
+    }
+    return false;
+  }
+
+  Future<bool> deleteProsedur(String kode) async {
+    try {
+      isLoading.value = true;
+      final res = await _api.dio.delete('/diagnosa-prosedur/prosedur', data: {
+        'no_rawat': noRawat,
+        'kode': kode,
+        'status': tipeRawat.toLowerCase(),
+      });
+      if (res.statusCode == 200 || (res.data != null && res.data['success'] == true)) {
+        await fetchProsedur();
+        return true;
+      }
+    } catch (_) {
+      Get.snackbar('Error', 'Gagal menghapus prosedur');
+    } finally {
+      isLoading.value = false;
     }
     return false;
   }
