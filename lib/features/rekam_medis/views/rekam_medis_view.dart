@@ -515,7 +515,7 @@ class RekamMedisView extends StatelessWidget {
   }
 
   Widget _buildTabBar(RekamMedisController ctrl) {
-    final tabs = ['Medis', 'Diagnosa', 'Obat', 'Lab', 'Radiologi'];
+    final tabs = ['Medis', 'Diagnosa', 'Obat', 'Lab', 'Radiologi', 'Konsultasi'];
     if (ctrl.tipeRawat == 'RANAP') {
       tabs.add('SBAR');
     }
@@ -580,16 +580,18 @@ class RekamMedisView extends StatelessWidget {
       }
       switch (ctrl.activeTab.value) {
         case 0:
-          return _buildMedisTab(ctrl);
+          return _buildMedisTab(context, ctrl);
         case 1:
-          return _buildDiagnosaTab(ctrl);
+          return _buildDiagnosaTab(context, ctrl);
         case 2:
-          return _buildObatTab(ctrl);
+          return _buildObatTab(context, ctrl);
         case 3:
           return _buildLabTab(ctrl);
         case 4:
           return _buildRadiologiTab(ctrl);
         case 5:
+          return _buildKonsultasiTab(context, ctrl);
+        case 6:
           return _buildSbarTab(context, ctrl);
         default:
           return const SizedBox();
@@ -597,177 +599,454 @@ class RekamMedisView extends StatelessWidget {
     });
   }
 
-  Widget _buildMedisTab(RekamMedisController ctrl) {
+  Widget _buildMedisTab(BuildContext context, RekamMedisController ctrl) {
     final list = ctrl.riwayatMedis;
-    if (list.isEmpty) return _emptyState('Belum ada data medis');
     final sortedList = list.reversed.toList();
-    return ListView.separated(
-      padding: const EdgeInsets.all(16),
-      itemCount: sortedList.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 16),
-      itemBuilder: (context, index) {
-        final data = sortedList[index];
-        final uniqueId = '${data['tanggal']}_${data['jam']}_$index';
-        return _SoapTile(
-          key: GlobalObjectKey(uniqueId),
-          data: data,
-          initiallyExpanded: index == 0,
-        );
-      },
-    );
-  }
-
-  Widget _buildDiagnosaTab(RekamMedisController ctrl) {
-    if (ctrl.diagnosa.isEmpty) return _emptyState('Belum ada diagnosa');
-    return ListView.separated(
-      padding: const EdgeInsets.all(16),
-      itemCount: ctrl.diagnosa.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 10),
-      itemBuilder: (_, i) {
-        final d = ctrl.diagnosa[i];
-        return _listCard(
-          icon: Icons.medical_information_rounded,
-          iconColor: AppTheme.info,
-          title: d['nm_penyakit'] ?? d['kd_penyakit'] ?? '-',
-          subtitle:
-              'ICD-10: ${d['kd_penyakit'] ?? '-'} • Status: ${d['status'] ?? '-'}',
-        );
-      },
-    );
-  }
-
-  Widget _buildObatTab(RekamMedisController ctrl) {
-    if (ctrl.obat.isEmpty) return _emptyState('Belum ada data obat');
-
-    final Map<String, List<Map<String, dynamic>>> groups = {};
-    for (final o in ctrl.obat) {
-      final tgl = o['tgl_perawatan']?.toString() ?? '-';
-      final jam = o['jam']?.toString() ?? '-';
-      final key = '$tgl|$jam';
-      if (!groups.containsKey(key)) {
-        groups[key] = [];
-      }
-      groups[key]!.add(o);
-    }
-
-    final sortedKeys = groups.keys.toList()..sort((a, b) => b.compareTo(a));
-
-    return ListView.separated(
-      padding: const EdgeInsets.all(16),
-      itemCount: sortedKeys.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 16),
-      itemBuilder: (context, index) {
-        final key = sortedKeys[index];
-        final parts = key.split('|');
-        final tgl = parts[0];
-        final jam = parts[1];
-        final items = groups[key]!;
-
-        final displayTime = jam == '-' ? '' : ' pukul $jam';
-
-        return Container(
-          decoration: BoxDecoration(
-            color: AppTheme.bgCard,
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: AppTheme.divider),
-            boxShadow: [
-              BoxShadow(
-                color: AppTheme.textPrimary.withOpacity(0.02),
-                blurRadius: 16,
-                offset: const Offset(0, 8),
-              )
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: double.infinity,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                decoration: const BoxDecoration(
-                  color: AppTheme.bgSurface,
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(17)),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.receipt_long_rounded,
-                        color: AppTheme.success, size: 16),
-                    const SizedBox(width: 8),
-                    Text(
-                      'Resep $tgl$displayTime',
-                      style: GoogleFonts.outfit(
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.w800,
-                        color: AppTheme.textPrimary,
-                      ),
-                    ),
-                  ],
-                ),
+    return Stack(
+      children: [
+        sortedList.isEmpty
+            ? _emptyState('Belum ada data medis')
+            : ListView.separated(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
+                itemCount: sortedList.length,
+                separatorBuilder: (_, __) => const SizedBox(height: 16),
+                itemBuilder: (context, index) {
+                  final data = sortedList[index];
+                  final uniqueId = '${data['tanggal']}_${data['jam']}_$index';
+                  return _SoapTile(
+                    key: GlobalObjectKey(uniqueId),
+                    data: data,
+                    initiallyExpanded: index == 0,
+                  );
+                },
               ),
-              ListView.separated(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: items.length,
-                separatorBuilder: (_, __) => const Divider(
-                    height: 1, thickness: 0.5, color: AppTheme.divider),
-                itemBuilder: (context, itemIdx) {
-                  final o = items[itemIdx];
-                  final signa = o['aturan'] ?? o['signa'] ?? '';
-                  final namaObat = o['nama_obat'] ?? o['nm_obat'] ?? '-';
-                  final qty = o['jumlah'] ?? '';
-                  final unit = o['satuan'] ?? '';
+        Positioned(
+          bottom: 16,
+          right: 16,
+          child: FloatingActionButton.extended(
+            onPressed: () => _showSoapForm(context, ctrl),
+            backgroundColor: AppTheme.primary,
+            icon: const Icon(Icons.add, color: Colors.white),
+            label: Text(
+              'Tambah SOAP',
+              style: GoogleFonts.outfit(
+                color: Colors.white,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
 
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 12),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: AppTheme.success.withOpacity(0.08),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: const Icon(Icons.medication_rounded,
-                              color: AppTheme.success, size: 16),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildDiagnosaTab(BuildContext context, RekamMedisController ctrl) {
+    final icd10SearchCtrl = TextEditingController();
+    final icd9SearchCtrl = TextEditingController();
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ──── DIAGNOSA (ICD-10) ────
+          Text(
+            'Diagnosa (ICD-10)',
+            style: GoogleFonts.outfit(
+              fontSize: 15,
+              fontWeight: FontWeight.w800,
+              color: AppTheme.primary,
+            ),
+          ),
+          const SizedBox(height: 10),
+          TextField(
+            controller: icd10SearchCtrl,
+            decoration: const InputDecoration(
+              hintText: 'Cari ICD-10 (Kode atau Deskripsi)...',
+              prefixIcon: Icon(Icons.search_rounded),
+            ),
+            onChanged: (val) => ctrl.searchICD10(val),
+          ),
+          const SizedBox(height: 8),
+          
+          // Autocomplete results ICD-10
+          Obx(() {
+            if (ctrl.isLoadingICD.value) {
+              return const Padding(
+                padding: EdgeInsets.symmetric(vertical: 8),
+                child: Center(child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))),
+              );
+            }
+            if (ctrl.searchICD10Results.isEmpty) {
+              return const SizedBox.shrink();
+            }
+            return Container(
+              maxHeight: 200,
+              decoration: BoxDecoration(
+                color: AppTheme.bgCard,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppTheme.divider),
+              ),
+              child: ListView.separated(
+                shrinkWrap: true,
+                itemCount: ctrl.searchICD10Results.length,
+                separatorBuilder: (_, __) => const Divider(height: 1, thickness: 0.5),
+                itemBuilder: (context, idx) {
+                  final item = ctrl.searchICD10Results[idx];
+                  final code = item['kd_penyakit']?.toString() ?? '';
+                  final name = item['nm_penyakit']?.toString() ?? '';
+                  return ListTile(
+                    dense: true,
+                    title: Text('$code - $name', style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.w600)),
+                    onTap: () {
+                      ctrl.searchICD10Results.clear();
+                      icd10SearchCtrl.clear();
+                      _showAddDiagnosaDialog(context, ctrl, code, name);
+                    },
+                  );
+                },
+              ),
+            );
+          }),
+          
+          const SizedBox(height: 12),
+          
+          // Active diagnoses list
+          Obx(() {
+            if (ctrl.diagnosa.isEmpty) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                child: Center(child: Text('Belum ada diagnosa aktif', style: GoogleFonts.outfit(color: AppTheme.textMuted))),
+              );
+            }
+            return ListView.separated(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: ctrl.diagnosa.length,
+              separatorBuilder: (_, __) => const SizedBox(height: 8),
+              itemBuilder: (_, i) {
+                final d = ctrl.diagnosa[i];
+                final code = d['kd_penyakit']?.toString() ?? '';
+                final name = d['nm_penyakit'] ?? code;
+                final priority = d['prioritas']?.toString() ?? '-';
+                final status = d['status_penyakit']?.toString() ?? '-';
+                
+                return _listCard(
+                  icon: Icons.medical_information_rounded,
+                  iconColor: AppTheme.info,
+                  title: name,
+                  subtitle: 'Kode: $code • Prioritas: $priority • Status: $status',
+                  trailing: IconButton(
+                    icon: const Icon(Icons.delete_outline_rounded, color: AppTheme.danger, size: 18),
+                    onPressed: () => ctrl.deleteDiagnosa(code),
+                  ),
+                );
+              },
+            );
+          }),
+          
+          const SizedBox(height: 24),
+          const Divider(color: AppTheme.divider),
+          const SizedBox(height: 16),
+          
+          // ──── PROSEDUR (ICD-9-CM) ────
+          Text(
+            'Prosedur (ICD-9-CM)',
+            style: GoogleFonts.outfit(
+              fontSize: 15,
+              fontWeight: FontWeight.w800,
+              color: AppTheme.primary,
+            ),
+          ),
+          const SizedBox(height: 10),
+          TextField(
+            controller: icd9SearchCtrl,
+            decoration: const InputDecoration(
+              hintText: 'Cari ICD-9 (Kode atau Deskripsi)...',
+              prefixIcon: Icon(Icons.search_rounded),
+            ),
+            onChanged: (val) => ctrl.searchICD9(val),
+          ),
+          const SizedBox(height: 8),
+          
+          // Autocomplete results ICD-9
+          Obx(() {
+            if (ctrl.isLoadingICD.value) {
+              return const Padding(
+                padding: EdgeInsets.symmetric(vertical: 8),
+                child: Center(child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))),
+              );
+            }
+            if (ctrl.searchICD9Results.isEmpty) {
+              return const SizedBox.shrink();
+            }
+            return Container(
+              maxHeight: 200,
+              decoration: BoxDecoration(
+                color: AppTheme.bgCard,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppTheme.divider),
+              ),
+              child: ListView.separated(
+                shrinkWrap: true,
+                itemCount: ctrl.searchICD9Results.length,
+                separatorBuilder: (_, __) => const Divider(height: 1, thickness: 0.5),
+                itemBuilder: (context, idx) {
+                  final item = ctrl.searchICD9Results[idx];
+                  final code = item['kode']?.toString() ?? '';
+                  final name = item['deskripsi_panjang']?.toString() ?? item['deskripsi_pendek']?.toString() ?? '';
+                  return ListTile(
+                    dense: true,
+                    title: Text('$code - $name', style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.w600)),
+                    onTap: () {
+                      ctrl.searchICD9Results.clear();
+                      icd9SearchCtrl.clear();
+                      _showAddProsedurDialog(context, ctrl, code, name);
+                    },
+                  );
+                },
+              ),
+            );
+          }),
+          
+          const SizedBox(height: 12),
+          
+          // Active procedures list
+          Obx(() {
+            if (ctrl.prosedurList.isEmpty) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                child: Center(child: Text('Belum ada prosedur aktif', style: GoogleFonts.outfit(color: AppTheme.textMuted))),
+              );
+            }
+            return ListView.separated(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: ctrl.prosedurList.length,
+              separatorBuilder: (_, __) => const SizedBox(height: 8),
+              itemBuilder: (_, i) {
+                final p = ctrl.prosedurList[i];
+                final code = p['kode']?.toString() ?? '';
+                final name = p['deskripsi_panjang']?.toString() ?? p['deskripsi_pendek']?.toString() ?? code;
+                final priority = p['prioritas']?.toString() ?? '1';
+                
+                return _listCard(
+                  icon: Icons.settings_accessibility_rounded,
+                  iconColor: AppTheme.accentAlt,
+                  title: name,
+                  subtitle: 'Kode: $code • Prioritas: $priority',
+                  trailing: IconButton(
+                    icon: const Icon(Icons.delete_outline_rounded, color: AppTheme.danger, size: 18),
+                    onPressed: () => ctrl.deleteProsedur(code),
+                  ),
+                );
+              },
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildObatTab(BuildContext context, RekamMedisController ctrl) {
+    return Stack(
+      children: [
+        Obx(() {
+          final listDispensed = ctrl.obat;
+          final listPending = ctrl.resepList;
+          
+          if (listDispensed.isEmpty && listPending.isEmpty) {
+            return _emptyState('Belum ada data obat atau resep');
+          }
+          
+          final Map<String, List<Map<String, dynamic>>> groups = {};
+          
+          // Add historical (dispensed) medications
+          for (final o in listDispensed) {
+            final tgl = o['tgl_perawatan']?.toString() ?? '-';
+            final jam = o['jam']?.toString() ?? '-';
+            final key = 'Dispensed|$tgl|$jam';
+            if (!groups.containsKey(key)) {
+              groups[key] = [];
+            }
+            groups[key]!.add(o);
+          }
+
+          // Add pending electronic prescriptions
+          for (final r in listPending) {
+            final tgl = r['tgl_perawatan']?.toString() ?? '-';
+            final jam = r['jam']?.toString() ?? '-';
+            final key = 'Pending|${r['no_resep']}|$tgl|$jam';
+            if (!groups.containsKey(key)) {
+              groups[key] = [];
+            }
+            groups[key]!.add({
+              'nama_obat': r['nama_brng'],
+              'jumlah': r['jml'],
+              'satuan': r['satuan'],
+              'aturan': r['aturan_pakai'],
+              'tgl_perawatan': tgl,
+              'jam': jam,
+              'no_resep': r['no_resep'],
+            });
+          }
+
+          final sortedKeys = groups.keys.toList()..sort((a, b) {
+            final partsA = a.split('|');
+            final partsB = b.split('|');
+            final tglA = partsA.length > 2 ? partsA[partsA.length - 2] : '';
+            final tglB = partsB.length > 2 ? partsB[partsB.length - 2] : '';
+            final jamA = partsA.length > 1 ? partsA[partsA.length - 1] : '';
+            final jamB = partsB.length > 1 ? partsB[partsB.length - 1] : '';
+            return '$tglB|$jamB'.compareTo('$tglA|$jamA');
+          });
+
+          return ListView.separated(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
+            itemCount: sortedKeys.length,
+            separatorBuilder: (_, __) => const SizedBox(height: 16),
+            itemBuilder: (context, index) {
+              final key = sortedKeys[index];
+              final parts = key.split('|');
+              final isPending = parts[0] == 'Pending';
+              final noResep = isPending ? parts[1] : null;
+              final tgl = isPending ? parts[2] : parts[1];
+              final jam = isPending ? parts[3] : parts[2];
+              final items = groups[key]!;
+              final displayTime = jam == '-' ? '' : ' pukul $jam';
+
+              return Container(
+                decoration: BoxDecoration(
+                  color: AppTheme.bgCard,
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(
+                    color: isPending ? AppTheme.warning.withOpacity(0.4) : AppTheme.divider,
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: isPending ? AppTheme.warning.withOpacity(0.08) : AppTheme.bgSurface,
+                        borderRadius: const BorderRadius.vertical(top: Radius.circular(17)),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
                             children: [
+                              Icon(
+                                isPending ? Icons.pending_actions_rounded : Icons.receipt_long_rounded,
+                                color: isPending ? AppTheme.warning : AppTheme.success,
+                                size: 16,
+                              ),
+                              const SizedBox(width: 8),
                               Text(
-                                namaObat,
+                                isPending ? 'Resep Dokter (Draft/Belum Diproses)' : 'Resep $tgl$displayTime',
                                 style: GoogleFonts.outfit(
-                                  fontSize: 13,
+                                  fontSize: 12.5,
                                   fontWeight: FontWeight.w800,
                                   color: AppTheme.textPrimary,
                                 ),
                               ),
-                              const SizedBox(height: 4),
-                              Text(
-                                'Jumlah: $qty $unit • Aturan: $signa',
-                                style: GoogleFonts.outfit(
-                                  fontSize: 11.5,
-                                  color: AppTheme.textSecondary,
-                                ),
-                              ),
                             ],
                           ),
-                        ),
-                        const SizedBox(width: 8),
-                        _buildPrescriptionTiming(signa),
-                      ],
+                          if (isPending && noResep != null)
+                            IconButton(
+                              icon: const Icon(Icons.delete_outline_rounded, color: AppTheme.danger, size: 18),
+                              onPressed: () => _confirmDeleteResep(context, ctrl, noResep),
+                              constraints: const BoxConstraints(),
+                              padding: EdgeInsets.zero,
+                            ),
+                        ],
+                      ),
                     ),
-                  );
-                },
+                    ListView.separated(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: items.length,
+                      separatorBuilder: (_, __) => const Divider(height: 1, thickness: 0.5, color: AppTheme.divider),
+                      itemBuilder: (context, itemIdx) {
+                        final o = items[itemIdx];
+                        final signa = o['aturan'] ?? '';
+                        final namaObat = o['nama_obat'] ?? '-';
+                        final qty = o['jumlah'] ?? '';
+                        final unit = o['satuan'] ?? '';
+
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: (isPending ? AppTheme.warning : AppTheme.success).withOpacity(0.08),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Icon(
+                                  Icons.medication_rounded,
+                                  color: isPending ? AppTheme.warning : AppTheme.success,
+                                  size: 16,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      namaObat,
+                                      style: GoogleFonts.outfit(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w800,
+                                        color: AppTheme.textPrimary,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      'Jumlah: $qty $unit • Aturan: $signa',
+                                      style: GoogleFonts.outfit(
+                                        fontSize: 11.5,
+                                        color: AppTheme.textSecondary,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              _buildPrescriptionTiming(signa),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              );
+            },
+          );
+        }),
+        Positioned(
+          bottom: 16,
+          right: 16,
+          child: FloatingActionButton.extended(
+            onPressed: () => _showPrescriptionSheet(context, ctrl),
+            backgroundColor: AppTheme.primary,
+            icon: const Icon(Icons.add_shopping_cart, color: Colors.white),
+            label: Text(
+              'Buat Resep',
+              style: GoogleFonts.outfit(
+                color: Colors.white,
+                fontWeight: FontWeight.w700,
               ),
-            ],
+            ),
           ),
-        );
-      },
+        ),
+      ],
     );
   }
 
@@ -1505,7 +1784,7 @@ class RekamMedisView extends StatelessWidget {
     );
   }
 
-  Widget _emptyState(String message) {
+  static Widget _emptyState(String message) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -1814,6 +2093,992 @@ class RekamMedisView extends StatelessWidget {
   }
 }
 
+void _confirmDeleteSoap(BuildContext context, RekamMedisController ctrl, String tgl, String jam) {
+    Get.dialog(
+      AlertDialog(
+        title: Text('Hapus SOAP', style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
+        content: Text('Apakah Anda yakin ingin menghapus data SOAP ini?', style: GoogleFonts.outfit()),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(),
+            child: Text('Batal', style: GoogleFonts.outfit(color: AppTheme.textSecondary)),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Get.back();
+              final success = await ctrl.deleteSoap(tgl, jam);
+              if (success) {
+                Get.snackbar('Sukses', 'Data SOAP berhasil dihapus',
+                    backgroundColor: Colors.white, colorText: AppTheme.primary);
+              }
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.danger),
+            child: Text('Hapus', style: GoogleFonts.outfit(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showSoapForm(BuildContext context, RekamMedisController ctrl, {Map<String, dynamic>? existingData}) {
+    final isEdit = existingData != null;
+    
+    final keluhanCtrl = TextEditingController(text: existingData?['keluhan_utama'] ?? '');
+    final pemeriksaanCtrl = TextEditingController(text: existingData?['pemeriksaan_fisik'] ?? '');
+    final penilaianCtrl = TextEditingController(text: existingData?['diagnosis'] ?? '');
+    final rtlCtrl = TextEditingController(text: existingData?['tata'] ?? '');
+    final instruksiCtrl = TextEditingController(text: existingData?['instruksi'] ?? '');
+    final evaluasiCtrl = TextEditingController(text: existingData?['evaluasi'] ?? '');
+    
+    final suhuCtrl = TextEditingController(text: existingData?['suhu']?.toString() ?? '');
+    final tensiCtrl = TextEditingController(text: existingData?['td']?.toString() ?? '');
+    final nadiCtrl = TextEditingController(text: existingData?['nadi']?.toString() ?? '');
+    final respirasiCtrl = TextEditingController(text: existingData?['rr']?.toString() ?? '');
+    final tinggiCtrl = TextEditingController(text: existingData?['tb']?.toString() ?? '');
+    final beratCtrl = TextEditingController(text: existingData?['bb']?.toString() ?? '');
+    final spo2Ctrl = TextEditingController(text: existingData?['spo']?.toString() ?? '');
+    final gcsCtrl = TextEditingController(text: existingData?['gcs']?.toString() ?? '');
+    final kesadaranCtrl = TextEditingController(text: existingData?['kesadaran']?.toString() ?? 'Compos Mentis');
+    
+    Get.bottomSheet(
+      Container(
+        height: Get.height * 0.85,
+        decoration: const BoxDecoration(
+          color: AppTheme.bgDark,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: const BoxDecoration(
+                color: AppTheme.bgCard,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+                border: Border(bottom: BorderSide(color: AppTheme.divider)),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    isEdit ? 'Ubah Pemeriksaan SOAP' : 'Tambah Pemeriksaan SOAP',
+                    style: GoogleFonts.outfit(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                      color: AppTheme.textPrimary,
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close_rounded, color: AppTheme.textSecondary),
+                    onPressed: () => Get.back(),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Tanda Vital & Fisik', style: GoogleFonts.outfit(fontSize: 14, fontWeight: FontWeight.w800, color: AppTheme.primary)),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(child: _formField('Suhu (°C)', suhuCtrl, keyboardType: TextInputType.number)),
+                        const SizedBox(width: 12),
+                        Expanded(child: _formField('Tensi (mmHg)', tensiCtrl)),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(child: _formField('Nadi (bpm)', nadiCtrl, keyboardType: TextInputType.number)),
+                        const SizedBox(width: 12),
+                        Expanded(child: _formField('Respirasi (x/m)', respirasiCtrl, keyboardType: TextInputType.number)),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(child: _formField('Tinggi (cm)', tinggiCtrl, keyboardType: TextInputType.number)),
+                        const SizedBox(width: 12),
+                        Expanded(child: _formField('Berat (kg)', beratCtrl, keyboardType: TextInputType.number)),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(child: _formField('SpO2 (%)', spo2Ctrl, keyboardType: TextInputType.number)),
+                        const SizedBox(width: 12),
+                        Expanded(child: _formField('GCS', gcsCtrl)),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    _formField('Kesadaran', kesadaranCtrl),
+                    
+                    const SizedBox(height: 20),
+                    const Divider(color: AppTheme.divider),
+                    const SizedBox(height: 16),
+                    
+                    Text('Catatan SOAP', style: GoogleFonts.outfit(fontSize: 14, fontWeight: FontWeight.w800, color: AppTheme.primary)),
+                    const SizedBox(height: 12),
+                    _formField('S (Subjective) - Keluhan Utama', keluhanCtrl, maxLines: 3),
+                    const SizedBox(height: 12),
+                    _formField('O (Objective) - Pemeriksaan Fisik', pemeriksaanCtrl, maxLines: 3),
+                    const SizedBox(height: 12),
+                    _formField('A (Assessment) - Diagnosis/Penilaian', penilaianCtrl, maxLines: 3),
+                    const SizedBox(height: 12),
+                    _formField('P (Plan) - Tata Laksana / RTL', rtlCtrl, maxLines: 3),
+                    const SizedBox(height: 12),
+                    _formField('Instruksi', instruksiCtrl, maxLines: 2),
+                    const SizedBox(height: 12),
+                    _formField('Evaluasi', evaluasiCtrl, maxLines: 2),
+                    const SizedBox(height: 24),
+                    
+                    SizedBox(
+                      width: double.infinity,
+                      height: 48,
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          final data = {
+                            'keluhan': keluhanCtrl.text,
+                            'pemeriksaan': pemeriksaanCtrl.text,
+                            'penilaian': penilaianCtrl.text,
+                            'rtl': rtlCtrl.text,
+                            'instruksi': instruksiCtrl.text,
+                            'evaluasi': evaluasiCtrl.text,
+                            'suhu_tubuh': suhuCtrl.text,
+                            'tensi': tensiCtrl.text,
+                            'nadi': nadiCtrl.text,
+                            'respirasi': respirasiCtrl.text,
+                            'tinggi': tinggiCtrl.text,
+                            'berat': beratCtrl.text,
+                            'spo2': spo2Ctrl.text,
+                            'gcs': gcsCtrl.text,
+                            'kesadaran': kesadaranCtrl.text,
+                          };
+                          
+                          final success = await ctrl.saveSoap(
+                            data: data,
+                            isEdit: isEdit,
+                            tglPerawatan: existingData?['tanggal'],
+                            jamRawat: existingData?['jam'],
+                          );
+                          
+                          if (success) {
+                            Get.back();
+                            Get.snackbar('Sukses', isEdit ? 'SOAP berhasil diperbarui' : 'SOAP berhasil disimpan',
+                                backgroundColor: Colors.white, colorText: AppTheme.primary);
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.primary,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        child: Text(
+                          isEdit ? 'Perbarui Catatan' : 'Simpan Catatan',
+                          style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 30),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+      isScrollControlled: true,
+    );
+  }
+
+  Widget _formField(String label, TextEditingController controller, {int maxLines = 1, TextInputType keyboardType = TextInputType.text}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: GoogleFonts.outfit(fontSize: 11, fontWeight: FontWeight.w700, color: AppTheme.textSecondary),
+        ),
+        const SizedBox(height: 6),
+        TextField(
+          controller: controller,
+          maxLines: maxLines,
+          keyboardType: keyboardType,
+          style: GoogleFonts.outfit(fontSize: 13, color: AppTheme.textPrimary, fontWeight: FontWeight.w500),
+          decoration: const InputDecoration(
+            isDense: true,
+            contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _showAddDiagnosaDialog(BuildContext context, RekamMedisController ctrl, String code, String name) {
+    int priority = 1;
+    String status = 'Baru';
+    
+    Get.dialog(
+      StatefulBuilder(
+        builder: (context, setState) {
+          return AlertDialog(
+            title: Text('Tambah Diagnosa', style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 16)),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('$code - $name', style: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.textPrimary)),
+                const SizedBox(height: 16),
+                Text('Prioritas', style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.textSecondary)),
+                Row(
+                  children: [
+                    Radio<int>(value: 1, groupValue: priority, onChanged: (v) => setState(() => priority = v!)),
+                    Text('1 (Utama)', style: GoogleFonts.outfit(fontSize: 12)),
+                    const SizedBox(width: 12),
+                    Radio<int>(value: 2, groupValue: priority, onChanged: (v) => setState(() => priority = v!)),
+                    Text('2+ (Sekunder)', style: GoogleFonts.outfit(fontSize: 12)),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Text('Status Kasus', style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.textSecondary)),
+                Row(
+                  children: [
+                    Radio<String>(value: 'Baru', groupValue: status, onChanged: (v) => setState(() => status = v!)),
+                    Text('Baru', style: GoogleFonts.outfit(fontSize: 12)),
+                    const SizedBox(width: 12),
+                    Radio<String>(value: 'Lama', groupValue: status, onChanged: (v) => setState(() => status = v!)),
+                    Text('Lama', style: GoogleFonts.outfit(fontSize: 12)),
+                  ],
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(onPressed: () => Get.back(), child: Text('Batal', style: GoogleFonts.outfit(color: AppTheme.textSecondary))),
+              ElevatedButton(
+                onPressed: () async {
+                  Get.back();
+                  final success = await ctrl.addDiagnosa(kdPenyakit: code, prioritas: priority, statusPenyakit: status);
+                  if (success) {
+                    Get.snackbar('Sukses', 'Diagnosa berhasil ditambahkan', backgroundColor: Colors.white, colorText: AppTheme.primary);
+                  }
+                },
+                style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primary),
+                child: Text('Simpan', style: GoogleFonts.outfit(color: Colors.white)),
+              ),
+            ],
+          );
+        }
+      )
+    );
+  }
+
+  void _showAddProsedurDialog(BuildContext context, RekamMedisController ctrl, String code, String name) {
+    int priority = 1;
+    
+    Get.dialog(
+      StatefulBuilder(
+        builder: (context, setState) {
+          return AlertDialog(
+            title: Text('Tambah Prosedur', style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 16)),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('$code - $name', style: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.textPrimary)),
+                const SizedBox(height: 16),
+                Text('Prioritas', style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.textSecondary)),
+                Row(
+                  children: [
+                    Radio<int>(value: 1, groupValue: priority, onChanged: (v) => setState(() => priority = v!)),
+                    Text('1 (Utama)', style: GoogleFonts.outfit(fontSize: 12)),
+                    const SizedBox(width: 12),
+                    Radio<int>(value: 2, groupValue: priority, onChanged: (v) => setState(() => priority = v!)),
+                    Text('2+ (Sekunder)', style: GoogleFonts.outfit(fontSize: 12)),
+                  ],
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(onPressed: () => Get.back(), child: Text('Batal', style: GoogleFonts.outfit(color: AppTheme.textSecondary))),
+              ElevatedButton(
+                onPressed: () async {
+                  Get.back();
+                  final success = await ctrl.addProsedur(kode: code, prioritas: priority);
+                  if (success) {
+                    Get.snackbar('Sukses', 'Prosedur berhasil ditambahkan', backgroundColor: Colors.white, colorText: AppTheme.primary);
+                  }
+                },
+                style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primary),
+                child: Text('Simpan', style: GoogleFonts.outfit(color: Colors.white)),
+              ),
+            ],
+          );
+        }
+      )
+    );
+  }
+
+  void _confirmDeleteResep(BuildContext context, RekamMedisController ctrl, String noResep) {
+    Get.dialog(
+      AlertDialog(
+        title: Text('Hapus Resep', style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
+        content: Text('Apakah Anda yakin ingin menghapus resep $noResep ini?', style: GoogleFonts.outfit()),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(),
+            child: Text('Batal', style: GoogleFonts.outfit(color: AppTheme.textSecondary)),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Get.back();
+              final success = await ctrl.deletePrescription(noResep);
+              if (success) {
+                Get.snackbar('Sukses', 'Resep berhasil dihapus',
+                    backgroundColor: Colors.white, colorText: AppTheme.primary);
+              }
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.danger),
+            child: Text('Hapus', style: GoogleFonts.outfit(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showPrescriptionSheet(BuildContext context, RekamMedisController ctrl) {
+    final searchCtrl = TextEditingController();
+    
+    Get.bottomSheet(
+      Container(
+        height: Get.height * 0.85,
+        decoration: const BoxDecoration(
+          color: AppTheme.bgDark,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: const BoxDecoration(
+                color: AppTheme.bgCard,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+                border: Border(bottom: BorderSide(color: AppTheme.divider)),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Resep Elektronik (E-Prescribing)',
+                    style: GoogleFonts.outfit(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                      color: AppTheme.textPrimary,
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close_rounded, color: AppTheme.textSecondary),
+                    onPressed: () => Get.back(),
+                  ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+              child: TextField(
+                controller: searchCtrl,
+                decoration: const InputDecoration(
+                  hintText: 'Cari nama obat / barang medis...',
+                  prefixIcon: Icon(Icons.search_rounded),
+                ),
+                onChanged: (val) => ctrl.searchObat(val),
+              ),
+            ),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Obx(() {
+                      if (ctrl.isLoadingObat.value) {
+                        return const Center(
+                          child: Padding(
+                            padding: EdgeInsets.all(16),
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                        );
+                      }
+                      if (ctrl.searchObatResults.isEmpty) {
+                        return const SizedBox.shrink();
+                      }
+                      return Container(
+                        constraints: const BoxConstraints(maxHeight: 250),
+                        margin: const EdgeInsets.only(bottom: 16),
+                        decoration: BoxDecoration(
+                          color: AppTheme.bgCard,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: AppTheme.divider),
+                        ),
+                        child: ListView.separated(
+                          shrinkWrap: true,
+                          itemCount: ctrl.searchObatResults.length,
+                          separatorBuilder: (_, __) => const Divider(height: 1, thickness: 0.5),
+                          itemBuilder: (context, idx) {
+                            final item = ctrl.searchObatResults[idx];
+                            final name = item['nama_brng'] ?? '-';
+                            final code = item['kode_brng'] ?? '';
+                            final stock = double.tryParse(item['total_stok']?.toString() ?? '0') ?? 0.0;
+                            final isLowStock = stock <= 0;
+                            
+                            return ListTile(
+                              dense: true,
+                              title: Text(name, style: GoogleFonts.outfit(fontSize: 12.5, fontWeight: FontWeight.bold)),
+                              subtitle: Text(
+                                'Stok: ${stock.toStringAsFixed(0)} ${item['satuan'] ?? ''}',
+                                style: GoogleFonts.outfit(
+                                  fontSize: 11,
+                                  color: isLowStock ? AppTheme.danger : AppTheme.textSecondary,
+                                  fontWeight: isLowStock ? FontWeight.bold : FontWeight.normal,
+                                ),
+                              ),
+                              trailing: isLowStock
+                                  ? Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                      decoration: BoxDecoration(color: AppTheme.danger.withOpacity(0.1), borderRadius: BorderRadius.circular(6)),
+                                      child: Text('Habis', style: GoogleFonts.outfit(fontSize: 10, color: AppTheme.danger, fontWeight: FontWeight.bold)),
+                                    )
+                                  : Icon(Icons.add_circle_outline_rounded, color: AppTheme.primary, size: 20),
+                              onTap: isLowStock
+                                  ? () {
+                                      Get.snackbar('Peringatan', 'Stok obat habis!', backgroundColor: Colors.white, colorText: AppTheme.danger);
+                                    }
+                                  : () {
+                                      ctrl.addToPrescription(item);
+                                      searchCtrl.clear();
+                                      ctrl.searchObatResults.clear();
+                                    },
+                            );
+                          },
+                        ),
+                      );
+                    }),
+                    Text(
+                      'Daftar Obat Resep',
+                      style: GoogleFonts.outfit(fontSize: 13.5, fontWeight: FontWeight.w800, color: AppTheme.textPrimary),
+                    ),
+                    const SizedBox(height: 10),
+                    Obx(() {
+                      if (ctrl.prescriptionDraft.isEmpty) {
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 32),
+                          child: Center(
+                            child: Column(
+                              children: [
+                                Icon(Icons.shopping_basket_outlined, size: 40, color: AppTheme.textMuted.withOpacity(0.5)),
+                                const SizedBox(height: 8),
+                                Text('Keranjang resep kosong', style: GoogleFonts.outfit(fontSize: 12, color: AppTheme.textMuted)),
+                              ],
+                            ),
+                          ),
+                        );
+                      }
+                      
+                      return ListView.separated(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: ctrl.prescriptionDraft.length,
+                        separatorBuilder: (_, __) => const SizedBox(height: 12),
+                        itemBuilder: (context, idx) {
+                          final item = ctrl.prescriptionDraft[idx];
+                          final code = item['kode_brng'];
+                          final qtyCtrl = TextEditingController(text: item['jml']?.toString() ?? '1');
+                          final sigCtrl = TextEditingController(text: item['aturan_pakai'] ?? '3x1 tablet');
+                          
+                          return Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: AppTheme.bgCard,
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(color: AppTheme.divider),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        item['nama_brng'] ?? '-',
+                                        style: GoogleFonts.outfit(fontSize: 12.5, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
+                                      ),
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(Icons.delete_outline_rounded, color: AppTheme.danger, size: 18),
+                                      onPressed: () => ctrl.removeFromPrescription(code),
+                                      constraints: const BoxConstraints(),
+                                      padding: EdgeInsets.zero,
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 10),
+                                Row(
+                                  children: [
+                                    SizedBox(
+                                      width: 80,
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text('Jumlah', style: GoogleFonts.outfit(fontSize: 10, color: AppTheme.textSecondary)),
+                                          const SizedBox(height: 4),
+                                          TextField(
+                                            controller: qtyCtrl,
+                                            keyboardType: TextInputType.number,
+                                            decoration: const InputDecoration(isDense: true, contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8)),
+                                            onChanged: (val) {
+                                              final q = int.tryParse(val) ?? 1;
+                                              item['jml'] = q;
+                                            },
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text('Aturan Pakai / Signa', style: GoogleFonts.outfit(fontSize: 10, color: AppTheme.textSecondary)),
+                                          const SizedBox(height: 4),
+                                          TextField(
+                                            controller: sigCtrl,
+                                            decoration: const InputDecoration(isDense: true, contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8)),
+                                            onChanged: (val) {
+                                              item['aturan_pakai'] = val;
+                                            },
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      );
+                    }),
+                    const SizedBox(height: 24),
+                    Obx(() {
+                      final hasItems = ctrl.prescriptionDraft.isNotEmpty;
+                      return SizedBox(
+                        width: double.infinity,
+                        height: 48,
+                        child: ElevatedButton(
+                          onPressed: hasItems
+                              ? () async {
+                                  final success = await ctrl.submitPrescription();
+                                  if (success) {
+                                    Get.back();
+                                    Get.snackbar('Sukses', 'Resep berhasil dikirim', backgroundColor: Colors.white, colorText: AppTheme.primary);
+                                  }
+                                }
+                              : null,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppTheme.primary,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                          child: Text(
+                            'Kirim Resep Ke Farmasi',
+                            style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13.5),
+                          ),
+                        ),
+                      );
+                    }),
+                    const SizedBox(height: 30),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+      isScrollControlled: true,
+    );
+  }
+
+  Widget _buildKonsultasiTab(BuildContext context, RekamMedisController ctrl) {
+    final activeSubTab = 0.obs;
+    
+    return Stack(
+      children: [
+        Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Obx(() {
+                      final active = activeSubTab.value == 0;
+                      return GestureDetector(
+                        onTap: () => activeSubTab.value = 0,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: active ? AppTheme.primary.withOpacity(0.08) : Colors.transparent,
+                            border: Border(bottom: BorderSide(color: active ? AppTheme.primary : Colors.transparent, width: 2)),
+                          ),
+                          child: Text(
+                            'Konsul Keluar',
+                            style: GoogleFonts.outfit(
+                              fontSize: 12.5,
+                              fontWeight: active ? FontWeight.bold : FontWeight.w600,
+                              color: active ? AppTheme.primary : AppTheme.textSecondary,
+                            ),
+                          ),
+                        ),
+                      );
+                    }),
+                  ),
+                  Expanded(
+                    child: Obx(() {
+                      final active = activeSubTab.value == 1;
+                      return GestureDetector(
+                        onTap: () => activeSubTab.value = 1,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: active ? AppTheme.primary.withOpacity(0.08) : Colors.transparent,
+                            border: Border(bottom: BorderSide(color: active ? AppTheme.primary : Colors.transparent, width: 2)),
+                          ),
+                          child: Text(
+                            'Konsul Masuk',
+                            style: GoogleFonts.outfit(
+                              fontSize: 12.5,
+                              fontWeight: active ? FontWeight.bold : FontWeight.w600,
+                              color: active ? AppTheme.primary : AppTheme.textSecondary,
+                            ),
+                          ),
+                        ),
+                      );
+                    }),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: Obx(() {
+                if (ctrl.isLoadingConsult.value) {
+                  return const Center(child: CircularProgressIndicator(strokeWidth: 2));
+                }
+                
+                final isOutgoing = activeSubTab.value == 0;
+                final list = isOutgoing ? ctrl.outgoingConsults : ctrl.incomingConsults;
+                
+                if (list.isEmpty) {
+                  return RekamMedisView._emptyState(isOutgoing ? 'Belum ada permintaan konsul keluar' : 'Belum ada konsul masuk');
+                }
+                
+                return ListView.separated(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
+                  itemCount: list.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 12),
+                  itemBuilder: (context, idx) {
+                    final item = list[idx];
+                    final tgl = item['tgl_perawatan'] ?? item['tgl_pesan'] ?? '-';
+                    final jam = item['jam_pesan'] ?? '-';
+                    final drPemberi = item['nm_dokter_pemberi'] ?? item['kd_dokter_pemberi'] ?? '-';
+                    final drPeminta = item['nm_dokter_peminta'] ?? item['kd_dokter_peminta'] ?? '-';
+                    
+                    final status = item['status']?.toString() ?? 'Belum Dijawab';
+                    final isAnswered = status.toLowerCase() == 'sudah dijawab' || item['jawaban'] != null;
+                    
+                    return Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: AppTheme.bgCard,
+                        borderRadius: BorderRadius.circular(18),
+                        border: Border.all(color: AppTheme.divider),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                '$tgl pukul $jam',
+                                style: GoogleFonts.outfit(fontSize: 11, color: AppTheme.textMuted, fontWeight: FontWeight.bold),
+                              ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: (isAnswered ? AppTheme.success : AppTheme.warning).withOpacity(0.12),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Text(
+                                  isAnswered ? 'Dijawab' : 'Pending',
+                                  style: GoogleFonts.outfit(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                    color: isAnswered ? AppTheme.success : AppTheme.warning,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 10),
+                          Text(
+                            isOutgoing ? 'Dokter Penerima: $drPemberi' : 'Dokter Pengirim: $drPeminta',
+                            style: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
+                          ),
+                          const SizedBox(height: 8),
+                          if (item['deskripsi_rujukan'] != null && item['deskripsi_rujukan'].toString().isNotEmpty) ...[
+                            Text(
+                              'Permintaan / Konsultasi:',
+                              style: GoogleFonts.outfit(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.textSecondary),
+                            ),
+                            Text(
+                              item['deskripsi_rujukan'],
+                              style: GoogleFonts.outfit(fontSize: 12.5, color: AppTheme.textPrimary),
+                            ),
+                            const SizedBox(height: 8),
+                          ],
+                          if (isAnswered && item['jawaban'] != null) ...[
+                            const Divider(color: AppTheme.divider, height: 16),
+                            Text(
+                              'Jawaban / Balasan:',
+                              style: GoogleFonts.outfit(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.success),
+                            ),
+                            Text(
+                              item['jawaban'],
+                              style: GoogleFonts.outfit(fontSize: 12.5, color: AppTheme.textPrimary),
+                            ),
+                          ],
+                          if (!isOutgoing && !isAnswered) ...[
+                            const SizedBox(height: 12),
+                            SizedBox(
+                              width: double.infinity,
+                              height: 36,
+                              child: ElevatedButton(
+                                onPressed: () => _showReplyConsultationDialog(context, ctrl, item),
+                                style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primary, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
+                                child: Text('Jawab Konsultasi', style: GoogleFonts.outfit(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    );
+                  },
+                );
+              }),
+            ),
+          ],
+        ),
+        Obx(() {
+          if (activeSubTab.value == 0) {
+            return Positioned(
+              bottom: 16,
+              right: 16,
+              child: FloatingActionButton.extended(
+                onPressed: () => _showConsultationDialog(context, ctrl),
+                backgroundColor: AppTheme.primary,
+                icon: const Icon(Icons.send_rounded, color: Colors.white),
+                label: Text(
+                  'Minta Konsul',
+                  style: GoogleFonts.outfit(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            );
+          }
+          return const SizedBox.shrink();
+        }),
+      ],
+    );
+  }
+
+  void _showConsultationDialog(BuildContext context, RekamMedisController ctrl) {
+  Map<String, dynamic>? selectedDokter;
+  final rujukanCtrl = TextEditingController();
+  final diagnosaCtrl = TextEditingController();
+  final dokterSearchCtrl = TextEditingController();
+  final filteredDokterList = <Map<String, dynamic>>[].obs;
+  
+  filteredDokterList.value = ctrl.dokterList;
+  
+  Get.dialog(
+    AlertDialog(
+      title: Text('Kirim Permintaan Konsultasi', style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 16)),
+      content: SizedBox(
+        width: Get.width * 0.85,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Pilih Dokter Tujuan', style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.textSecondary)),
+              const SizedBox(height: 6),
+              TextField(
+                controller: dokterSearchCtrl,
+                decoration: const InputDecoration(hintText: 'Cari nama dokter...', prefixIcon: Icon(Icons.search_rounded), isDense: true, contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8)),
+                onChanged: (val) {
+                  if (val.trim().isEmpty) {
+                    filteredDokterList.value = ctrl.dokterList;
+                  } else {
+                    filteredDokterList.value = ctrl.dokterList.where((d) => (d['nm_dokter'] ?? '').toString().toLowerCase().contains(val.toLowerCase())).toList();
+                  }
+                },
+              ),
+              const SizedBox(height: 8),
+              Container(
+                height: 120,
+                decoration: BoxDecoration(border: Border.all(color: AppTheme.divider), borderRadius: BorderRadius.circular(8)),
+                child: Obx(() {
+                  if (filteredDokterList.isEmpty) {
+                    return Center(child: Text('Dokter tidak ditemukan', style: GoogleFonts.outfit(fontSize: 12, color: AppTheme.textMuted)));
+                  }
+                  return ListView.separated(
+                    shrinkWrap: true,
+                    itemCount: filteredDokterList.length,
+                    separatorBuilder: (_, __) => const Divider(height: 1, thickness: 0.5),
+                    itemBuilder: (context, idx) {
+                      final dr = filteredDokterList[idx];
+                      final code = dr['kd_dokter'] ?? '';
+                      final name = dr['nm_dokter'] ?? '';
+                      return Obx(() {
+                        final isSelected = selectedDokter?['kd_dokter'] == code;
+                        return ListTile(
+                          dense: true,
+                          title: Text(name, style: GoogleFonts.outfit(fontSize: 12, fontWeight: isSelected ? FontWeight.bold : FontWeight.normal)),
+                          selected: isSelected,
+                          selectedColor: AppTheme.primary,
+                          onTap: () {
+                            selectedDokter = dr;
+                            dokterSearchCtrl.text = name;
+                            filteredDokterList.refresh();
+                          },
+                        );
+                      });
+                    },
+                  );
+                }),
+              ),
+              const SizedBox(height: 16),
+              Text('Diagnosa Kerja', style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.textSecondary)),
+              const SizedBox(height: 6),
+              TextField(
+                controller: diagnosaCtrl,
+                decoration: const InputDecoration(hintText: 'Tuliskan diagnosa kerja...', isDense: true, contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 10)),
+              ),
+              const SizedBox(height: 16),
+              Text('Isi Permintaan / Rujukan / Keterangan', style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.textSecondary)),
+              const SizedBox(height: 6),
+              TextField(
+                controller: rujukanCtrl,
+                maxLines: 4,
+                decoration: const InputDecoration(hintText: 'Tuliskan deskripsi rujukan/pertanyaan...', isDense: true, contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 10)),
+              ),
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(onPressed: () => Get.back(), child: Text('Batal', style: GoogleFonts.outfit(color: AppTheme.textSecondary))),
+        ElevatedButton(
+          onPressed: () async {
+            if (selectedDokter == null) {
+              Get.snackbar('Error', 'Silakan pilih dokter tujuan terlebih dahulu', backgroundColor: Colors.white, colorText: AppTheme.danger);
+              return;
+            }
+            if (rujukanCtrl.text.trim().isEmpty) {
+              Get.snackbar('Error', 'Isi rujukan tidak boleh kosong', backgroundColor: Colors.white, colorText: AppTheme.danger);
+              return;
+            }
+            Get.back();
+            final success = await ctrl.sendConsultation(
+              targetDokter: selectedDokter!['kd_dokter'],
+              jenis: ctrl.tipeRawat.isEmpty ? 'RALAN' : ctrl.tipeRawat,
+              diagnosa: diagnosaCtrl.text,
+              uraian: rujukanCtrl.text,
+            );
+            if (success) {
+              Get.snackbar('Sukses', 'Permintaan konsultasi berhasil dikirim', backgroundColor: Colors.white, colorText: AppTheme.primary);
+            }
+          },
+          style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primary),
+          child: Text('Kirim', style: GoogleFonts.outfit(color: Colors.white)),
+        ),
+      ],
+    ),
+  );
+}
+
+void _showReplyConsultationDialog(BuildContext context, RekamMedisController ctrl, Map<String, dynamic> item) {
+  final jawabanCtrl = TextEditingController();
+  final diagnosaCtrl = TextEditingController();
+  
+  Get.dialog(
+    AlertDialog(
+      title: Text('Jawab Konsultasi', style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 16)),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Dari: ${item['nm_dokter_peminta'] ?? item['kd_dokter_peminta'] ?? '-'}', style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.textSecondary)),
+          const SizedBox(height: 6),
+          Text(item['deskripsi_rujukan'] ?? '-', style: GoogleFonts.outfit(fontSize: 13, color: AppTheme.textPrimary)),
+          const SizedBox(height: 16),
+          Text('Diagnosa Kerja / Hasil Pemeriksaan', style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.textSecondary)),
+          const SizedBox(height: 6),
+          TextField(
+            controller: diagnosaCtrl,
+            decoration: const InputDecoration(hintText: 'Tuliskan diagnosa kerja/hasil...', isDense: true, contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 10)),
+          ),
+          const SizedBox(height: 16),
+          Text('Jawaban / Keterangan', style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.textSecondary)),
+          const SizedBox(height: 6),
+          TextField(
+            controller: jawabanCtrl,
+            maxLines: 4,
+            decoration: const InputDecoration(hintText: 'Tuliskan jawaban...', isDense: true, contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 10)),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(onPressed: () => Get.back(), child: Text('Batal', style: GoogleFonts.outfit(color: AppTheme.textSecondary))),
+        ElevatedButton(
+          onPressed: () async {
+            if (jawabanCtrl.text.trim().isEmpty) {
+              Get.snackbar('Error', 'Jawaban tidak boleh kosong', backgroundColor: Colors.white, colorText: AppTheme.danger);
+              return;
+            }
+            Get.back();
+            final success = await ctrl.replyConsultation(
+              noPermintaan: item['no_permintaan']?.toString() ?? '',
+              diagnosa: diagnosaCtrl.text,
+              uraian: jawabanCtrl.text,
+            );
+            if (success) {
+              Get.snackbar('Sukses', 'Konsultasi berhasil dijawab', backgroundColor: Colors.white, colorText: AppTheme.primary);
+            }
+          },
+          style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primary),
+          child: Text('Kirim', style: GoogleFonts.outfit(color: Colors.white)),
+        ),
+      ],
+    ),
+  );
+}
+
 // ── _SoapTile ─────────────────────────────────────────────────────────────────
 // StatefulWidget terpisah agar state expand tidak ter-recycle oleh ListView
 class _SoapTile extends StatefulWidget {
@@ -1923,6 +3188,34 @@ class _SoapTileState extends State<_SoapTile> {
               color: AppTheme.textSecondary,
             ),
           ),
+          trailing: Obx(() {
+            final authCtrl = Get.find<AuthController>();
+            final myNip = authCtrl.user.value?['nip'] ?? authCtrl.user.value?['username'] ?? '';
+            final recordNip = data['nip']?.toString() ?? '';
+            final isOwnRecord = recordNip == myNip && myNip.isNotEmpty;
+            
+            return Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (isOwnRecord) ...[
+                  IconButton(
+                    icon: const Icon(Icons.edit_rounded, color: AppTheme.primary, size: 18),
+                    onPressed: () => _showSoapForm(context, _ctrl, existingData: data),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.delete_outline_rounded, color: AppTheme.danger, size: 18),
+                    onPressed: () => _confirmDeleteSoap(context, _ctrl, formattedDate, formattedTime),
+                  ),
+                ],
+                Icon(
+                  _isExpanded
+                      ? Icons.keyboard_arrow_up_rounded
+                      : Icons.keyboard_arrow_down_rounded,
+                  color: AppTheme.textSecondary,
+                ),
+              ],
+            );
+          }),
           children: [
             const Divider(height: 24, thickness: 1, color: AppTheme.divider),
 
