@@ -39,6 +39,8 @@ class RekamMedisController extends GetxController {
   final selisihBiaya = 0.0.obs;
   final hasPerkiraan = false.obs;
   final isLoadingBilling = false.obs;
+  final isLoadingLab = false.obs;
+  final isLoadingRad = false.obs;
 
   String get noRawat => pasienData.value?['no_rawat'] ?? '';
   String get noRkmMedis => pasienData.value?['no_rkm_medis'] ?? pasienData.value?['no_rm'] ?? '';
@@ -83,24 +85,26 @@ class RekamMedisController extends GetxController {
     isLoading.value = true;
     expandedStates.clear();
     try {
+      // 1. Core/Primary data: must load to display the initial page content
       await Future.wait([
         _fetchRiwayatMedis(),
         _fetchDiagnosa(),
         _fetchObat(),
-        _fetchLaboratorium(),
-        _fetchRadiologi(),
-        // _fetchDicomStudies(),
-        _fetchBillingInfo(),
-        _fetchSbarList(),
-        _fetchDpjpList(),
         fetchProsedur(),
-        fetchConsultations(),
-        fetchDokterList(),
-        fetchResepList(),
       ]);
     } finally {
       isLoading.value = false;
     }
+
+    // 2. Secondary/Background data: lazy load in the background asynchronously
+    _fetchLaboratorium();
+    _fetchRadiologi();
+    _fetchBillingInfo();
+    _fetchSbarList();
+    _fetchDpjpList();
+    fetchConsultations();
+    fetchDokterList();
+    fetchResepList();
   }
 
   Future<List<dynamic>> _safeGetList(String endpoint, String noRawat) async {
@@ -271,6 +275,7 @@ class RekamMedisController extends GetxController {
   }
 
   Future<void> _fetchLaboratorium() async {
+    isLoadingLab.value = true;
     try {
       final res = await _api.dio.get('/riwayat/pasien/laboratorium', queryParameters: {'no_rawat': noRawat});
       if (res.data['success'] == true && res.data['data'] != null) {
@@ -319,10 +324,13 @@ class RekamMedisController extends GetxController {
         }
         laboratorium.value = groupedLab;
       }
-    } catch (_) {}
+    } catch (_) {} finally {
+      isLoadingLab.value = false;
+    }
   }
 
   Future<void> _fetchRadiologi() async {
+    isLoadingRad.value = true;
     try {
       final res = await _api.dio.get('/riwayat/pasien/radiologi', queryParameters: {'no_rawat': noRawat});
       if (res.data['success'] == true && res.data['data'] != null) {
@@ -343,7 +351,9 @@ class RekamMedisController extends GetxController {
           };
         }).toList();
       }
-    } catch (_) {}
+    } catch (_) {} finally {
+      isLoadingRad.value = false;
+    }
   }
 
   // Future<void> _fetchDicomStudies() async {

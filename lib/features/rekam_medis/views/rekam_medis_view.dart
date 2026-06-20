@@ -4,6 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../core/utils/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:webview_flutter/webview_flutter.dart';
+import 'package:shimmer/shimmer.dart';
 import '../../../core/theme/app_theme.dart';
 import '../controllers/rekam_medis_controller.dart';
 import '../../auth/controllers/auth_controller.dart';
@@ -573,12 +574,6 @@ class RekamMedisView extends StatelessWidget {
 
   Widget _buildTabContent(BuildContext context, RekamMedisController ctrl) {
     return Obx(() {
-      if (ctrl.isLoading.value) {
-        return const Center(
-          child:
-              CircularProgressIndicator(color: AppTheme.accent, strokeWidth: 2),
-        );
-      }
       switch (ctrl.activeTab.value) {
         case 0:
           return _buildMedisTab(context, ctrl);
@@ -601,52 +596,65 @@ class RekamMedisView extends StatelessWidget {
   }
 
   Widget _buildMedisTab(BuildContext context, RekamMedisController ctrl) {
-    final list = ctrl.riwayatMedis;
-    final sortedList = list.reversed.toList();
-    return Stack(
-      children: [
-        sortedList.isEmpty
-            ? _emptyState('Belum ada data medis')
-            : ListView.separated(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
-                itemCount: sortedList.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 16),
-                itemBuilder: (context, index) {
-                  final data = sortedList[index];
-                  final uniqueId = '${data['tanggal']}_${data['jam']}_$index';
-                  return _SoapTile(
-                    key: GlobalObjectKey(uniqueId),
-                    data: data,
-                    initiallyExpanded: index == 0,
-                  );
-                },
-              ),
-        Positioned(
-          bottom: 16,
-          right: 16,
-          child: FloatingActionButton.extended(
-            onPressed: () => _showSoapForm(context, ctrl),
-            backgroundColor: AppTheme.primary,
-            icon: const Icon(Icons.add, color: Colors.white),
-            label: Text(
-              'Tambah SOAP',
-              style: GoogleFonts.outfit(
-                color: Colors.white,
-                fontWeight: FontWeight.w700,
+    return Obx(() {
+      if (ctrl.isLoading.value) {
+        return const Center(
+          child: CircularProgressIndicator(color: AppTheme.accent, strokeWidth: 2),
+        );
+      }
+      final list = ctrl.riwayatMedis;
+      final sortedList = list.reversed.toList();
+      return Stack(
+        children: [
+          sortedList.isEmpty
+              ? _emptyState('Belum ada data medis')
+              : ListView.separated(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
+                  itemCount: sortedList.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 16),
+                  itemBuilder: (context, index) {
+                    final data = sortedList[index];
+                    final uniqueId = '${data['tanggal']}_${data['jam']}_$index';
+                    return _SoapTile(
+                      key: GlobalObjectKey(uniqueId),
+                      data: data,
+                      initiallyExpanded: index == 0,
+                    );
+                  },
+                ),
+          Positioned(
+            bottom: 16,
+            right: 16,
+            child: FloatingActionButton.extended(
+              onPressed: () => _showSoapForm(context, ctrl),
+              backgroundColor: AppTheme.primary,
+              icon: const Icon(Icons.add, color: Colors.white),
+              label: Text(
+                'Tambah SOAP',
+                style: GoogleFonts.outfit(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ),
           ),
-        ),
-      ],
-    );
+        ],
+      );
+    });
   }
 
   Widget _buildDiagnosaTab(BuildContext context, RekamMedisController ctrl) {
     final icd10SearchCtrl = TextEditingController();
     final icd9SearchCtrl = TextEditingController();
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
+    return Obx(() {
+      if (ctrl.isLoading.value) {
+        return const Center(
+          child: CircularProgressIndicator(color: AppTheme.accent, strokeWidth: 2),
+        );
+      }
+      return SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -845,14 +853,19 @@ class RekamMedisView extends StatelessWidget {
             );
           }),
         ],
-      ),
-    );
+      );
+    });
   }
 
   Widget _buildObatTab(BuildContext context, RekamMedisController ctrl) {
     return Stack(
       children: [
         Obx(() {
+          if (ctrl.isLoading.value) {
+            return const Center(
+              child: CircularProgressIndicator(color: AppTheme.accent, strokeWidth: 2),
+            );
+          }
           final listDispensed = ctrl.obat;
           final listPending = ctrl.resepList;
           
@@ -1114,11 +1127,15 @@ class RekamMedisView extends StatelessWidget {
   }
 
   Widget _buildLabTab(RekamMedisController ctrl) {
-    if (ctrl.laboratorium.isEmpty) {
-      return _emptyState('Belum ada hasil laboratorium');
-    }
-    return ListView.separated(
-      padding: const EdgeInsets.all(16),
+    return Obx(() {
+      if (ctrl.isLoadingLab.value) {
+        return _buildShimmerLoader();
+      }
+      if (ctrl.laboratorium.isEmpty) {
+        return _emptyState('Belum ada hasil laboratorium');
+      }
+      return ListView.separated(
+        padding: const EdgeInsets.all(16),
       itemCount: ctrl.laboratorium.length,
       separatorBuilder: (_, __) => const SizedBox(height: 20),
       itemBuilder: (context, groupIndex) {
@@ -1293,12 +1310,17 @@ class RekamMedisView extends StatelessWidget {
         );
       },
     );
+    });
   }
 
   Widget _buildRadiologiTab(RekamMedisController ctrl) {
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
+    return Obx(() {
+      if (ctrl.isLoadingRad.value) {
+        return _buildShimmerLoader();
+      }
+      return ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
         // Section 1: Hasil Bacaan & Foto
         Row(
           children: [
@@ -1357,6 +1379,7 @@ class RekamMedisView extends StatelessWidget {
         // }),
       ],
     );
+    });
   }
 
   Widget _buildRadiologiCard(Map<String, dynamic> r) {
@@ -1785,6 +1808,95 @@ class RekamMedisView extends StatelessWidget {
     );
   }
 
+  Widget _buildShimmerLoader() {
+    return Shimmer.fromColors(
+      baseColor: AppTheme.divider,
+      highlightColor: AppTheme.bgDark.withOpacity(0.5),
+      child: ListView.separated(
+        padding: const EdgeInsets.all(16),
+        itemCount: 3,
+        separatorBuilder: (_, __) => const SizedBox(height: 16),
+        itemBuilder: (context, _) => Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppTheme.divider),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          width: 140,
+                          height: 14,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Container(
+                          width: 80,
+                          height: 10,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Container(
+                width: double.infinity,
+                height: 12,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Container(
+                width: double.infinity,
+                height: 12,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Container(
+                width: 180,
+                height: 12,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   static Widget _emptyState(String message) {
     return Center(
       child: Column(
@@ -1826,8 +1938,7 @@ class RekamMedisView extends StatelessWidget {
   Widget _buildSbarTab(BuildContext context, RekamMedisController ctrl) {
     return Obx(() {
       if (ctrl.isLoadingSbar.value) {
-        return const Center(
-            child: CircularProgressIndicator(color: AppTheme.accent));
+        return _buildShimmerLoader();
       }
       final list = ctrl.sbarList;
       if (list.isEmpty) return _emptyState('Belum ada handover SBAR');
@@ -2225,30 +2336,36 @@ void _confirmDeleteSoap(BuildContext context, RekamMedisController ctrl, String 
                       if (!isEdit && ctrl.soapDraft.isNotEmpty) {
                         return Container(
                           margin: const EdgeInsets.only(bottom: 16),
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                           decoration: BoxDecoration(
-                            color: AppTheme.warning.withOpacity(0.15),
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: AppTheme.warning.withOpacity(0.3)),
+                            color: const Color(0xFFFEF3C7), // Warm premium amber
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: const Color(0xFFF59E0B).withOpacity(0.3), width: 1.2),
                           ),
                           child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
+                              const Icon(Icons.warning_amber_rounded, color: Color(0xFFD97706), size: 18),
+                              const SizedBox(width: 8),
                               Expanded(
                                 child: Text(
-                                  'Melanjutkan draft lokal yang belum tersimpan.',
+                                  'Melanjutkan draft SOAP lokal yang belum tersimpan',
                                   style: GoogleFonts.outfit(
-                                    fontSize: 12,
-                                    color: AppTheme.warning,
-                                    fontWeight: FontWeight.w600,
+                                    fontSize: 11.5,
+                                    color: const Color(0xFF92400E),
+                                    fontWeight: FontWeight.w700,
                                   ),
                                 ),
                               ),
+                              const SizedBox(width: 8),
                               TextButton(
                                 style: TextButton.styleFrom(
-                                  padding: EdgeInsets.zero,
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                   minimumSize: Size.zero,
                                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                  backgroundColor: const Color(0xFFF59E0B).withOpacity(0.12),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
                                 ),
                                 onPressed: () {
                                   ctrl.clearSoapDraft();
@@ -2269,11 +2386,11 @@ void _confirmDeleteSoap(BuildContext context, RekamMedisController ctrl, String 
                                   kesadaranCtrl.text = 'Compos Mentis';
                                 },
                                 child: Text(
-                                  'Hapus Draft',
+                                  'Hapus',
                                   style: GoogleFonts.outfit(
-                                    fontSize: 12,
-                                    color: AppTheme.danger,
-                                    fontWeight: FontWeight.bold,
+                                    fontSize: 11,
+                                    color: const Color(0xFFB45309),
+                                    fontWeight: FontWeight.w800,
                                   ),
                                 ),
                               ),
@@ -2671,38 +2788,44 @@ void _confirmDeleteSoap(BuildContext context, RekamMedisController ctrl, String 
                       if (ctrl.prescriptionDraft.isNotEmpty) {
                         return Container(
                           margin: const EdgeInsets.only(bottom: 12),
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                           decoration: BoxDecoration(
-                            color: AppTheme.primary.withOpacity(0.12),
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: AppTheme.primary.withOpacity(0.25)),
+                            color: const Color(0xFFFEF3C7), // Warm premium amber
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: const Color(0xFFF59E0B).withOpacity(0.3), width: 1.2),
                           ),
                           child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
+                              const Icon(Icons.warning_amber_rounded, color: Color(0xFFD97706), size: 18),
+                              const SizedBox(width: 8),
                               Expanded(
                                 child: Text(
-                                  'Melanjutkan resep draft (${ctrl.prescriptionDraft.length} obat).',
+                                  'Melanjutkan resep draft (${ctrl.prescriptionDraft.length} obat)',
                                   style: GoogleFonts.outfit(
-                                    fontSize: 12,
-                                    color: AppTheme.primary,
-                                    fontWeight: FontWeight.w600,
+                                    fontSize: 11.5,
+                                    color: const Color(0xFF92400E),
+                                    fontWeight: FontWeight.w700,
                                   ),
                                 ),
                               ),
+                              const SizedBox(width: 8),
                               TextButton(
                                 style: TextButton.styleFrom(
-                                  padding: EdgeInsets.zero,
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                   minimumSize: Size.zero,
                                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                  backgroundColor: const Color(0xFFF59E0B).withOpacity(0.12),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
                                 ),
                                 onPressed: () => ctrl.clearPrescriptionDraft(),
                                 child: Text(
-                                  'Kosongkan',
+                                  'Hapus',
                                   style: GoogleFonts.outfit(
-                                    fontSize: 12,
-                                    color: AppTheme.danger,
-                                    fontWeight: FontWeight.bold,
+                                    fontSize: 11,
+                                    color: const Color(0xFFB45309),
+                                    fontWeight: FontWeight.w800,
                                   ),
                                 ),
                               ),
@@ -2922,7 +3045,7 @@ void _confirmDeleteSoap(BuildContext context, RekamMedisController ctrl, String 
             Expanded(
               child: Obx(() {
                 if (ctrl.isLoadingConsult.value) {
-                  return const Center(child: CircularProgressIndicator(strokeWidth: 2));
+                  return _buildShimmerLoader();
                 }
                 
                 final isOutgoing = activeSubTab.value == 0;
