@@ -11,6 +11,7 @@ class AuthController extends GetxController {
   final errorMsg = ''.obs;
   final user = Rxn<Map<String, dynamic>>();
   final setting = Rxn<Map<String, dynamic>>();
+  final profileData = Rxn<Map<String, dynamic>>();
 
   @override
   void onInit() {
@@ -35,14 +36,38 @@ class AuthController extends GetxController {
     }
   }
 
+  Future<void> fetchProfile() async {
+    try {
+      final response = await _api.dio.get('/profile');
+      if (response.data != null && response.data['success'] == true) {
+        profileData.value = Map<String, dynamic>.from(response.data['data']);
+        await _storage.write(key: 'profile_data', value: jsonEncode(profileData.value));
+      }
+    } catch (_) {
+      try {
+        final cached = await _storage.read(key: 'profile_data');
+        if (cached != null) {
+          profileData.value = Map<String, dynamic>.from(jsonDecode(cached));
+        }
+      } catch (_) {}
+    }
+  }
+
   Future<void> _checkToken() async {
     final token = await _storage.read(key: 'auth_token');
     final userData = await _storage.read(key: 'user_data');
     final cachedSetting = await _storage.read(key: 'setting_data');
+    final cachedProfile = await _storage.read(key: 'profile_data');
 
     if (cachedSetting != null) {
       try {
         setting.value = Map<String, dynamic>.from(jsonDecode(cachedSetting));
+      } catch (_) {}
+    }
+
+    if (cachedProfile != null) {
+      try {
+        profileData.value = Map<String, dynamic>.from(jsonDecode(cachedProfile));
       } catch (_) {}
     }
 
@@ -52,6 +77,7 @@ class AuthController extends GetxController {
       try {
         user.value = Map<String, dynamic>.from(jsonDecode(userData));
       } catch (_) {}
+      fetchProfile();
       Get.offAllNamed('/home');
     }
   }
@@ -77,6 +103,7 @@ class AuthController extends GetxController {
 
         user.value = userData;
         await fetchSetting();
+        await fetchProfile();
         Get.offAllNamed('/home');
       } else {
         errorMsg.value = response.data['message'] ?? 'Login gagal';
@@ -92,6 +119,7 @@ class AuthController extends GetxController {
     await _storage.deleteAll();
     user.value = null;
     setting.value = null;
+    profileData.value = null;
     Get.offAllNamed('/login');
   }
 }
