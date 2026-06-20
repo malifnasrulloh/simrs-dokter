@@ -19,10 +19,85 @@ class DashboardController extends GetxController {
   final bedDetails = <Map<String, dynamic>>[].obs;
   final bedClasses = <Map<String, dynamic>>[].obs;
 
+  // Jasa Medis / Harian Dokter States
+  final isLoadingHarian = false.obs;
+  final harianList = <Map<String, dynamic>>[].obs;
+  final harianSummary = <String, dynamic>{}.obs;
+  final selectedDateStart = Rx<DateTime>(DateTime.now());
+  final selectedDateEnd = Rx<DateTime>(DateTime.now());
+  final selectedCaraBayar = 'Semua'.obs; // holds kd_pj or 'Semua'
+  final caraBayarOptions = <Map<String, dynamic>>[].obs;
+  final currentHarianPage = 1.obs;
+  final totalHarianCount = 0.obs;
+
   @override
   void onInit() {
     super.onInit();
     fetchDashboard();
+    fetchCaraBayarOptions();
+    fetchHarianDokter();
+  }
+
+  Future<void> fetchCaraBayarOptions() async {
+    try {
+      final res = await _api.dio.get('/harian-dokter/cara-bayar');
+      if (res.data['success'] == true) {
+        caraBayarOptions.value = List<Map<String, dynamic>>.from(res.data['data'] ?? []);
+      }
+    } catch (_) {}
+  }
+
+  Future<void> fetchHarianDokter({bool isLoadMore = false}) async {
+    if (isLoadingHarian.value && !isLoadMore) return;
+
+    try {
+      if (!isLoadMore) {
+        isLoadingHarian.value = true;
+        currentHarianPage.value = 1;
+        harianList.clear();
+        harianSummary.clear();
+      } else {
+        currentHarianPage.value += 1;
+      }
+
+      final startStr = selectedDateStart.value.toIso8601String().substring(0, 10);
+      final endStr = selectedDateEnd.value.toIso8601String().substring(0, 10);
+
+      final queryParams = {
+        'tgl1': startStr,
+        'tgl2': endStr,
+        'kd_pj': selectedCaraBayar.value,
+        'page': currentHarianPage.value,
+        'limit': 20,
+      };
+
+      if (!isLoadMore) {
+        // Fetch summary
+        final summaryRes = await _api.dio.get('/harian-dokter/summary', queryParameters: queryParams);
+        if (summaryRes.data['success'] == true) {
+          harianSummary.value = Map<String, dynamic>.from(summaryRes.data['data'] ?? {});
+        }
+      }
+
+      // Fetch list
+      final listRes = await _api.dio.get('/harian-dokter', queryParameters: queryParams);
+      if (listRes.data['success'] == true) {
+        final listData = List<Map<String, dynamic>>.from(listRes.data['data']?['data'] ?? []);
+        totalHarianCount.value = listRes.data['data']?['total'] ?? 0;
+        if (isLoadMore) {
+          harianList.addAll(listData);
+        } else {
+          harianList.value = listData;
+        }
+      }
+    } catch (_) {
+      if (!isLoadMore) {
+        harianList.clear();
+        harianSummary.clear();
+      }
+    } finally {
+      isLoadingHarian.value = false;
+    }
   }
 
   Future<void> fetchDashboard() async {

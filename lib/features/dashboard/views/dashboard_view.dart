@@ -4,6 +4,7 @@ import '../../../core/theme/app_theme.dart';
 import '../controllers/dashboard_controller.dart';
 import 'home_dashboard_view.dart';
 import 'patient_workspace_view.dart';
+import 'harian_dokter_view.dart';
 import 'profile_view.dart';
 
 class DashboardView extends StatelessWidget {
@@ -16,6 +17,7 @@ class DashboardView extends StatelessWidget {
     final List<Widget> pages = [
       const HomeDashboardView(),
       const PatientWorkspaceView(),
+      const HarianDokterView(),
       const ProfileView(),
     ];
 
@@ -44,6 +46,11 @@ class DashboardView extends StatelessWidget {
               icon: Icon(Icons.people_outline_rounded),
               selectedIcon: Icon(Icons.people_alt_rounded, color: AppTheme.primary),
               label: 'Pasien',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.analytics_outlined),
+              selectedIcon: Icon(Icons.analytics_rounded, color: AppTheme.primary),
+              label: 'Jasa Medis',
             ),
             NavigationDestination(
               icon: Icon(Icons.person_outline_rounded),

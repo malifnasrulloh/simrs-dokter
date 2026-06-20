@@ -12,16 +12,34 @@ class ProfileView extends StatelessWidget {
   Widget build(BuildContext context) {
     final auth = Get.find<AuthController>();
     final ctrl = Get.find<DashboardController>();
+    auth.fetchProfile();
 
     return Scaffold(
       backgroundColor: AppTheme.bgDark,
       body: Obx(() {
+        final profile = auth.profileData.value ?? {};
         final user = auth.user.value ?? {};
-        final nama = user['nama'] ?? 'Dokter Spesialis';
-        final nip = user['nip'] ?? '-';
-        final jabatan = user['jabatan'] ?? 'Staf Medik Fungsional';
+
+        final nama = profile['nama'] ?? user['nama'] ?? 'Dokter Spesialis';
+        final nip = profile['nik'] ?? user['nip'] ?? '-';
+        
+        final docInfo = profile['dokter_info'] as Map<String, dynamic>?;
+        final spesialis = docInfo?['spesialis'] ?? '';
+        final jabatan = profile['jabatan'] ?? (spesialis.isNotEmpty ? 'Dokter Spesialis $spesialis' : 'Staf Medik Fungsional');
+        
         final settingName = auth.setting.value?['nama_instansi'];
-        final departemen = settingName ?? user['departemen'] ?? '';
+        final departemen = profile['departemen'] ?? settingName ?? user['departemen'] ?? '';
+        
+        final noIjn = docInfo?['no_ijn_praktek'] ?? '-';
+        final gender = profile['jenis_kelamin'] ?? '-';
+        final birthPlace = profile['tempat_lahir'] ?? '';
+        final birthDate = profile['tanggal_lahir'] ?? '';
+        final birthStr = (birthPlace.isNotEmpty && birthDate.isNotEmpty)
+            ? '$birthPlace, $birthDate'
+            : birthDate.isNotEmpty
+                ? birthDate
+                : '-';
+        final alamat = profile['alamat'] ?? '-';
 
         return SingleChildScrollView(
           child: Column(
@@ -34,7 +52,14 @@ class ProfileView extends StatelessWidget {
                   children: [
                     _buildSectionTitle('Informasi Akun Medis'),
                     const SizedBox(height: 8),
-                    _buildProfileDetailsCard(nip, departemen),
+                    _buildProfileDetailsCard(
+                      nip: nip,
+                      dept: departemen,
+                      noIjn: noIjn,
+                      gender: gender,
+                      ttl: birthStr,
+                      alamat: alamat,
+                    ),
                     const SizedBox(height: 20),
                     _buildSectionTitle('Statistik Kerja Hari Ini'),
                     const SizedBox(height: 8),
@@ -119,7 +144,14 @@ class ProfileView extends StatelessWidget {
     );
   }
 
-  Widget _buildProfileDetailsCard(String nip, String dept) {
+  Widget _buildProfileDetailsCard({
+    required String nip,
+    required String dept,
+    required String noIjn,
+    required String gender,
+    required String ttl,
+    required String alamat,
+  }) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -133,7 +165,13 @@ class ProfileView extends StatelessWidget {
           const Divider(height: 24, thickness: 0.8),
           _buildDetailRow(Icons.local_hospital_outlined, 'Unit / Departemen', dept),
           const Divider(height: 24, thickness: 0.8),
-          _buildDetailRow(Icons.verified_user_outlined, 'Status Hak Akses', 'Dokter DPJP'),
+          _buildDetailRow(Icons.card_membership_rounded, 'No. Izin Praktek (SIP)', noIjn),
+          const Divider(height: 24, thickness: 0.8),
+          _buildDetailRow(Icons.person_outline_rounded, 'Jenis Kelamin', gender),
+          const Divider(height: 24, thickness: 0.8),
+          _buildDetailRow(Icons.cake_outlined, 'Tempat, Tanggal Lahir', ttl),
+          const Divider(height: 24, thickness: 0.8),
+          _buildDetailRow(Icons.location_on_outlined, 'Alamat Rumah', alamat),
         ],
       ),
     );
