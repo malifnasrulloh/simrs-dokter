@@ -1,8 +1,10 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:get/get.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import '../../../core/config/app_config.dart';
 import '../../../core/network/api_client.dart';
 import '../../auth/controllers/auth_controller.dart';
@@ -26,6 +28,10 @@ class RekamMedisController extends GetxController {
   final dicomStudies = <Map<String, dynamic>>[].obs;
   final isLoadingDicom = false.obs;
   final expandedStates = <String, bool>{}.obs;
+  
+  // Vitals Chart and Offline Queue observables
+  final activeChartType = 0.obs;
+  final offlineSoapQueue = <Map<String, dynamic>>[].obs;
 
   // SBAR & DPJP data
   final sbarList = <Map<String, dynamic>>[].obs;
@@ -63,6 +69,19 @@ class RekamMedisController extends GetxController {
     if (args is Map<String, dynamic>) {
       pasienData.value = args;
     }
+    
+    // Listen to network transitions to automatically sync offline notes
+    Connectivity().onConnectivityChanged.listen((event) {
+      bool isOnline = false;
+      if (event is List) {
+        isOnline = event.isNotEmpty && !event.contains(ConnectivityResult.none);
+      } else {
+        isOnline = event != ConnectivityResult.none;
+      }
+      if (isOnline) {
+        syncOfflineSoap();
+      }
+    });
   }
 
   @override
@@ -72,6 +91,7 @@ class RekamMedisController extends GetxController {
       fetchAllData();
       initNotificationSse();
       loadDrafts();
+      loadOfflineSoapQueue();
     }
   }
 
@@ -530,6 +550,78 @@ class RekamMedisController extends GetxController {
   // ─── NEW CLINICAL MODULES METHODS & OBSERVABLES ───
 
   // Module A: SOAP
+  Future<void> loadOfflineSoapQueue() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final raw = prefs.getString('offline_soap_queue_$noRawat');
+      if (raw != null) {
+        final List decoded = jsonDecode(raw);
+        offlineSoapQueue.value = decoded.map((e) => Map<String, dynamic>.from(e)).toList();
+        
+        // Inject offline records into UI immediately
+        for (var item in offlineSoapQueue) {
+          final mockSoap = _normalizeMedisData(item);
+          mockSoap['isOfflineDraft'] = true;
+          final exists = riwayatMedis.any((x) => x['tanggal'] == mockSoap['tanggal'] && x['jam'] == mockSoap['jam']);
+          if (!exists) {
+            riwayatMedis.add(mockSoap);
+          }
+        }
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _saveOfflineQueueToPrefs() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('offline_soap_queue_$noRawat', jsonEncode(offlineSoapQueue));
+    } catch (_) {}
+  }
+
+  Future<void> syncOfflineSoap() async {
+    if (offlineSoapQueue.isEmpty) return;
+    
+    final conn = await Connectivity().checkConnectivity();
+    final isOffline = (conn is List) ? (conn.isEmpty || conn.contains(ConnectivityResult.none)) : (conn == ConnectivityResult.none);
+    if (isOffline) return;
+
+    final toSync = List<Map<String, dynamic>>.from(offlineSoapQueue);
+    bool anySuccess = false;
+
+    for (var item in toSync) {
+      try {
+        final path = item['_tipeRawat'] == 'RANAP' ? '/soap/ranap' : '/soap/ralan';
+        final payload = Map<String, dynamic>.from(item)
+          ..remove('_tipeRawat')
+          ..remove('isOfflineDraft')
+          ..remove('isEdit');
+        
+        dynamic res;
+        if (item['isEdit'] == true) {
+          res = await _api.dio.put(path, data: payload);
+        } else {
+          res = await _api.dio.post(path, data: payload);
+        }
+
+        if (res.statusCode == 200 || res.statusCode == 201 || (res.data != null && res.data['success'] == true)) {
+          offlineSoapQueue.removeWhere((x) => x['tanggal'] == item['tanggal'] && x['jam'] == item['jam']);
+          anySuccess = true;
+        }
+      } catch (_) {}
+    }
+
+    if (anySuccess) {
+      await _saveOfflineQueueToPrefs();
+      Get.snackbar(
+        'Sinkronisasi',
+        'Data SOAP offline berhasil disinkronkan ke server.',
+        backgroundColor: AppTheme.primary,
+        colorText: Colors.white,
+      );
+      await _fetchRiwayatMedis();
+    }
+  }
+
   Future<bool> saveSoap({
     required Map<String, dynamic> data,
     bool isEdit = false,
@@ -540,7 +632,59 @@ class RekamMedisController extends GetxController {
       isLoading.value = true;
       final authCtrl = Get.find<AuthController>();
       final myNip = authCtrl.user.value?['nip'] ?? authCtrl.user.value?['username'] ?? '';
+      final myName = authCtrl.user.value?['nama'] ?? authCtrl.user.value?['name'] ?? 'Dokter';
       
+      // Check online status
+      final conn = await Connectivity().checkConnectivity();
+      final isOffline = (conn is List) ? (conn.isEmpty || conn.contains(ConnectivityResult.none)) : (conn == ConnectivityResult.none);
+      
+      if (isOffline) {
+        final now = DateTime.now();
+        final tglStr = tglPerawatan ?? '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+        final jamStr = jamRawat ?? '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}:${now.second.toString().padLeft(2, '0')}';
+        
+        final payload = {
+          'no_rawat': noRawat,
+          ...data,
+          'nip': myNip,
+          'tanggal': tglStr,
+          'jam': jamStr,
+          'tgl_perawatan': tglStr,
+          'jam_rawat': jamStr,
+          'nm_dokter': myName,
+          '_tipeRawat': tipeRawat,
+          if (isEdit) 'isEdit': true,
+        };
+
+        // Add to offline queue
+        offlineSoapQueue.add(payload);
+        await _saveOfflineQueueToPrefs();
+
+        // Optimistically show in UI
+        final mockSoap = _normalizeMedisData(payload);
+        mockSoap['isOfflineDraft'] = true;
+        if (isEdit) {
+          final idx = riwayatMedis.indexWhere((x) => x['tanggal'] == tglPerawatan && x['jam'] == jamRawat);
+          if (idx != -1) {
+            riwayatMedis[idx] = mockSoap;
+          }
+        } else {
+          riwayatMedis.add(mockSoap);
+        }
+
+        if (!isEdit) {
+          await clearSoapDraft();
+        }
+
+        Get.snackbar(
+          'Mode Offline',
+          'Data SOAP disimpan secara lokal di antrean offline.',
+          backgroundColor: AppTheme.warning,
+          colorText: Colors.white,
+        );
+        return true;
+      }
+
       final payload = {
         'no_rawat': noRawat,
         ...data,
@@ -1073,4 +1217,78 @@ class RekamMedisController extends GetxController {
     _sseClient?.close();
     super.onClose();
   }
+
+  // vitals trend parser
+  List<VitalsTrendPoint> get vitalsChartData {
+    final List<VitalsTrendPoint> points = [];
+    for (var raw in riwayatMedis) {
+      final tgl = raw['tanggal']?.toString() ?? '';
+      final jam = raw['jam']?.toString() ?? '';
+      if (tgl.isEmpty || tgl == '-') continue;
+      DateTime? dt;
+      try {
+        final parsedJam = jam == '-' ? '00:00:00' : jam;
+        if (tgl.contains('-')) {
+          final parts = tgl.split('-');
+          if (parts[0].length == 4) {
+            // yyyy-MM-dd
+            dt = DateTime.parse('$tgl ${parsedJam.split(' ')[0]}');
+          } else {
+            // dd-MM-yyyy
+            dt = DateTime.parse('${parts[2]}-${parts[1]}-${parts[0]} ${parsedJam.split(' ')[0]}');
+          }
+        }
+      } catch (_) {}
+      if (dt == null) continue;
+
+      double? systole;
+      double? diastole;
+      double? suhu;
+      double? nadi;
+      double? rr;
+
+      final tensi = raw['tensi']?.toString().trim() ?? '';
+      if (tensi.contains('/')) {
+        final parts = tensi.split('/');
+        systole = double.tryParse(parts[0].replaceAll(RegExp(r'[^0-9.]'), ''));
+        if (parts.length > 1) {
+          diastole = double.tryParse(parts[1].replaceAll(RegExp(r'[^0-9.]'), ''));
+        }
+      }
+
+      suhu = double.tryParse(raw['suhu_tubuh']?.toString().replaceAll(RegExp(r'[^0-9.]'), '') ?? '');
+      nadi = double.tryParse(raw['nadi']?.toString().replaceAll(RegExp(r'[^0-9.]'), '') ?? '');
+      rr = double.tryParse(raw['respirasi']?.toString().replaceAll(RegExp(r'[^0-9.]'), '') ?? '');
+
+      if (systole != null || diastole != null || suhu != null || nadi != null || rr != null) {
+        points.add(VitalsTrendPoint(
+          dateTime: dt,
+          systole: systole,
+          diastole: diastole,
+          suhu: suhu,
+          nadi: nadi,
+          rr: rr,
+        ));
+      }
+    }
+    return points;
+  }
+}
+
+class VitalsTrendPoint {
+  final DateTime dateTime;
+  final double? systole;
+  final double? diastole;
+  final double? suhu;
+  final double? nadi;
+  final double? rr;
+
+  VitalsTrendPoint({
+    required this.dateTime,
+    this.systole,
+    this.diastole,
+    this.suhu,
+    this.nadi,
+    this.rr,
+  });
 }
