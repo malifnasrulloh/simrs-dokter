@@ -32,7 +32,7 @@ class HomeDashboardView extends StatelessWidget {
                     const SizedBox(height: 12),
                     _buildSectionTitle('Status Pelayanan Hari Ini'),
                     const SizedBox(height: 8),
-                    _buildStatsGrid(ctrl),
+                    _buildStatsGrid(context, ctrl),
                     const SizedBox(height: 20),
                     _buildSectionTitle('Jadwal Operasi Hari Ini'),
                     const SizedBox(height: 8),
@@ -153,7 +153,7 @@ class HomeDashboardView extends StatelessWidget {
     );
   }
 
-  Widget _buildStatsGrid(DashboardController ctrl) {
+  Widget _buildStatsGrid(BuildContext context, DashboardController ctrl) {
     return Obx(() {
       // Calculate checked Ralan count
       final ralanTotal = ctrl.listPasienRalan.length;
@@ -165,13 +165,17 @@ class HomeDashboardView extends StatelessWidget {
       final igdTotal = ctrl.listPasienIGD.length;
       final operasiTotal = ctrl.listJadwalOperasi.length;
 
+      final width = MediaQuery.of(context).size.width;
+      final int columns = width > 600 ? 4 : 2;
+      final double aspectRatio = width > 600 ? 1.8 : 1.45;
+
       return GridView.count(
-        crossAxisCount: 2,
+        crossAxisCount: columns,
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
         crossAxisSpacing: 12,
         mainAxisSpacing: 12,
-        childAspectRatio: 1.45,
+        childAspectRatio: aspectRatio,
         children: [
           _buildStatCard(
             title: 'Antrean Ralan',

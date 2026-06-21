@@ -2293,12 +2293,14 @@ void _confirmDeleteSoap(BuildContext context, RekamMedisController ctrl, String 
     }
     
     Get.bottomSheet(
-      Container(
-        height: Get.height * 0.85,
-        decoration: const BoxDecoration(
-          color: AppTheme.bgDark,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        ),
+      Padding(
+        padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+        child: Container(
+          height: Get.height * 0.85,
+          decoration: const BoxDecoration(
+            color: AppTheme.bgDark,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
         child: Column(
           children: [
             Container(
@@ -2509,8 +2511,9 @@ void _confirmDeleteSoap(BuildContext context, RekamMedisController ctrl, String 
           ],
         ),
       ),
-      isScrollControlled: true,
-    );
+    ),
+  isScrollControlled: true,
+);
   }
 
   Widget _formField(String label, TextEditingController controller, {int maxLines = 1, TextInputType keyboardType = TextInputType.text}) {
@@ -2671,12 +2674,14 @@ void _confirmDeleteSoap(BuildContext context, RekamMedisController ctrl, String 
     final searchCtrl = TextEditingController();
     
     Get.bottomSheet(
-      Container(
-        height: Get.height * 0.85,
-        decoration: const BoxDecoration(
-          color: AppTheme.bgDark,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        ),
+      Padding(
+        padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+        child: Container(
+          height: Get.height * 0.85,
+          decoration: const BoxDecoration(
+            color: AppTheme.bgDark,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
         child: Column(
           children: [
             Container(
@@ -2976,8 +2981,9 @@ void _confirmDeleteSoap(BuildContext context, RekamMedisController ctrl, String 
           ],
         ),
       ),
-      isScrollControlled: true,
-    );
+    ),
+  isScrollControlled: true,
+);
   }
 
   Widget _buildKonsultasiTab(BuildContext context, RekamMedisController ctrl) {
