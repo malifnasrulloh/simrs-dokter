@@ -18,27 +18,48 @@ class _PatientWorkspaceViewState extends State<PatientWorkspaceView> {
   final searchController = TextEditingController();
   String searchQuery = '';
 
+  late PageController _pageController;
+  late Worker _tabWorker;
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController(initialPage: ctrl.selectedTab.value);
+    _tabWorker = ever(ctrl.selectedTab, (int index) {
+      if (_pageController.hasClients && _pageController.page?.round() != index) {
+        _pageController.animateToPage(
+          index,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+        );
+      }
+    });
+  }
+
   @override
   void dispose() {
+    _tabWorker.dispose();
+    _pageController.dispose();
     searchController.dispose();
     super.dispose();
   }
 
-  List<Map<String, dynamic>> get _currentList {
-    switch (ctrl.selectedTab.value) {
+  List<Map<String, dynamic>> _filteredListForTab(int tabIndex) {
+    List<Map<String, dynamic>> list;
+    switch (tabIndex) {
       case 0:
-        return ctrl.listPasienRanap;
+        list = ctrl.listPasienRanap;
+        break;
       case 1:
-        return ctrl.listPasienRalan;
+        list = ctrl.listPasienRalan;
+        break;
       case 2:
-        return ctrl.listPasienIGD;
+        list = ctrl.listPasienIGD;
+        break;
       default:
-        return [];
+        list = [];
     }
-  }
 
-  List<Map<String, dynamic>> get _filteredList {
-    final list = _currentList;
     if (searchQuery.isEmpty) return list;
     final query = searchQuery.toLowerCase();
     return list.where((p) {
@@ -51,19 +72,6 @@ class _PatientWorkspaceViewState extends State<PatientWorkspaceView> {
           '';
       return name.contains(query) || rm.contains(query) || room.contains(query);
     }).toList();
-  }
-
-  String get _currentTypeString {
-    switch (ctrl.selectedTab.value) {
-      case 0:
-        return 'RANAP';
-      case 1:
-        return 'RALAN';
-      case 2:
-        return 'IGD';
-      default:
-        return 'RANAP';
-    }
   }
 
   @override
@@ -344,78 +352,89 @@ class _PatientWorkspaceViewState extends State<PatientWorkspaceView> {
   }
 
   Widget _buildPatientList() {
+    return Expanded(
+      child: PageView(
+        controller: _pageController,
+        onPageChanged: (index) {
+          ctrl.selectedTab.value = index;
+        },
+        children: [
+          _buildPatientCategoryList(0),
+          _buildPatientCategoryList(1),
+          _buildPatientCategoryList(2),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPatientCategoryList(int tabIndex) {
+    final typeStr = tabIndex == 0 ? 'RANAP' : tabIndex == 1 ? 'RALAN' : 'IGD';
+    final typeColor = tabIndex == 0
+        ? AppTheme.info
+        : tabIndex == 2
+            ? AppTheme.danger
+            : AppTheme.success;
+
     return Obx(() {
       if (ctrl.isLoading.value) {
-        return const Expanded(
-          child: Center(
-            child: CircularProgressIndicator(color: AppTheme.accent),
-          ),
+        return const Center(
+          child: CircularProgressIndicator(color: AppTheme.accent),
         );
       }
 
-      final list = _filteredList;
+      final list = _filteredListForTab(tabIndex);
       if (list.isEmpty) {
-        return Expanded(
-          child: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: AppTheme.bgCard,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: AppTheme.divider),
-                  ),
-                  child: Icon(Icons.person_search_rounded,
-                      size: 40, color: AppTheme.textMuted.withOpacity(0.5)),
+        return Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: AppTheme.bgCard,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: AppTheme.divider),
                 ),
-                const SizedBox(height: 16),
-                Text(
-                  searchQuery.isEmpty
-                      ? 'Tidak ada data pasien'
-                      : 'Pasien tidak ditemukan',
-                  style: GoogleFonts.outfit(
-                      color: AppTheme.textSecondary,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Silakan periksa kembali filter pencarian Anda',
-                  style: GoogleFonts.outfit(
-                      color: AppTheme.textMuted,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600),
-                ),
-              ],
-            ),
+                child: Icon(Icons.person_search_rounded,
+                    size: 40, color: AppTheme.textMuted.withOpacity(0.5)),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                searchQuery.isEmpty
+                    ? 'Tidak ada data pasien'
+                    : 'Pasien tidak ditemukan',
+                style: GoogleFonts.outfit(
+                    color: AppTheme.textSecondary,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Silakan periksa kembali filter pencarian Anda',
+                style: GoogleFonts.outfit(
+                    color: AppTheme.textMuted,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600),
+              ),
+            ],
           ),
         );
       }
 
-      final typeColor = ctrl.selectedTab.value == 0
-          ? AppTheme.info
-          : ctrl.selectedTab.value == 2
-              ? AppTheme.danger
-              : AppTheme.success;
-
-      return Expanded(
-        child: RefreshIndicator(
-          color: AppTheme.accent,
-          backgroundColor: AppTheme.bgCard,
-          onRefresh: ctrl.fetchDashboard,
-          child: ListView.separated(
-            physics: const AlwaysScrollableScrollPhysics(
-                parent: BouncingScrollPhysics()),
-            padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
-            itemCount: list.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 12),
-            itemBuilder: (context, index) {
-              final pasien = list[index];
-              return _patientTile(pasien, _currentTypeString, typeColor);
-            },
-          ),
+      return RefreshIndicator(
+        color: AppTheme.accent,
+        backgroundColor: AppTheme.bgCard,
+        onRefresh: ctrl.fetchDashboard,
+        child: ListView.separated(
+          physics: const AlwaysScrollableScrollPhysics(
+              parent: BouncingScrollPhysics()),
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+          itemCount: list.length,
+          separatorBuilder: (_, __) => const SizedBox(height: 12),
+          itemBuilder: (context, index) {
+            final pasien = list[index];
+            return _patientTile(pasien, typeStr, typeColor);
+          },
         ),
       );
     });

@@ -258,6 +258,10 @@ class _HarianDokterViewState extends State<HarianDokterView> {
       final lab = double.tryParse(summary['total_lab']?.toString() ?? '0') ?? 0;
       final rad = double.tryParse(summary['total_rad']?.toString() ?? '0') ?? 0;
 
+      final width = MediaQuery.of(context).size.width;
+      final int columns = width > 600 ? 5 : (width > 360 ? 2 : 1);
+      final double aspectRatio = width > 600 ? 2.0 : (width > 360 ? 2.2 : 4.0);
+
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -302,10 +306,10 @@ class _HarianDokterViewState extends State<HarianDokterView> {
           ),
           const SizedBox(height: 12),
           GridView.count(
-            crossAxisCount: 2,
+            crossAxisCount: columns,
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            childAspectRatio: 2.2,
+            childAspectRatio: aspectRatio,
             crossAxisSpacing: 10,
             mainAxisSpacing: 10,
             children: [
