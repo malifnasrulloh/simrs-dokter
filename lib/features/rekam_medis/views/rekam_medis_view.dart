@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:fl_chart/fl_chart.dart';
+import 'package:intl/intl.dart';
 import '../../../core/utils/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:webview_flutter/webview_flutter.dart';
@@ -604,38 +606,102 @@ class RekamMedisView extends StatelessWidget {
       }
       final list = ctrl.riwayatMedis;
       final sortedList = list.reversed.toList();
-      return Stack(
+      return Column(
         children: [
-          sortedList.isEmpty
-              ? _emptyState('Belum ada data medis')
-              : ListView.separated(
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
-                  itemCount: sortedList.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 16),
-                  itemBuilder: (context, index) {
-                    final data = sortedList[index];
-                    final uniqueId = '${data['tanggal']}_${data['jam']}_$index';
-                    return _SoapTile(
-                      key: GlobalObjectKey(uniqueId),
-                      data: data,
-                      initiallyExpanded: index == 0,
-                    );
-                  },
+          Obx(() {
+            if (ctrl.offlineSoapQueue.isNotEmpty) {
+              return Container(
+                margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  color: AppTheme.warning.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppTheme.warning.withOpacity(0.4)),
                 ),
-          Positioned(
-            bottom: 16,
-            right: 16,
-            child: FloatingActionButton.extended(
-              onPressed: () => _showSoapForm(context, ctrl),
-              backgroundColor: AppTheme.primary,
-              icon: const Icon(Icons.add, color: Colors.white),
-              label: Text(
-                'Tambah SOAP',
-                style: GoogleFonts.outfit(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w700,
+                child: Row(
+                  children: [
+                    Icon(Icons.cloud_off_rounded, color: AppTheme.warning),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Koneksi Offline',
+                            style: GoogleFonts.outfit(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                              color: AppTheme.warning,
+                            ),
+                          ),
+                          Text(
+                            '${ctrl.offlineSoapQueue.length} data SOAP tersimpan di antrean lokal.',
+                            style: GoogleFonts.outfit(
+                              fontSize: 10.5,
+                              color: AppTheme.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.warning,
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      ),
+                      onPressed: () => ctrl.syncOfflineSoap(),
+                      child: Text(
+                        'Sinkronkan',
+                        style: GoogleFonts.outfit(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ),
+              );
+            }
+            return const SizedBox.shrink();
+          }),
+          Expanded(
+            child: Stack(
+              children: [
+                sortedList.isEmpty
+                    ? _emptyState('Belum ada data medis')
+                    : ListView.separated(
+                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
+                        itemCount: sortedList.length,
+                        separatorBuilder: (_, __) => const SizedBox(height: 16),
+                        itemBuilder: (context, index) {
+                          final data = sortedList[index];
+                          final uniqueId = '${data['tanggal']}_${data['jam']}_$index';
+                          return _SoapTile(
+                            key: GlobalObjectKey(uniqueId),
+                            data: data,
+                            initiallyExpanded: index == 0,
+                          );
+                        },
+                      ),
+                Positioned(
+                  bottom: 16,
+                  right: 16,
+                  child: FloatingActionButton.extended(
+                    onPressed: () => _showSoapForm(context, ctrl),
+                    backgroundColor: AppTheme.primary,
+                    icon: const Icon(Icons.add, color: Colors.white),
+                    label: Text(
+                      'Tambah SOAP',
+                      style: GoogleFonts.outfit(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -1808,7 +1874,7 @@ class RekamMedisView extends StatelessWidget {
     );
   }
 
-  Widget _buildShimmerLoader() {
+  static Widget _buildShimmerLoader() {
     return Shimmer.fromColors(
       baseColor: AppTheme.divider,
       highlightColor: AppTheme.bgDark.withOpacity(0.5),
@@ -3051,7 +3117,7 @@ void _confirmDeleteSoap(BuildContext context, RekamMedisController ctrl, String 
             Expanded(
               child: Obx(() {
                 if (ctrl.isLoadingConsult.value) {
-                  return _buildShimmerLoader();
+                  return RekamMedisView._buildShimmerLoader();
                 }
                 
                 final isOutgoing = activeSubTab.value == 0;
@@ -3550,7 +3616,10 @@ class _SoapTileState extends State<_SoapTile> {
             // ── O: OBJEKTIF ───────────────────────────────────────
             _soapLabel('O', 'Objektif', AppTheme.accent),
             const SizedBox(height: 10),
-            _clinicalSection('Tanda Vital', [_vitalGrid(data)]),
+            _clinicalSection('Tanda Vital', [
+              _vitalGrid(data),
+              _buildVitalsChart(),
+            ]),
             if (_hasVal('keadaan') ||
                 _hasVal('kesadaran') ||
                 _hasVal('gcs') ||
@@ -3805,6 +3874,259 @@ class _SoapTileState extends State<_SoapTile> {
     final spo = int.tryParse(val.toString().replaceAll(RegExp(r'[^0-9]'), ''));
     if (spo != null) return spo < 95 ? AppTheme.danger : AppTheme.success;
     return AppTheme.success;
+  }
+
+  Widget _buildVitalsChart() {
+    return Obx(() {
+      final points = _ctrl.vitalsChartData;
+      if (points.length < 2) {
+        return const SizedBox.shrink();
+      }
+
+      final type = _ctrl.activeChartType.value;
+
+      List<FlSpot> spots1 = [];
+      List<FlSpot> spots2 = [];
+
+      double minY = 0;
+      double maxY = 100;
+      String label1 = '';
+      String label2 = '';
+      Color color1 = AppTheme.primary;
+      Color color2 = AppTheme.accent;
+
+      if (type == 0) {
+        label1 = 'Sistole';
+        label2 = 'Diastole';
+        color1 = AppTheme.danger;
+        color2 = AppTheme.info;
+        for (int i = 0; i < points.length; i++) {
+          if (points[i].systole != null) {
+            spots1.add(FlSpot(i.toDouble(), points[i].systole!));
+          }
+          if (points[i].diastole != null) {
+            spots2.add(FlSpot(i.toDouble(), points[i].diastole!));
+          }
+        }
+        minY = 40;
+        maxY = 200;
+      } else if (type == 1) {
+        label1 = 'Suhu (°C)';
+        color1 = AppTheme.accent;
+        for (int i = 0; i < points.length; i++) {
+          if (points[i].suhu != null) {
+            spots1.add(FlSpot(i.toDouble(), points[i].suhu!));
+          }
+        }
+        minY = 35;
+        maxY = 42;
+      } else {
+        label1 = 'Nadi (bpm)';
+        label2 = 'Respirasi (rr)';
+        color1 = AppTheme.success;
+        color2 = AppTheme.warning;
+        for (int i = 0; i < points.length; i++) {
+          if (points[i].nadi != null) {
+            spots1.add(FlSpot(i.toDouble(), points[i].nadi!));
+          }
+          if (points[i].rr != null) {
+            spots2.add(FlSpot(i.toDouble(), points[i].rr!));
+          }
+        }
+        minY = 10;
+        maxY = 150;
+      }
+
+      if (spots1.isEmpty && spots2.isEmpty) {
+        return const SizedBox.shrink();
+      }
+
+      return Container(
+        margin: const EdgeInsets.only(top: 16),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppTheme.bgCard,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppTheme.divider),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Tren Perkembangan Vital',
+                  style: GoogleFonts.outfit(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: AppTheme.textPrimary,
+                  ),
+                ),
+                Row(
+                  children: [
+                    if (spots1.isNotEmpty) ...[
+                      Container(width: 8, height: 8, decoration: BoxDecoration(color: color1, shape: BoxShape.circle)),
+                      const SizedBox(width: 4),
+                      Text(label1, style: GoogleFonts.outfit(fontSize: 10, color: AppTheme.textSecondary)),
+                    ],
+                    if (spots2.isNotEmpty) ...[
+                      const SizedBox(width: 12),
+                      Container(width: 8, height: 8, decoration: BoxDecoration(color: color2, shape: BoxShape.circle)),
+                      const SizedBox(width: 4),
+                      Text(label2, style: GoogleFonts.outfit(fontSize: 10, color: AppTheme.textSecondary)),
+                    ],
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                _chartTabButton('TD', 0, type),
+                const SizedBox(width: 8),
+                _chartTabButton('Suhu', 1, type),
+                const SizedBox(width: 8),
+                _chartTabButton('Nadi/RR', 2, type),
+              ],
+            ),
+            const SizedBox(height: 20),
+            SizedBox(
+              height: 160,
+              child: LineChart(
+                LineChartData(
+                  minY: minY,
+                  maxY: maxY,
+                  gridData: FlGridData(
+                    show: true,
+                    drawVerticalLine: false,
+                    getDrawingHorizontalLine: (value) => FlLine(
+                      color: AppTheme.divider.withOpacity(0.5),
+                      strokeWidth: 1,
+                    ),
+                  ),
+                  titlesData: FlTitlesData(
+                    show: true,
+                    rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                    topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                    bottomTitles: AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        reservedSize: 22,
+                        interval: 1,
+                        getTitlesWidget: (value, meta) {
+                          final int idx = value.toInt();
+                          if (idx >= 0 && idx < points.length) {
+                            final dt = points[idx].dateTime;
+                            return Padding(
+                              padding: const EdgeInsets.only(top: 4.0),
+                              child: Text(
+                                DateFormat('dd/MM').format(dt),
+                                style: GoogleFonts.outfit(fontSize: 8, color: AppTheme.textMuted),
+                              ),
+                            );
+                          }
+                          return const SizedBox.shrink();
+                        },
+                      ),
+                    ),
+                    leftTitles: AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        reservedSize: 28,
+                        getTitlesWidget: (value, meta) {
+                          return Text(
+                            value.toStringAsFixed(0),
+                            style: GoogleFonts.outfit(fontSize: 8, color: AppTheme.textMuted),
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                  borderData: FlBorderData(show: false),
+                  lineTouchData: LineTouchData(
+                    touchTooltipData: LineTouchTooltipData(
+                      getTooltipColor: (_) => AppTheme.bgDark.withOpacity(0.9),
+                      getTooltipItems: (touchedSpots) {
+                        return touchedSpots.map((spot) {
+                          final idx = spot.x.toInt();
+                          final dateStr = DateFormat('dd MMM yyyy HH:mm').format(points[idx].dateTime);
+                          return LineTooltipItem(
+                            '$dateStr\n${spot.bar.gradient != null ? label2 : label1}: ${spot.y.toStringAsFixed(1)}',
+                            GoogleFonts.outfit(fontSize: 10, color: Colors.white, fontWeight: FontWeight.w600),
+                          );
+                        }).toList();
+                      },
+                    ),
+                  ),
+                  lineBarsData: [
+                    if (spots1.isNotEmpty)
+                      LineChartBarData(
+                        spots: spots1,
+                        isCurved: true,
+                        barWidth: 2.5,
+                        color: color1,
+                        dotData: FlDotData(
+                          show: true,
+                          getDotPainter: (spot, percent, barData, index) => FlDotCirclePainter(
+                            radius: 3,
+                            color: color1,
+                            strokeWidth: 1,
+                            strokeColor: Colors.white,
+                          ),
+                        ),
+                      ),
+                    if (spots2.isNotEmpty)
+                      LineChartBarData(
+                        spots: spots2,
+                        isCurved: true,
+                        barWidth: 2.5,
+                        color: color2,
+                        dotData: FlDotData(
+                          show: true,
+                          getDotPainter: (spot, percent, barData, index) => FlDotCirclePainter(
+                            radius: 3,
+                            color: color2,
+                            strokeWidth: 1,
+                            strokeColor: Colors.white,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    });
+  }
+
+  Widget _chartTabButton(String text, int index, int activeIdx) {
+    final active = index == activeIdx;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () => _ctrl.activeChartType.value = index,
+        borderRadius: BorderRadius.circular(8),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: active ? AppTheme.primary : AppTheme.bgDark,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: active ? AppTheme.primary : AppTheme.divider),
+          ),
+          child: Text(
+            text,
+            style: GoogleFonts.outfit(
+              fontSize: 10.5,
+              fontWeight: FontWeight.bold,
+              color: active ? Colors.white : AppTheme.textSecondary,
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
 
