@@ -140,7 +140,7 @@ class _HarianDokterViewState extends State<HarianDokterView> {
           Text(
             'Filter Rentang Tanggal & Cara Bayar',
             style: GoogleFonts.outfit(
-              color: Colors.white,
+              color: AppTheme.textPrimary,
               fontWeight: FontWeight.w600,
               fontSize: 13,
             ),
@@ -164,7 +164,7 @@ class _HarianDokterViewState extends State<HarianDokterView> {
                         children: [
                           Text(
                             ctrl.selectedDateStart.value.toIso8601String().substring(0, 10),
-                            style: GoogleFonts.robotoMono(color: Colors.white, fontSize: 12),
+                            style: GoogleFonts.robotoMono(color: AppTheme.textPrimary, fontSize: 12),
                           ),
                           const Icon(Icons.calendar_month, color: AppTheme.primary, size: 16),
                         ],
@@ -190,7 +190,7 @@ class _HarianDokterViewState extends State<HarianDokterView> {
                         children: [
                           Text(
                             ctrl.selectedDateEnd.value.toIso8601String().substring(0, 10),
-                            style: GoogleFonts.robotoMono(color: Colors.white, fontSize: 12),
+                            style: GoogleFonts.robotoMono(color: AppTheme.textPrimary, fontSize: 12),
                           ),
                           const Icon(Icons.calendar_month, color: AppTheme.primary, size: 16),
                         ],
@@ -217,7 +217,7 @@ class _HarianDokterViewState extends State<HarianDokterView> {
                   dropdownColor: AppTheme.bgCard,
                   isExpanded: true,
                   icon: const Icon(Icons.keyboard_arrow_down_rounded, color: AppTheme.primary),
-                  style: GoogleFonts.outfit(color: Colors.white, fontSize: 13),
+                  style: GoogleFonts.outfit(color: AppTheme.textPrimary, fontSize: 13),
                   items: [
                     DropdownMenuItem(
                       value: 'Semua',
@@ -293,7 +293,7 @@ class _HarianDokterViewState extends State<HarianDokterView> {
                 Text(
                   _formatRupiah(grandTotal),
                   style: GoogleFonts.robotoMono(
-                    color: Colors.white,
+                    color: AppTheme.primary,
                     fontWeight: FontWeight.w800,
                     fontSize: 22,
                   ),
@@ -360,7 +360,7 @@ class _HarianDokterViewState extends State<HarianDokterView> {
           Text(
             _formatRupiah(val),
             style: GoogleFonts.robotoMono(
-              color: Colors.white,
+              color: AppTheme.textPrimary,
               fontWeight: FontWeight.w700,
               fontSize: 12.5,
             ),
@@ -378,7 +378,7 @@ class _HarianDokterViewState extends State<HarianDokterView> {
           Text(
             'Daftar Transaksi Pasien',
             style: GoogleFonts.outfit(
-              color: Colors.white,
+              color: AppTheme.textPrimary,
               fontWeight: FontWeight.w700,
               fontSize: 14,
             ),
@@ -461,24 +461,31 @@ class _HarianDokterViewState extends State<HarianDokterView> {
             final tarif = double.tryParse(tx['tarif']?.toString() ?? '0') ?? 0;
 
             Color tagColor;
+            Color tagTextColor;
             switch (categoryCode) {
               case 'RJ':
                 tagColor = const Color(0xFFCBEBFF);
+                tagTextColor = const Color(0xFF0284C7);
                 break;
               case 'RI':
                 tagColor = const Color(0xFFCBFCD4);
+                tagTextColor = const Color(0xFF16A34A);
                 break;
               case 'OP':
                 tagColor = const Color(0xFFFFD4D4);
+                tagTextColor = const Color(0xFFDC2626);
                 break;
               case 'LAB':
                 tagColor = const Color(0xFFFFF0CB);
+                tagTextColor = const Color(0xFFD97706);
                 break;
               case 'RAD':
                 tagColor = const Color(0xFFFFE3D2);
+                tagTextColor = const Color(0xFFEA580C);
                 break;
               default:
                 tagColor = AppTheme.divider;
+                tagTextColor = AppTheme.textSecondary;
             }
 
             return Padding(
@@ -509,7 +516,7 @@ class _HarianDokterViewState extends State<HarianDokterView> {
                                 child: Text(
                                   category,
                                   style: GoogleFonts.outfit(
-                                    color: tagColor,
+                                    color: tagTextColor,
                                     fontSize: 8.5,
                                     fontWeight: FontWeight.w800,
                                   ),
@@ -529,7 +536,7 @@ class _HarianDokterViewState extends State<HarianDokterView> {
                           Text(
                             patientName,
                             style: GoogleFonts.outfit(
-                              color: Colors.white,
+                              color: AppTheme.textPrimary,
                               fontWeight: FontWeight.w700,
                               fontSize: 13,
                             ),
@@ -546,7 +553,7 @@ class _HarianDokterViewState extends State<HarianDokterView> {
                           Text(
                             procedure,
                             style: GoogleFonts.outfit(
-                              color: Colors.white.withValues(alpha: 0.9),
+                              color: AppTheme.textSecondary,
                               fontSize: 12,
                               fontWeight: FontWeight.w500,
                             ),

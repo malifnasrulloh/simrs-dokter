@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:get/get.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:dio/dio.dart';
 import '../../../core/network/api_client.dart';
 
 class AuthController extends GetxController {
@@ -109,6 +110,15 @@ class AuthController extends GetxController {
         errorMsg.value = response.data['message'] ?? 'Login gagal';
       }
     } catch (e) {
+      if (e is DioException) {
+        if (e.response != null && e.response?.data != null) {
+          final data = e.response?.data;
+          if (data is Map && data['message'] != null) {
+            errorMsg.value = data['message'].toString();
+            return;
+          }
+        }
+      }
       errorMsg.value = 'Koneksi gagal. Periksa jaringan Anda.';
     } finally {
       isLoading.value = false;
