@@ -68,7 +68,7 @@ class _HarianDokterViewState extends State<HarianDokterView> {
               surface: AppTheme.bgCard,
               onSurface: Colors.white,
             ),
-            dialogBackgroundColor: AppTheme.bgDark,
+            dialogTheme: DialogThemeData(backgroundColor: AppTheme.bgDark),
           ),
           child: child!,
         );
@@ -127,9 +127,6 @@ class _HarianDokterViewState extends State<HarianDokterView> {
   }
 
   Widget _buildFilterSection(BuildContext context) {
-    final dateStartStr = ctrl.selectedDateStart.value.toIso8601String().substring(0, 10);
-    final dateEndStr = ctrl.selectedDateEnd.value.toIso8601String().substring(0, 10);
-
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -271,14 +268,14 @@ class _HarianDokterViewState extends State<HarianDokterView> {
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  AppTheme.primary.withOpacity(0.15),
-                  AppTheme.primary.withOpacity(0.02),
+                  AppTheme.primary.withValues(alpha: 0.15),
+                  AppTheme.primary.withValues(alpha: 0.02),
                 ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppTheme.primary.withOpacity(0.3)),
+              border: Border.all(color: AppTheme.primary.withValues(alpha: 0.3)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -389,7 +386,7 @@ class _HarianDokterViewState extends State<HarianDokterView> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              color: AppTheme.primary.withOpacity(0.08),
+              color: AppTheme.primary.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(
@@ -423,7 +420,7 @@ class _HarianDokterViewState extends State<HarianDokterView> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.receipt_long_rounded, size: 48, color: AppTheme.textSecondary.withOpacity(0.4)),
+                Icon(Icons.receipt_long_rounded, size: 48, color: AppTheme.textSecondary.withValues(alpha: 0.4)),
                 const SizedBox(height: 12),
                 Text(
                   'Tidak ada data transaksi harian.',
@@ -505,9 +502,9 @@ class _HarianDokterViewState extends State<HarianDokterView> {
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                 decoration: BoxDecoration(
-                                  color: tagColor.withOpacity(0.12),
+                                  color: tagColor.withValues(alpha: 0.12),
                                   borderRadius: BorderRadius.circular(4),
-                                  border: Border.all(color: tagColor.withOpacity(0.3)),
+                                  border: Border.all(color: tagColor.withValues(alpha: 0.3)),
                                 ),
                                 child: Text(
                                   category,
@@ -549,7 +546,7 @@ class _HarianDokterViewState extends State<HarianDokterView> {
                           Text(
                             procedure,
                             style: GoogleFonts.outfit(
-                              color: Colors.white.withOpacity(0.9),
+                              color: Colors.white.withValues(alpha: 0.9),
                               fontSize: 12,
                               fontWeight: FontWeight.w500,
                             ),

@@ -100,7 +100,7 @@ class ProfileView extends StatelessWidget {
               height: 76,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: AppTheme.primary.withOpacity(0.15),
+                color: AppTheme.primary.withValues(alpha: 0.15),
                 border: Border.all(color: Colors.white, width: 2),
               ),
               child: const Center(
@@ -305,7 +305,7 @@ class ProfileView extends StatelessWidget {
           child: ElevatedButton(
             onPressed: auth.logout,
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.danger.withOpacity(0.08),
+              backgroundColor: AppTheme.danger.withValues(alpha: 0.08),
               elevation: 0,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(14),

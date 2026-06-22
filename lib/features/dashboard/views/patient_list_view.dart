@@ -161,7 +161,7 @@ class _PatientListViewState extends State<PatientListView> {
                           shape: BoxShape.circle,
                           border: Border.all(color: AppTheme.divider),
                         ),
-                        child: Icon(Icons.person_search_rounded, size: 40, color: AppTheme.textMuted.withOpacity(0.5)),
+                        child: Icon(Icons.person_search_rounded, size: 40, color: AppTheme.textMuted.withValues(alpha: 0.5)),
                       ),
                       const SizedBox(height: 16),
                       Text(
@@ -219,7 +219,7 @@ class _PatientListViewState extends State<PatientListView> {
                           border: Border.all(color: AppTheme.divider, width: 1.2),
                           boxShadow: [
                             BoxShadow(
-                              color: AppTheme.textPrimary.withOpacity(0.04),
+                              color: AppTheme.textPrimary.withValues(alpha: 0.04),
                               blurRadius: 16,
                               offset: const Offset(0, 8),
                             )
@@ -250,7 +250,7 @@ class _PatientListViewState extends State<PatientListView> {
                                     color: isBpjs ? const Color(0xFFD1FAE5) : AppTheme.bgSurface,
                                     borderRadius: BorderRadius.circular(6),
                                     border: Border.all(
-                                      color: isBpjs ? const Color(0xFF10B981).withOpacity(0.3) : AppTheme.divider,
+                                      color: isBpjs ? const Color(0xFF10B981).withValues(alpha: 0.3) : AppTheme.divider,
                                       width: 1,
                                     ),
                                   ),
@@ -288,9 +288,9 @@ class _PatientListViewState extends State<PatientListView> {
                                   Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                     decoration: BoxDecoration(
-                                      color: Colors.orange.withOpacity(0.08),
+                                      color: Colors.orange.withValues(alpha: 0.08),
                                       borderRadius: BorderRadius.circular(5),
-                                      border: Border.all(color: Colors.orange.withOpacity(0.2)),
+                                      border: Border.all(color: Colors.orange.withValues(alpha: 0.2)),
                                     ),
                                     child: Text(
                                       '${pasien['lama']} Hari',

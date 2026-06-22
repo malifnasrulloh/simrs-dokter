@@ -170,7 +170,7 @@ class RekamMedisView extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: AppTheme.primary.withOpacity(0.2),
+            color: AppTheme.primary.withValues(alpha: 0.2),
             blurRadius: 12,
             offset: const Offset(0, 6),
           ),
@@ -185,7 +185,7 @@ class RekamMedisView extends StatelessWidget {
                 width: 36,
                 height: 36,
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
+                  color: Colors.white.withValues(alpha: 0.2),
                   shape: BoxShape.circle,
                 ),
                 child: Center(
@@ -223,7 +223,7 @@ class RekamMedisView extends StatelessWidget {
                           style: GoogleFonts.robotoMono(
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
-                            color: Colors.white.withOpacity(0.9),
+                            color: Colors.white.withValues(alpha: 0.9),
                           ),
                         ),
                         const SizedBox(width: 6),
@@ -231,7 +231,7 @@ class RekamMedisView extends StatelessWidget {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 6, vertical: 1.5),
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
+                            color: Colors.white.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(5),
                           ),
                           child: Text(
@@ -312,7 +312,7 @@ class RekamMedisView extends StatelessWidget {
                                 style: GoogleFonts.outfit(
                                   fontSize: 10.5,
                                   fontWeight: FontWeight.w600,
-                                  color: Colors.white.withOpacity(0.95),
+                                  color: Colors.white.withValues(alpha: 0.95),
                                 ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
@@ -362,7 +362,7 @@ class RekamMedisView extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.all(4),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.15),
+                    color: Colors.white.withValues(alpha: 0.15),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
@@ -385,7 +385,7 @@ class RekamMedisView extends StatelessWidget {
               children: [
                 const SizedBox(height: 10),
                 Divider(
-                    color: Colors.white.withOpacity(0.2), height: 1, thickness: 1),
+                    color: Colors.white.withValues(alpha: 0.2), height: 1, thickness: 1),
                 const SizedBox(height: 10),
                 Row(
                   children: [
@@ -429,7 +429,7 @@ class RekamMedisView extends StatelessWidget {
                     children: [
                       const SizedBox(height: 10),
                       Divider(
-                          color: Colors.white.withOpacity(0.2),
+                          color: Colors.white.withValues(alpha: 0.2),
                           height: 1,
                           thickness: 1),
                       const SizedBox(height: 10),
@@ -441,7 +441,7 @@ class RekamMedisView extends StatelessWidget {
                               'Total Billing',
                               style: GoogleFonts.outfit(
                                   fontSize: 11,
-                                  color: Colors.white.withOpacity(0.85),
+                                  color: Colors.white.withValues(alpha: 0.85),
                                   fontWeight: FontWeight.w700),
                             ),
                             Text(
@@ -544,14 +544,14 @@ class RekamMedisView extends StatelessWidget {
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
                     color: active
-                        ? AppTheme.primaryLight.withOpacity(0.3)
+                        ? AppTheme.primaryLight.withValues(alpha: 0.3)
                         : AppTheme.divider,
                     width: 1,
                   ),
                   boxShadow: active
                       ? [
                           BoxShadow(
-                            color: AppTheme.primary.withOpacity(0.2),
+                            color: AppTheme.primary.withValues(alpha: 0.2),
                             blurRadius: 10,
                             offset: const Offset(0, 4),
                           )
@@ -614,9 +614,9 @@ class RekamMedisView extends StatelessWidget {
                 margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 decoration: BoxDecoration(
-                  color: AppTheme.warning.withOpacity(0.12),
+                  color: AppTheme.warning.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppTheme.warning.withOpacity(0.4)),
+                  border: Border.all(color: AppTheme.warning.withValues(alpha: 0.4)),
                 ),
                 child: Row(
                   children: [
@@ -1001,7 +1001,7 @@ class RekamMedisView extends StatelessWidget {
                   color: AppTheme.bgCard,
                   borderRadius: BorderRadius.circular(18),
                   border: Border.all(
-                    color: isPending ? AppTheme.warning.withOpacity(0.4) : AppTheme.divider,
+                    color: isPending ? AppTheme.warning.withValues(alpha: 0.4) : AppTheme.divider,
                   ),
                 ),
                 child: Column(
@@ -1011,7 +1011,7 @@ class RekamMedisView extends StatelessWidget {
                       width: double.infinity,
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                       decoration: BoxDecoration(
-                        color: isPending ? AppTheme.warning.withOpacity(0.08) : AppTheme.bgSurface,
+                        color: isPending ? AppTheme.warning.withValues(alpha: 0.08) : AppTheme.bgSurface,
                         borderRadius: const BorderRadius.vertical(top: Radius.circular(17)),
                       ),
                       child: Row(
@@ -1065,7 +1065,7 @@ class RekamMedisView extends StatelessWidget {
                               Container(
                                 padding: const EdgeInsets.all(8),
                                 decoration: BoxDecoration(
-                                  color: (isPending ? AppTheme.warning : AppTheme.success).withOpacity(0.08),
+                                  color: (isPending ? AppTheme.warning : AppTheme.success).withValues(alpha: 0.08),
                                   borderRadius: BorderRadius.circular(10),
                                 ),
                                 child: Icon(
@@ -1176,9 +1176,9 @@ class RekamMedisView extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2.5),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.08),
+        color: color.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: color.withOpacity(0.2), width: 0.8),
+        border: Border.all(color: color.withValues(alpha: 0.2), width: 0.8),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -1217,7 +1217,7 @@ class RekamMedisView extends StatelessWidget {
             border: Border.all(color: AppTheme.divider),
             boxShadow: [
               BoxShadow(
-                color: AppTheme.textPrimary.withOpacity(0.02),
+                color: AppTheme.textPrimary.withValues(alpha: 0.02),
                 blurRadius: 16,
                 offset: const Offset(0, 8),
               )
@@ -1464,7 +1464,7 @@ class RekamMedisView extends StatelessWidget {
           border: Border.all(color: AppTheme.divider),
           boxShadow: [
             BoxShadow(
-              color: AppTheme.textPrimary.withOpacity(0.02),
+              color: AppTheme.textPrimary.withValues(alpha: 0.02),
               blurRadius: 16,
               offset: const Offset(0, 8),
             )
@@ -1564,7 +1564,7 @@ class RekamMedisView extends StatelessWidget {
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 10, vertical: 6),
                               decoration: BoxDecoration(
-                                color: Colors.black.withOpacity(0.6),
+                                color: Colors.black.withValues(alpha: 0.6),
                                 borderRadius: const BorderRadius.only(
                                     topLeft: Radius.circular(12)),
                               ),
@@ -1625,7 +1625,7 @@ class RekamMedisView extends StatelessWidget {
         border: Border.all(color: AppTheme.divider),
         boxShadow: [
           BoxShadow(
-            color: AppTheme.textPrimary.withOpacity(0.02),
+            color: AppTheme.textPrimary.withValues(alpha: 0.02),
             blurRadius: 16,
             offset: const Offset(0, 8),
           )
@@ -1637,9 +1637,9 @@ class RekamMedisView extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
             decoration: BoxDecoration(
-              color: AppTheme.accentAlt.withOpacity(0.08),
+              color: AppTheme.accentAlt.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppTheme.accentAlt.withOpacity(0.2)),
+              border: Border.all(color: AppTheme.accentAlt.withValues(alpha: 0.2)),
             ),
             child: Text(
               modality.toUpperCase(),
@@ -1688,7 +1688,7 @@ class RekamMedisView extends StatelessWidget {
                       borderRadius: BorderRadius.circular(10),
                       boxShadow: [
                         BoxShadow(
-                          color: AppTheme.primary.withOpacity(0.15),
+                          color: AppTheme.primary.withValues(alpha: 0.15),
                           blurRadius: 8,
                           offset: const Offset(0, 4),
                         )
@@ -1792,7 +1792,7 @@ class RekamMedisView extends StatelessWidget {
       child: Column(
         children: [
           Icon(Icons.info_outline_rounded,
-              size: 24, color: AppTheme.textMuted.withOpacity(0.6)),
+              size: 24, color: AppTheme.textMuted.withValues(alpha: 0.6)),
           const SizedBox(height: 8),
           Text(
             message,
@@ -1823,7 +1823,7 @@ class RekamMedisView extends StatelessWidget {
         border: Border.all(color: AppTheme.divider),
         boxShadow: [
           BoxShadow(
-            color: AppTheme.textPrimary.withOpacity(0.03),
+            color: AppTheme.textPrimary.withValues(alpha: 0.03),
             blurRadius: 16,
             offset: const Offset(0, 8),
           )
@@ -1834,7 +1834,7 @@ class RekamMedisView extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: iconColor.withOpacity(0.08),
+              color: iconColor.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(icon, color: iconColor, size: 20),
@@ -1878,7 +1878,7 @@ class RekamMedisView extends StatelessWidget {
   static Widget _buildShimmerLoader() {
     return Shimmer.fromColors(
       baseColor: AppTheme.divider,
-      highlightColor: AppTheme.bgDark.withOpacity(0.5),
+      highlightColor: AppTheme.bgDark.withValues(alpha: 0.5),
       child: ListView.separated(
         padding: const EdgeInsets.all(16),
         itemCount: 3,
@@ -1977,7 +1977,7 @@ class RekamMedisView extends StatelessWidget {
               border: Border.all(color: AppTheme.divider),
             ),
             child: Icon(Icons.inventory_2_outlined,
-                size: 40, color: AppTheme.textMuted.withOpacity(0.6)),
+                size: 40, color: AppTheme.textMuted.withValues(alpha: 0.6)),
           ),
           const SizedBox(height: 16),
           Text(
@@ -2028,7 +2028,7 @@ class RekamMedisView extends StatelessWidget {
               border: Border.all(color: AppTheme.divider),
               boxShadow: [
                 BoxShadow(
-                  color: AppTheme.textPrimary.withOpacity(0.015),
+                  color: AppTheme.textPrimary.withValues(alpha: 0.015),
                   blurRadius: 10,
                   offset: const Offset(0, 4),
                 )
@@ -2103,10 +2103,10 @@ class RekamMedisView extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 10, vertical: 5),
                         decoration: BoxDecoration(
-                          color: AppTheme.success.withOpacity(0.08),
+                          color: AppTheme.success.withValues(alpha: 0.08),
                           borderRadius: BorderRadius.circular(8),
                           border: Border.all(
-                              color: AppTheme.success.withOpacity(0.2)),
+                              color: AppTheme.success.withValues(alpha: 0.2)),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
@@ -2155,10 +2155,10 @@ class RekamMedisView extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 10, vertical: 5),
                         decoration: BoxDecoration(
-                          color: AppTheme.warning.withOpacity(0.08),
+                          color: AppTheme.warning.withValues(alpha: 0.08),
                           borderRadius: BorderRadius.circular(8),
                           border: Border.all(
-                              color: AppTheme.warning.withOpacity(0.2)),
+                              color: AppTheme.warning.withValues(alpha: 0.2)),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
@@ -2251,7 +2251,7 @@ class RekamMedisView extends StatelessWidget {
               if (success) {
                 Get.snackbar(
                     'Sukses', 'Instruksi SBAR berhasil diverifikasi oleh DPJP',
-                    backgroundColor: AppTheme.success.withOpacity(0.1),
+                    backgroundColor: AppTheme.success.withValues(alpha: 0.1),
                     colorText: AppTheme.success,
                     snackPosition: SnackPosition.BOTTOM);
               }
@@ -2409,7 +2409,7 @@ void _confirmDeleteSoap(BuildContext context, RekamMedisController ctrl, String 
                           decoration: BoxDecoration(
                             color: const Color(0xFFFEF3C7), // Warm premium amber
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: const Color(0xFFF59E0B).withOpacity(0.3), width: 1.2),
+                            border: Border.all(color: const Color(0xFFF59E0B).withValues(alpha: 0.3), width: 1.2),
                           ),
                           child: Row(
                             children: [
@@ -2431,7 +2431,7 @@ void _confirmDeleteSoap(BuildContext context, RekamMedisController ctrl, String 
                                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                   minimumSize: Size.zero,
                                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                  backgroundColor: const Color(0xFFF59E0B).withOpacity(0.12),
+                                  backgroundColor: const Color(0xFFF59E0B).withValues(alpha: 0.12),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(8),
                                   ),
@@ -2622,25 +2622,33 @@ void _confirmDeleteSoap(BuildContext context, RekamMedisController ctrl, String 
                 Text('$code - $name', style: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.textPrimary)),
                 const SizedBox(height: 16),
                 Text('Prioritas', style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.textSecondary)),
-                Row(
-                  children: [
-                    Radio<int>(value: 1, groupValue: priority, onChanged: (v) => setState(() => priority = v!)),
-                    Text('1 (Utama)', style: GoogleFonts.outfit(fontSize: 12)),
-                    const SizedBox(width: 12),
-                    Radio<int>(value: 2, groupValue: priority, onChanged: (v) => setState(() => priority = v!)),
-                    Text('2+ (Sekunder)', style: GoogleFonts.outfit(fontSize: 12)),
-                  ],
+                RadioGroup<int>(
+                  groupValue: priority,
+                  onChanged: (v) => setState(() => priority = v!),
+                  child: Row(
+                    children: [
+                      Radio<int>(value: 1),
+                      Text('1 (Utama)', style: GoogleFonts.outfit(fontSize: 12)),
+                      const SizedBox(width: 12),
+                      Radio<int>(value: 2),
+                      Text('2+ (Sekunder)', style: GoogleFonts.outfit(fontSize: 12)),
+                    ],
+                  ),
                 ),
                 const SizedBox(height: 12),
                 Text('Status Kasus', style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.textSecondary)),
-                Row(
-                  children: [
-                    Radio<String>(value: 'Baru', groupValue: status, onChanged: (v) => setState(() => status = v!)),
-                    Text('Baru', style: GoogleFonts.outfit(fontSize: 12)),
-                    const SizedBox(width: 12),
-                    Radio<String>(value: 'Lama', groupValue: status, onChanged: (v) => setState(() => status = v!)),
-                    Text('Lama', style: GoogleFonts.outfit(fontSize: 12)),
-                  ],
+                RadioGroup<String>(
+                  groupValue: status,
+                  onChanged: (v) => setState(() => status = v!),
+                  child: Row(
+                    children: [
+                      Radio<String>(value: 'Baru'),
+                      Text('Baru', style: GoogleFonts.outfit(fontSize: 12)),
+                      const SizedBox(width: 12),
+                      Radio<String>(value: 'Lama'),
+                      Text('Lama', style: GoogleFonts.outfit(fontSize: 12)),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -2679,14 +2687,18 @@ void _confirmDeleteSoap(BuildContext context, RekamMedisController ctrl, String 
                 Text('$code - $name', style: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.textPrimary)),
                 const SizedBox(height: 16),
                 Text('Prioritas', style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.textSecondary)),
-                Row(
-                  children: [
-                    Radio<int>(value: 1, groupValue: priority, onChanged: (v) => setState(() => priority = v!)),
-                    Text('1 (Utama)', style: GoogleFonts.outfit(fontSize: 12)),
-                    const SizedBox(width: 12),
-                    Radio<int>(value: 2, groupValue: priority, onChanged: (v) => setState(() => priority = v!)),
-                    Text('2+ (Sekunder)', style: GoogleFonts.outfit(fontSize: 12)),
-                  ],
+                RadioGroup<int>(
+                  groupValue: priority,
+                  onChanged: (v) => setState(() => priority = v!),
+                  child: Row(
+                    children: [
+                      Radio<int>(value: 1),
+                      Text('1 (Utama)', style: GoogleFonts.outfit(fontSize: 12)),
+                      const SizedBox(width: 12),
+                      Radio<int>(value: 2),
+                      Text('2+ (Sekunder)', style: GoogleFonts.outfit(fontSize: 12)),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -2820,7 +2832,6 @@ void _confirmDeleteSoap(BuildContext context, RekamMedisController ctrl, String 
                           itemBuilder: (context, idx) {
                             final item = ctrl.searchObatResults[idx];
                             final name = item['nama_brng'] ?? '-';
-                            final code = item['kode_brng'] ?? '';
                             final stock = double.tryParse(item['total_stok']?.toString() ?? '0') ?? 0.0;
                             final isLowStock = stock <= 0;
                             
@@ -2838,7 +2849,7 @@ void _confirmDeleteSoap(BuildContext context, RekamMedisController ctrl, String 
                               trailing: isLowStock
                                   ? Container(
                                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                      decoration: BoxDecoration(color: AppTheme.danger.withOpacity(0.1), borderRadius: BorderRadius.circular(6)),
+                                      decoration: BoxDecoration(color: AppTheme.danger.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(6)),
                                       child: Text('Habis', style: GoogleFonts.outfit(fontSize: 10, color: AppTheme.danger, fontWeight: FontWeight.bold)),
                                     )
                                   : Icon(Icons.add_circle_outline_rounded, color: AppTheme.primary, size: 20),
@@ -2864,7 +2875,7 @@ void _confirmDeleteSoap(BuildContext context, RekamMedisController ctrl, String 
                           decoration: BoxDecoration(
                             color: const Color(0xFFFEF3C7), // Warm premium amber
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: const Color(0xFFF59E0B).withOpacity(0.3), width: 1.2),
+                            border: Border.all(color: const Color(0xFFF59E0B).withValues(alpha: 0.3), width: 1.2),
                           ),
                           child: Row(
                             children: [
@@ -2886,7 +2897,7 @@ void _confirmDeleteSoap(BuildContext context, RekamMedisController ctrl, String 
                                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                   minimumSize: Size.zero,
                                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                  backgroundColor: const Color(0xFFF59E0B).withOpacity(0.12),
+                                  backgroundColor: const Color(0xFFF59E0B).withValues(alpha: 0.12),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(8),
                                   ),
@@ -2919,7 +2930,7 @@ void _confirmDeleteSoap(BuildContext context, RekamMedisController ctrl, String 
                           child: Center(
                             child: Column(
                               children: [
-                                Icon(Icons.shopping_basket_outlined, size: 40, color: AppTheme.textMuted.withOpacity(0.5)),
+                                Icon(Icons.shopping_basket_outlined, size: 40, color: AppTheme.textMuted.withValues(alpha: 0.5)),
                                 const SizedBox(height: 8),
                                 Text('Keranjang resep kosong', style: GoogleFonts.outfit(fontSize: 12, color: AppTheme.textMuted)),
                               ],
@@ -3073,7 +3084,7 @@ void _confirmDeleteSoap(BuildContext context, RekamMedisController ctrl, String 
                           padding: const EdgeInsets.symmetric(vertical: 8),
                           alignment: Alignment.center,
                           decoration: BoxDecoration(
-                            color: active ? AppTheme.primary.withOpacity(0.08) : Colors.transparent,
+                            color: active ? AppTheme.primary.withValues(alpha: 0.08) : Colors.transparent,
                             border: Border(bottom: BorderSide(color: active ? AppTheme.primary : Colors.transparent, width: 2)),
                           ),
                           child: Text(
@@ -3097,7 +3108,7 @@ void _confirmDeleteSoap(BuildContext context, RekamMedisController ctrl, String 
                           padding: const EdgeInsets.symmetric(vertical: 8),
                           alignment: Alignment.center,
                           decoration: BoxDecoration(
-                            color: active ? AppTheme.primary.withOpacity(0.08) : Colors.transparent,
+                            color: active ? AppTheme.primary.withValues(alpha: 0.08) : Colors.transparent,
                             border: Border(bottom: BorderSide(color: active ? AppTheme.primary : Colors.transparent, width: 2)),
                           ),
                           child: Text(
@@ -3162,7 +3173,7 @@ void _confirmDeleteSoap(BuildContext context, RekamMedisController ctrl, String 
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                 decoration: BoxDecoration(
-                                  color: (isAnswered ? AppTheme.success : AppTheme.warning).withOpacity(0.12),
+                                  color: (isAnswered ? AppTheme.success : AppTheme.warning).withValues(alpha: 0.12),
                                   borderRadius: BorderRadius.circular(6),
                                 ),
                                 child: Text(
@@ -3523,7 +3534,7 @@ class _SoapTileState extends State<_SoapTile> {
           border: Border.all(color: AppTheme.divider),
           boxShadow: [
             BoxShadow(
-              color: AppTheme.textPrimary.withOpacity(0.02),
+              color: AppTheme.textPrimary.withValues(alpha: 0.02),
               blurRadius: 16,
               offset: const Offset(0, 8),
             )
@@ -3541,7 +3552,7 @@ class _SoapTileState extends State<_SoapTile> {
           leading: Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: AppTheme.primary.withOpacity(0.08),
+              color: AppTheme.primary.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(12),
             ),
             child: const Icon(Icons.sticky_note_2_rounded,
@@ -3684,9 +3695,9 @@ class _SoapTileState extends State<_SoapTile> {
           height: 28,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: color.withOpacity(0.12),
+            color: color.withValues(alpha: 0.12),
             borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: color.withOpacity(0.3)),
+            border: Border.all(color: color.withValues(alpha: 0.3)),
           ),
           child: Text(
             letter,
@@ -3762,9 +3773,9 @@ class _SoapTileState extends State<_SoapTile> {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
       decoration: BoxDecoration(
-        color: statusColor.withOpacity(0.06),
+        color: statusColor.withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: statusColor.withOpacity(0.3), width: 1.2),
+        border: Border.all(color: statusColor.withValues(alpha: 0.3), width: 1.2),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -4002,7 +4013,7 @@ class _SoapTileState extends State<_SoapTile> {
                     show: true,
                     drawVerticalLine: false,
                     getDrawingHorizontalLine: (value) => FlLine(
-                      color: AppTheme.divider.withOpacity(0.5),
+                      color: AppTheme.divider.withValues(alpha: 0.5),
                       strokeWidth: 1,
                     ),
                   ),
@@ -4047,7 +4058,7 @@ class _SoapTileState extends State<_SoapTile> {
                   borderData: FlBorderData(show: false),
                   lineTouchData: LineTouchData(
                     touchTooltipData: LineTouchTooltipData(
-                      getTooltipColor: (_) => AppTheme.bgDark.withOpacity(0.9),
+                      getTooltipColor: (_) => AppTheme.bgDark.withValues(alpha: 0.9),
                       getTooltipItems: (touchedSpots) {
                         return touchedSpots.map((spot) {
                           final idx = spot.x.toInt();

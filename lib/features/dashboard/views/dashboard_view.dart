@@ -34,7 +34,7 @@ class DashboardView extends StatelessWidget {
             ctrl.currentNavIndex.value = index;
           },
           backgroundColor: AppTheme.bgCard,
-          indicatorColor: AppTheme.primary.withOpacity(0.12),
+          indicatorColor: AppTheme.primary.withValues(alpha: 0.12),
           elevation: 8,
           destinations: const [
             NavigationDestination(
