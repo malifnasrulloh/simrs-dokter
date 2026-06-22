@@ -340,7 +340,11 @@ class HomeDashboardView extends StatelessWidget {
         itemCount: ctrl.listJadwalOperasi.length,
         itemBuilder: (context, index) {
           final op = ctrl.listJadwalOperasi[index];
-          final timeStr = '${op['jam_mulai']?.toString().substring(0, 5) ?? '00:00'} - ${op['jam_selesai']?.toString().substring(0, 5) ?? 'Selesai'}';
+          final jamMulaiRaw = op['jam_mulai']?.toString() ?? '';
+          final jamMulai = jamMulaiRaw.length >= 5 ? jamMulaiRaw.substring(0, 5) : (jamMulaiRaw.isNotEmpty ? jamMulaiRaw : '00:00');
+          final jamSelesaiRaw = op['jam_selesai']?.toString() ?? '';
+          final jamSelesai = jamSelesaiRaw.length >= 5 ? jamSelesaiRaw.substring(0, 5) : (jamSelesaiRaw.isNotEmpty ? jamSelesaiRaw : 'Selesai');
+          final timeStr = '$jamMulai - $jamSelesai';
           final room = op['nm_ruang_ok']?.toString() ?? 'Kamar OK';
           final procedure = op['nm_perawatan']?.toString() ?? 'Tindakan Operasi';
           final patient = op['nm_pasien']?.toString() ?? 'Pasien';
@@ -368,7 +372,7 @@ class HomeDashboardView extends StatelessWidget {
                       const Icon(Icons.access_time_filled_rounded, color: Colors.amber, size: 16),
                       const SizedBox(height: 4),
                       Text(
-                        op['jam_mulai']?.toString().substring(0, 5) ?? '00:00',
+                        jamMulai,
                         style: GoogleFonts.robotoMono(
                           fontSize: 10.5,
                           fontWeight: FontWeight.w800,

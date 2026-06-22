@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:async';
 import 'package:get/get.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -15,6 +16,7 @@ class RekamMedisController extends GetxController {
   HttpClient? _sseClient;
   HttpClientRequest? _sseRequest;
   HttpClientResponse? _sseResponse;
+  StreamSubscription? _connectivitySubscription;
   final isLoading = false.obs;
   final activeTab = 0.obs;
   final showDetails = false.obs;
@@ -75,7 +77,7 @@ class RekamMedisController extends GetxController {
     }
     
     // Listen to network transitions to automatically sync offline notes
-    Connectivity().onConnectivityChanged.listen((event) {
+    _connectivitySubscription = Connectivity().onConnectivityChanged.listen((event) {
       final isOnline = event.isNotEmpty && !event.contains(ConnectivityResult.none);
       if (isOnline) {
         syncOfflineSoap();
@@ -1213,6 +1215,7 @@ class RekamMedisController extends GetxController {
   void onClose() {
     _sseRequest?.abort();
     _sseClient?.close();
+    _connectivitySubscription?.cancel();
     super.onClose();
   }
 
@@ -1245,7 +1248,7 @@ class RekamMedisController extends GetxController {
       double? nadi;
       double? rr;
 
-      final tensi = raw['tensi']?.toString().trim() ?? '';
+      final tensi = raw['td']?.toString().trim() ?? '';
       if (tensi.contains('/')) {
         final parts = tensi.split('/');
         systole = double.tryParse(parts[0].replaceAll(RegExp(r'[^0-9.]'), ''));
@@ -1254,9 +1257,9 @@ class RekamMedisController extends GetxController {
         }
       }
 
-      suhu = double.tryParse(raw['suhu_tubuh']?.toString().replaceAll(RegExp(r'[^0-9.]'), '') ?? '');
+      suhu = double.tryParse(raw['suhu']?.toString().replaceAll(RegExp(r'[^0-9.]'), '') ?? '');
       nadi = double.tryParse(raw['nadi']?.toString().replaceAll(RegExp(r'[^0-9.]'), '') ?? '');
-      rr = double.tryParse(raw['respirasi']?.toString().replaceAll(RegExp(r'[^0-9.]'), '') ?? '');
+      rr = double.tryParse(raw['rr']?.toString().replaceAll(RegExp(r'[^0-9.]'), '') ?? '');
 
       if (systole != null || diastole != null || suhu != null || nadi != null || rr != null) {
         points.add(VitalsTrendPoint(
