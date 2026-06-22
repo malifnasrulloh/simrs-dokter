@@ -17,6 +17,8 @@ class RekamMedisController extends GetxController {
   HttpClientRequest? _sseRequest;
   HttpClientResponse? _sseResponse;
   StreamSubscription? _connectivitySubscription;
+  late final PageController pageController;
+  late final Worker _tabWorker;
   final isLoading = false.obs;
   final activeTab = 0.obs;
   final showDetails = false.obs;
@@ -76,6 +78,17 @@ class RekamMedisController extends GetxController {
       pasienData.value = args;
     }
     
+    pageController = PageController(initialPage: activeTab.value);
+    _tabWorker = ever(activeTab, (int index) {
+      if (pageController.hasClients && pageController.page?.round() != index) {
+        pageController.animateToPage(
+          index,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+        );
+      }
+    });
+
     // Listen to network transitions to automatically sync offline notes
     _connectivitySubscription = Connectivity().onConnectivityChanged.listen((event) {
       final isOnline = event.isNotEmpty && !event.contains(ConnectivityResult.none);
@@ -1216,6 +1229,8 @@ class RekamMedisController extends GetxController {
     _sseRequest?.abort();
     _sseClient?.close();
     _connectivitySubscription?.cancel();
+    _tabWorker.dispose();
+    pageController.dispose();
     super.onClose();
   }
 
