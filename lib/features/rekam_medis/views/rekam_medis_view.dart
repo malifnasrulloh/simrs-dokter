@@ -575,26 +575,25 @@ class RekamMedisView extends StatelessWidget {
   }
 
   Widget _buildTabContent(BuildContext context, RekamMedisController ctrl) {
-    return Obx(() {
-      switch (ctrl.activeTab.value) {
-        case 0:
-          return _buildMedisTab(context, ctrl);
-        case 1:
-          return _buildDiagnosaTab(context, ctrl);
-        case 2:
-          return _buildObatTab(context, ctrl);
-        case 3:
-          return _buildLabTab(ctrl);
-        case 4:
-          return _buildRadiologiTab(ctrl);
-        case 5:
-          return _buildKonsultasiTab(context, ctrl);
-        case 6:
-          return _buildSbarTab(context, ctrl);
-        default:
-          return const SizedBox();
-      }
-    });
+    final children = [
+      _buildMedisTab(context, ctrl),
+      _buildDiagnosaTab(context, ctrl),
+      _buildObatTab(context, ctrl),
+      _buildLabTab(ctrl),
+      _buildRadiologiTab(ctrl),
+      _buildKonsultasiTab(context, ctrl),
+    ];
+    if (ctrl.tipeRawat == 'RANAP') {
+      children.add(_buildSbarTab(context, ctrl));
+    }
+
+    return PageView(
+      controller: ctrl.pageController,
+      onPageChanged: (index) {
+        ctrl.activeTab.value = index;
+      },
+      children: children,
+    );
   }
 
   Widget _buildMedisTab(BuildContext context, RekamMedisController ctrl) {
