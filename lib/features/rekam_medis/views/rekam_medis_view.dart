@@ -756,7 +756,7 @@ class RekamMedisView extends StatelessWidget {
               return const SizedBox.shrink();
             }
             return Container(
-              maxHeight: 200,
+              constraints: const BoxConstraints(maxHeight: 200),
               decoration: BoxDecoration(
                 color: AppTheme.bgCard,
                 borderRadius: BorderRadius.circular(12),
@@ -856,7 +856,7 @@ class RekamMedisView extends StatelessWidget {
               return const SizedBox.shrink();
             }
             return Container(
-              maxHeight: 200,
+              constraints: const BoxConstraints(maxHeight: 200),
               decoration: BoxDecoration(
                 color: AppTheme.bgCard,
                 borderRadius: BorderRadius.circular(12),
@@ -919,9 +919,10 @@ class RekamMedisView extends StatelessWidget {
             );
           }),
         ],
-      );
-    });
-  }
+      ),
+    );
+  });
+}
 
   Widget _buildObatTab(BuildContext context, RekamMedisController ctrl) {
     return Stack(

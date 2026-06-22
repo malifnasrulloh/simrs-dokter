@@ -8,9 +8,13 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import '../../../core/config/app_config.dart';
 import '../../../core/network/api_client.dart';
 import '../../auth/controllers/auth_controller.dart';
+import '../../../core/theme/app_theme.dart';
 
 class RekamMedisController extends GetxController {
   final _api = ApiClient();
+  HttpClient? _sseClient;
+  HttpClientRequest? _sseRequest;
+  HttpClientResponse? _sseResponse;
   final isLoading = false.obs;
   final activeTab = 0.obs;
   final showDetails = false.obs;
