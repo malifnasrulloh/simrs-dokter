@@ -76,12 +76,7 @@ class RekamMedisController extends GetxController {
     
     // Listen to network transitions to automatically sync offline notes
     Connectivity().onConnectivityChanged.listen((event) {
-      bool isOnline = false;
-      if (event is List) {
-        isOnline = event.isNotEmpty && !event.contains(ConnectivityResult.none);
-      } else {
-        isOnline = event != ConnectivityResult.none;
-      }
+      final isOnline = event.isNotEmpty && !event.contains(ConnectivityResult.none);
       if (isOnline) {
         syncOfflineSoap();
       }
@@ -586,7 +581,7 @@ class RekamMedisController extends GetxController {
     if (offlineSoapQueue.isEmpty) return;
     
     final conn = await Connectivity().checkConnectivity();
-    final isOffline = (conn is List) ? (conn.isEmpty || conn.contains(ConnectivityResult.none)) : (conn == ConnectivityResult.none);
+    final isOffline = conn.isEmpty || conn.contains(ConnectivityResult.none);
     if (isOffline) return;
 
     final toSync = List<Map<String, dynamic>>.from(offlineSoapQueue);
@@ -638,9 +633,8 @@ class RekamMedisController extends GetxController {
       final myNip = authCtrl.user.value?['nip'] ?? authCtrl.user.value?['username'] ?? '';
       final myName = authCtrl.user.value?['nama'] ?? authCtrl.user.value?['name'] ?? 'Dokter';
       
-      // Check online status
       final conn = await Connectivity().checkConnectivity();
-      final isOffline = (conn is List) ? (conn.isEmpty || conn.contains(ConnectivityResult.none)) : (conn == ConnectivityResult.none);
+      final isOffline = conn.isEmpty || conn.contains(ConnectivityResult.none);
       
       if (isOffline) {
         final now = DateTime.now();

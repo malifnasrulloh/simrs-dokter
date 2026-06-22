@@ -51,7 +51,7 @@ class _LoginViewState extends State<LoginView> with TickerProviderStateMixin {
               height: 320,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: AppTheme.primary.withOpacity(0.08),
+                color: AppTheme.primary.withValues(alpha: 0.08),
               ),
               child: BackdropFilter(
                 filter: ImageFilter.blur(sigmaX: 90, sigmaY: 90),
@@ -67,7 +67,7 @@ class _LoginViewState extends State<LoginView> with TickerProviderStateMixin {
               height: 260,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: AppTheme.accentAlt.withOpacity(0.06),
+                color: AppTheme.accentAlt.withValues(alpha: 0.06),
               ),
               child: BackdropFilter(
                 filter: ImageFilter.blur(sigmaX: 80, sigmaY: 80),
@@ -114,7 +114,7 @@ class _LoginViewState extends State<LoginView> with TickerProviderStateMixin {
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
-                color: AppTheme.primary.withOpacity(0.25),
+                color: AppTheme.primary.withValues(alpha: 0.25),
                 blurRadius: 20,
                 offset: const Offset(0, 6),
               ),
@@ -164,7 +164,7 @@ class _LoginViewState extends State<LoginView> with TickerProviderStateMixin {
         border: Border.all(color: AppTheme.divider, width: 1.2),
         boxShadow: [
           BoxShadow(
-            color: AppTheme.textPrimary.withOpacity(0.05),
+            color: AppTheme.textPrimary.withValues(alpha: 0.05),
             blurRadius: 24,
             offset: const Offset(0, 12),
           )
@@ -261,7 +261,7 @@ class _LoginViewState extends State<LoginView> with TickerProviderStateMixin {
                 ? []
                 : [
                     BoxShadow(
-                      color: AppTheme.primary.withOpacity(0.3),
+                      color: AppTheme.primary.withValues(alpha: 0.3),
                       blurRadius: 16,
                       offset: const Offset(0, 6),
                     ),
@@ -299,9 +299,9 @@ class _LoginViewState extends State<LoginView> with TickerProviderStateMixin {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
-          color: AppTheme.danger.withOpacity(0.08),
+          color: AppTheme.danger.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AppTheme.danger.withOpacity(0.2)),
+          border: Border.all(color: AppTheme.danger.withValues(alpha: 0.2)),
         ),
         child: Row(
           children: [

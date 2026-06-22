@@ -75,9 +75,9 @@ class HomeDashboardView extends StatelessWidget {
               width: 50,
               height: 50,
               decoration: BoxDecoration(
-                color: AppTheme.primary.withOpacity(0.2),
+                color: AppTheme.primary.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppTheme.primary.withOpacity(0.4), width: 1.5),
+                border: Border.all(color: AppTheme.primary.withValues(alpha: 0.4), width: 1.5),
               ),
               child: const Icon(Icons.medical_services_rounded, color: Colors.white, size: 26),
             ),
@@ -243,7 +243,7 @@ class HomeDashboardView extends StatelessWidget {
           border: Border.all(color: AppTheme.divider),
           boxShadow: [
             BoxShadow(
-              color: AppTheme.textPrimary.withOpacity(0.015),
+              color: AppTheme.textPrimary.withValues(alpha: 0.015),
               blurRadius: 10,
               offset: const Offset(0, 4),
             )
@@ -267,7 +267,7 @@ class HomeDashboardView extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
-                    color: color.withOpacity(0.08),
+                    color: color.withValues(alpha: 0.08),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(icon, color: color, size: 16),
@@ -319,7 +319,7 @@ class HomeDashboardView extends StatelessWidget {
           ),
           child: Column(
             children: [
-              Icon(Icons.calendar_today_rounded, color: AppTheme.textMuted.withOpacity(0.5), size: 36),
+              Icon(Icons.calendar_today_rounded, color: AppTheme.textMuted.withValues(alpha: 0.5), size: 36),
               const SizedBox(height: 8),
               Text(
                 'Tidak ada jadwal operasi hari ini',
@@ -360,7 +360,7 @@ class HomeDashboardView extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                   decoration: BoxDecoration(
-                    color: Colors.amber.withOpacity(0.08),
+                    color: Colors.amber.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Column(
