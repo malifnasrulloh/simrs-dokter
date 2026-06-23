@@ -10,6 +10,8 @@ import '../../../core/config/app_config.dart';
 import '../../../core/network/api_client.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/utils/local_notification_service.dart';
+import '../../dashboard/controllers/dashboard_controller.dart';
 
 class RekamMedisController extends GetxController {
   final _api = ApiClient();
@@ -1214,13 +1216,21 @@ class RekamMedisController extends GetxController {
   }
 
   void _handleSseEvent(String event, dynamic data) {
+    final int notificationId = DateTime.now().millisecondsSinceEpoch.remainder(100000);
+
     if (event == 'consultation_request') {
       final drPemberi = data['nm_dokter_pemberi'] ?? 'Rekan Dokter';
+      final diagnosa = data['diagnosa_kerja'] ?? '';
       Get.snackbar(
         'Konsultasi Baru',
-        'Permintaan konsultasi dari $drPemberi: "${data['diagnosa_kerja'] ?? ''}"',
+        'Permintaan konsultasi dari $drPemberi: "$diagnosa"',
         duration: const Duration(seconds: 6),
         snackPosition: SnackPosition.TOP,
+      );
+      LocalNotificationService.showNotification(
+        id: notificationId,
+        title: 'Konsultasi Baru',
+        body: 'Permintaan konsultasi dari $drPemberi: "$diagnosa"',
       );
       fetchConsultations();
     } else if (event == 'consultation_response') {
@@ -1230,6 +1240,47 @@ class RekamMedisController extends GetxController {
         'Balasan dari $drPenerima untuk permintaan ${data['no_permintaan']}',
         duration: const Duration(seconds: 6),
         snackPosition: SnackPosition.TOP,
+      );
+      LocalNotificationService.showNotification(
+        id: notificationId,
+        title: 'Konsultasi Dijawab',
+        body: 'Balasan dari $drPenerima untuk permintaan ${data['no_permintaan']}',
+      );
+      fetchConsultations();
+    } else if (event == 'new_admission') {
+      final nmPasien = data['nm_pasien'] ?? 'Pasien Baru';
+      final noRawat = data['no_rawat'] ?? '';
+      Get.snackbar(
+        'Pasien Baru Terdaftar',
+        'Anda telah didelegasikan sebagai DPJP untuk $nmPasien ($noRawat)',
+        duration: const Duration(seconds: 6),
+        snackPosition: SnackPosition.TOP,
+      );
+      LocalNotificationService.showNotification(
+        id: notificationId,
+        title: 'Pasien Baru Terdaftar',
+        body: 'Anda telah didelegasikan sebagai DPJP untuk $nmPasien ($noRawat)',
+      );
+      try {
+        if (Get.isRegistered<DashboardController>()) {
+          Get.find<DashboardController>().fetchDashboard();
+        }
+      } catch (_) {}
+    } else if (event == 'emergency_igd_consultation') {
+      final drPemberi = data['nm_dokter_pemberi'] ?? 'Rekan Dokter';
+      final nmPasien = data['nm_pasien'] ?? 'Pasien';
+      Get.snackbar(
+        '🚨 URGENT: KONSUL IGD',
+        'Permintaan konsultasi segera dari $drPemberi untuk pasien $nmPasien',
+        duration: const Duration(seconds: 10),
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: Colors.red[800],
+        colorText: Colors.white,
+      );
+      LocalNotificationService.showNotification(
+        id: notificationId,
+        title: '🚨 URGENT: KONSUL IGD',
+        body: 'Permintaan konsultasi segera dari $drPemberi untuk pasien $nmPasien',
       );
       fetchConsultations();
     }
