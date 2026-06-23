@@ -1218,15 +1218,19 @@ class RekamMedisController extends GetxController {
   void _handleSseEvent(String event, dynamic data) {
     final int notificationId = DateTime.now().millisecondsSinceEpoch.remainder(100000);
 
+    final isTesting = Platform.environment.containsKey('FLUTTER_TEST');
+
     if (event == 'consultation_request') {
       final drPemberi = data['nm_dokter_pemberi'] ?? 'Rekan Dokter';
       final diagnosa = data['diagnosa_kerja'] ?? '';
-      Get.snackbar(
-        'Konsultasi Baru',
-        'Permintaan konsultasi dari $drPemberi: "$diagnosa"',
-        duration: const Duration(seconds: 6),
-        snackPosition: SnackPosition.TOP,
-      );
+      if (!isTesting) {
+        Get.snackbar(
+          'Konsultasi Baru',
+          'Permintaan konsultasi dari $drPemberi: "$diagnosa"',
+          duration: const Duration(seconds: 6),
+          snackPosition: SnackPosition.TOP,
+        );
+      }
       LocalNotificationService.showNotification(
         id: notificationId,
         title: 'Konsultasi Baru',
@@ -1235,12 +1239,14 @@ class RekamMedisController extends GetxController {
       fetchConsultations();
     } else if (event == 'consultation_response') {
       final drPenerima = data['nm_dokter_dikonsuli'] ?? 'Rekan Dokter';
-      Get.snackbar(
-        'Konsultasi Dijawab',
-        'Balasan dari $drPenerima untuk permintaan ${data['no_permintaan']}',
-        duration: const Duration(seconds: 6),
-        snackPosition: SnackPosition.TOP,
-      );
+      if (!isTesting) {
+        Get.snackbar(
+          'Konsultasi Dijawab',
+          'Balasan dari $drPenerima untuk permintaan ${data['no_permintaan']}',
+          duration: const Duration(seconds: 6),
+          snackPosition: SnackPosition.TOP,
+        );
+      }
       LocalNotificationService.showNotification(
         id: notificationId,
         title: 'Konsultasi Dijawab',
@@ -1250,12 +1256,14 @@ class RekamMedisController extends GetxController {
     } else if (event == 'new_admission') {
       final nmPasien = data['nm_pasien'] ?? 'Pasien Baru';
       final noRawat = data['no_rawat'] ?? '';
-      Get.snackbar(
-        'Pasien Baru Terdaftar',
-        'Anda telah didelegasikan sebagai DPJP untuk $nmPasien ($noRawat)',
-        duration: const Duration(seconds: 6),
-        snackPosition: SnackPosition.TOP,
-      );
+      if (!isTesting) {
+        Get.snackbar(
+          'Pasien Baru Terdaftar',
+          'Anda telah didelegasikan sebagai DPJP untuk $nmPasien ($noRawat)',
+          duration: const Duration(seconds: 6),
+          snackPosition: SnackPosition.TOP,
+        );
+      }
       LocalNotificationService.showNotification(
         id: notificationId,
         title: 'Pasien Baru Terdaftar',
@@ -1269,14 +1277,16 @@ class RekamMedisController extends GetxController {
     } else if (event == 'emergency_igd_consultation') {
       final drPemberi = data['nm_dokter_pemberi'] ?? 'Rekan Dokter';
       final nmPasien = data['nm_pasien'] ?? 'Pasien';
-      Get.snackbar(
-        '🚨 URGENT: KONSUL IGD',
-        'Permintaan konsultasi segera dari $drPemberi untuk pasien $nmPasien',
-        duration: const Duration(seconds: 10),
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: Colors.red[800],
-        colorText: Colors.white,
-      );
+      if (!isTesting) {
+        Get.snackbar(
+          '🚨 URGENT: KONSUL IGD',
+          'Permintaan konsultasi segera dari $drPemberi untuk pasien $nmPasien',
+          duration: const Duration(seconds: 10),
+          snackPosition: SnackPosition.TOP,
+          backgroundColor: Colors.red[800],
+          colorText: Colors.white,
+        );
+      }
       LocalNotificationService.showNotification(
         id: notificationId,
         title: '🚨 URGENT: KONSUL IGD',
@@ -1284,6 +1294,11 @@ class RekamMedisController extends GetxController {
       );
       fetchConsultations();
     }
+  }
+
+  @visibleForTesting
+  void handleSseEventForTesting(String event, dynamic data) {
+    _handleSseEvent(event, data);
   }
 
   @override
