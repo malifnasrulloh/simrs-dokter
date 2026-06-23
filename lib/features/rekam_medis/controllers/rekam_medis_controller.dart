@@ -499,7 +499,14 @@ class RekamMedisController extends GetxController {
     }
   }
 
-  Future<bool> validasiSbar(String tglPerawatan, String jamRawat) async {
+  Future<bool> validasiSbar({
+    required String? noPermintaan,
+    required String tglPerawatan,
+    required String jamRawat,
+    required String respon,
+    required String instruksi,
+    required String rencana,
+  }) async {
     try {
       final authCtrl = Get.find<AuthController>();
       final myNip = authCtrl.user.value?['nip'];
@@ -508,10 +515,14 @@ class RekamMedisController extends GetxController {
         return false;
       }
       final res = await _api.dio.post('/pemeriksaan/validasi', data: {
+        'no_permintaan': noPermintaan,
         'no_rawat': noRawat,
         'tgl_perawatan': tglPerawatan,
         'jam_rawat': jamRawat,
         'nik': myNip,
+        'respon': respon,
+        'instruksi': instruksi,
+        'rencana': rencana,
       });
       if (res.statusCode == 201 || (res.data != null && res.data['success'] == true)) {
         await _fetchSbarList();
