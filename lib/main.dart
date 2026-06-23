@@ -8,10 +8,13 @@ import 'features/dashboard/views/dashboard_view.dart';
 import 'features/dashboard/views/patient_list_view.dart';
 import 'features/rekam_medis/views/rekam_medis_view.dart';
 import 'core/utils/google_fonts.dart';
+import 'core/utils/local_notification_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   GoogleFonts.config.allowRuntimeFetching = false;
+  await LocalNotificationService.initialize();
+  await LocalNotificationService.requestPermissions();
   runApp(const SimrsDokterApp());
 }
 
