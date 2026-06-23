@@ -3736,7 +3736,9 @@ class _SoapTileState extends State<_SoapTile> {
             )
           ],
         ),
-        child: ExpansionTile(
+        child: Material(
+          color: Colors.transparent,
+          child: ExpansionTile(
           key: ValueKey(uniqueId),
           initiallyExpanded: _isExpanded,
           onExpansionChanged: (v) {
@@ -3880,6 +3882,7 @@ class _SoapTileState extends State<_SoapTile> {
           ],
         ),
       ),
+     ),
     );
   }
 
