@@ -773,8 +773,8 @@ class RekamMedisController extends GetxController {
     try {
       isLoadingConsult.value = true;
       final results = await Future.wait([
-        _api.dio.get('/konsultasi/masuk'),
-        _api.dio.get('/konsultasi/keluar'),
+        _api.dio.get('/konsultasi/masuk', queryParameters: {'no_rawat': noRawat}),
+        _api.dio.get('/konsultasi/keluar', queryParameters: {'no_rawat': noRawat}),
       ]);
       
       if (results[0].statusCode == 200 && results[0].data != null && results[0].data['success'] == true) {
