@@ -117,16 +117,18 @@ class DashboardController extends GetxController {
 
   Future<void> _fetchPasienRanap() async {
     try {
+      final authCtrl = Get.find<AuthController>();
+      final loggedInDoctorId = authCtrl.user.value?['nip'];
       final res = await _api.dio.get('/list-pasien-ranap', queryParameters: {
         'belumpulang': 'true',
         'statusbayar': 'semua',
+        if (loggedInDoctorId != null && loggedInDoctorId.toString().isNotEmpty)
+          'kd_dokter': loggedInDoctorId,
       });
       if (res.data['success'] == true) {
         var data = List<Map<String, dynamic>>.from(res.data['data'] ?? [])
             .map((e) => {...e, '_type': 'RANAP'})
             .toList();
-        final authCtrl = Get.find<AuthController>();
-        final loggedInDoctorId = authCtrl.user.value?['nip'];
         if (loggedInDoctorId != null && loggedInDoctorId.toString().isNotEmpty) {
           data = data.where((e) {
             final dpjpList = e['dpjp'] as List? ?? [];
@@ -141,17 +143,19 @@ class DashboardController extends GetxController {
 
   Future<void> _fetchPasienRalan() async {
     try {
+      final authCtrl = Get.find<AuthController>();
+      final loggedInDoctorId = authCtrl.user.value?['nip'];
       final todayStr = DateTime.now().toIso8601String().substring(0, 10);
       final res = await _api.dio.get('/list-pasien-ralan', queryParameters: {
         'tglawal': todayStr,
         'tglakhir': todayStr,
+        if (loggedInDoctorId != null && loggedInDoctorId.toString().isNotEmpty)
+          'dokter': loggedInDoctorId,
       });
       if (res.data['success'] == true) {
         var data = List<Map<String, dynamic>>.from(res.data['data'] ?? [])
             .map((e) => {...e, '_type': 'RALAN'})
             .toList();
-        final authCtrl = Get.find<AuthController>();
-        final loggedInDoctorId = authCtrl.user.value?['nip'];
         if (loggedInDoctorId != null && loggedInDoctorId.toString().isNotEmpty) {
           data = data.where((e) => e['kd_dokter'] == loggedInDoctorId).toList();
         }
@@ -163,18 +167,20 @@ class DashboardController extends GetxController {
 
   Future<void> _fetchPasienIGD() async {
     try {
+      final authCtrl = Get.find<AuthController>();
+      final loggedInDoctorId = authCtrl.user.value?['nip'];
       final todayStr = DateTime.now().toIso8601String().substring(0, 10);
       final res = await _api.dio.get('/list-pasien-igd', queryParameters: {
         'tglawal': todayStr,
         'tglakhir': todayStr,
         'statuslanjut': 'semua',
+        if (loggedInDoctorId != null && loggedInDoctorId.toString().isNotEmpty)
+          'kd_dokter': loggedInDoctorId,
       });
       if (res.data['success'] == true) {
         var data = List<Map<String, dynamic>>.from(res.data['data'] ?? [])
             .map((e) => {...e, '_type': 'IGD'})
             .toList();
-        final authCtrl = Get.find<AuthController>();
-        final loggedInDoctorId = authCtrl.user.value?['nip'];
         if (loggedInDoctorId != null && loggedInDoctorId.toString().isNotEmpty) {
           data = data.where((e) => e['kd_dokter'] == loggedInDoctorId).toList();
         }
