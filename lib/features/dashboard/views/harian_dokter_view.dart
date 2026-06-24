@@ -63,9 +63,9 @@ class _HarianDokterViewState extends State<HarianDokterView> {
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: const ColorScheme.dark(
-              primary: AppTheme.primary,
-              onPrimary: Colors.black,
-              surface: AppTheme.bgCard,
+              primary: AppTheme.primaryLight,
+              onPrimary: Colors.white,
+              surface: AppTheme.primary,
               onSurface: Colors.white,
             ),
             dialogTheme: DialogThemeData(backgroundColor: AppTheme.bgDark),
