@@ -3460,7 +3460,7 @@ void _confirmDeleteSoap(BuildContext context, RekamMedisController ctrl, String 
   }
 
   void _showConsultationDialog(BuildContext context, RekamMedisController ctrl) {
-    Map<String, dynamic>? selectedDokter;
+    final selectedDokter = Rxn<Map<String, dynamic>>();
     final rujukanCtrl = TextEditingController();
     final diagnosaCtrl = TextEditingController();
     final attachmentCtrl = TextEditingController();
@@ -3509,16 +3509,15 @@ void _confirmDeleteSoap(BuildContext context, RekamMedisController ctrl, String 
                         final code = dr['kd_dokter'] ?? '';
                         final name = dr['nm_dokter'] ?? '';
                         return Obx(() {
-                          final isSelected = selectedDokter?['kd_dokter'] == code;
+                          final isSelected = selectedDokter.value?['kd_dokter'] == code;
                           return ListTile(
                             dense: true,
                             title: Text(name, style: GoogleFonts.outfit(fontSize: 12, fontWeight: isSelected ? FontWeight.bold : FontWeight.normal)),
                             selected: isSelected,
                             selectedColor: AppTheme.primary,
                             onTap: () {
-                              selectedDokter = dr;
+                              selectedDokter.value = dr;
                               dokterSearchCtrl.text = name;
-                              filteredDokterList.refresh();
                             },
                           );
                         });
@@ -3556,7 +3555,7 @@ void _confirmDeleteSoap(BuildContext context, RekamMedisController ctrl, String 
           TextButton(onPressed: () => Get.back(), child: Text('Batal', style: GoogleFonts.outfit(color: AppTheme.textSecondary))),
           ElevatedButton(
             onPressed: () async {
-              if (selectedDokter == null) {
+              if (selectedDokter.value == null) {
                 Get.snackbar('Error', 'Silakan pilih dokter tujuan terlebih dahulu', backgroundColor: Colors.white, colorText: AppTheme.danger);
                 return;
               }
@@ -3572,7 +3571,7 @@ void _confirmDeleteSoap(BuildContext context, RekamMedisController ctrl, String 
               }
 
               final success = await ctrl.sendConsultation(
-                targetDokter: selectedDokter!['kd_dokter'],
+                targetDokter: selectedDokter.value!['kd_dokter'],
                 jenis: ctrl.tipeRawat.isEmpty ? 'RALAN' : ctrl.tipeRawat,
                 diagnosa: diagnosaCtrl.text,
                 uraian: finalUraian,
