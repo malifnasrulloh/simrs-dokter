@@ -97,7 +97,7 @@ void main() {
     });
 
     testWidgets('SSE alerts trigger local notifications and refreshes lists', (WidgetTester tester) async {
-      print('=== SSE Test: Start ===');
+      debugPrint('=== SSE Test: Start ===');
       Get.routing.args = {
         'no_rawat': '2026/06/20/0001',
         'no_rkm_medis': 'P00001',
@@ -105,50 +105,50 @@ void main() {
       };
       // Pump MaterialApp so GetX has overlay context for Snackbars
       await tester.pumpWidget(GetMaterialApp(home: const Scaffold()));
-      print('=== SSE Test: MaterialApp pumped ===');
+      debugPrint('=== SSE Test: MaterialApp pumped ===');
       
       final controller = Get.put(RekamMedisController());
-      print('=== SSE Test: Controller put ===');
+      debugPrint('=== SSE Test: Controller put ===');
 
       await tester.runAsync(() async {
         await controller.fetchAllData();
-        print('=== SSE Test: Data fetched ===');
+        debugPrint('=== SSE Test: Data fetched ===');
 
         // 1. Test new_admission event
         controller.handleSseEventForTesting('new_admission', {
           'no_rawat': '2026/06/20/0004',
           'nm_pasien': 'Test Admission Patient',
         });
-        print('=== SSE Test: Event 1 handled ===');
+        debugPrint('=== SSE Test: Event 1 handled ===');
 
         // 2. Test emergency_igd_consultation event
         controller.handleSseEventForTesting('emergency_igd_consultation', {
           'nm_dokter_pemberi': 'Dr. IGD Sender',
           'nm_pasien': 'IGD Emergency Patient',
         });
-        print('=== SSE Test: Event 2 handled ===');
+        debugPrint('=== SSE Test: Event 2 handled ===');
 
         // 3. Test consultation_request event
         controller.handleSseEventForTesting('consultation_request', {
           'nm_dokter_pemberi': 'Dr. Consult Sender',
           'nm_pasien': 'Budi Santoso',
         });
-        print('=== SSE Test: Event 3 handled ===');
+        debugPrint('=== SSE Test: Event 3 handled ===');
 
         // 4. Test consultation_response event
         controller.handleSseEventForTesting('consultation_response', {
           'nm_dokter_pemberi': 'Dr. Consult Responder',
           'nm_pasien': 'Budi Santoso',
         });
-        print('=== SSE Test: Event 4 handled ===');
+        debugPrint('=== SSE Test: Event 4 handled ===');
       });
 
       await tester.pumpAndSettle();
-      print('=== SSE Test: Pump completed ===');
+      debugPrint('=== SSE Test: Pump completed ===');
 
       // Simple verify that calls didn't crash
       expect(controller.riwayatMedis.length, equals(1));
-      print('=== SSE Test: Finish ===');
+      debugPrint('=== SSE Test: Finish ===');
     });
   });
 

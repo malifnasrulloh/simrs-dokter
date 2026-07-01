@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:dio/dio.dart';
@@ -91,7 +90,6 @@ class TestHelper {
     dio.interceptors.add(InterceptorsWrapper(
       onRequest: (options, handler) {
         final path = options.path;
-        final method = options.method.toUpperCase();
 
         if (path.contains('/auth/login')) {
           final data = options.data as Map?;

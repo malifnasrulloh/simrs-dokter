@@ -70,7 +70,7 @@ void main() {
 
   group('LoginView Widget Integration Tests', () {
     testWidgets('renders login form properly and handles submit', (WidgetTester tester) async {
-      final authController = Get.put(AuthController());
+      Get.put(AuthController());
 
       await tester.pumpWidget(
         GetMaterialApp(
@@ -104,7 +104,7 @@ void main() {
     });
 
     testWidgets('shows validation/error message on login failure', (WidgetTester tester) async {
-      final authController = Get.put(AuthController());
+      Get.put(AuthController());
 
       await tester.pumpWidget(
         GetMaterialApp(
