@@ -7,6 +7,7 @@ import 'package:simrs_dokter/features/dashboard/views/dashboard_view.dart';
 import 'package:simrs_dokter/features/dashboard/views/home_dashboard_view.dart';
 import 'package:simrs_dokter/features/dashboard/views/patient_workspace_view.dart';
 import 'package:simrs_dokter/features/dashboard/views/harian_dokter_view.dart';
+import 'package:simrs_dokter/features/dashboard/views/harian_dokter_config_view.dart';
 import 'test_helper.dart';
 
 void main() {
@@ -104,6 +105,68 @@ void main() {
 
       // HarianDokterView should be active
       expect(find.byType(HarianDokterView), findsOneWidget);
+    });
+
+    testWidgets('renders HarianDokterConfigView for admin user', (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(1200, 1920);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      final authCtrl = Get.find<AuthController>();
+      authCtrl.user.value = {
+        'kd_dokter': 'ADMIN',
+        'nm_dokter': 'Super Admin',
+        'isadmin': true,
+      };
+
+      Get.put(DashboardController());
+
+      await tester.pumpWidget(
+        GetMaterialApp(
+          home: const DashboardView(),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Tap on bottom navigation item 'Akses Harian'
+      expect(find.text('Akses Harian'), findsOneWidget);
+      await tester.tap(find.text('Akses Harian'));
+      await tester.pumpAndSettle();
+
+      // Should show HarianDokterConfigView
+      expect(find.byType(HarianDokterConfigView), findsOneWidget);
+    });
+
+    testWidgets('hides Jasa Medis tab for doctor without access', (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(1200, 1920);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      final authCtrl = Get.find<AuthController>();
+      authCtrl.user.value = {
+        'kd_dokter': 'D0001',
+        'nm_dokter': 'Dr. Limited Access',
+        'isadmin': false,
+        'userakses': <String>[], // No harian_dokter access
+      };
+
+      Get.put(DashboardController());
+
+      await tester.pumpWidget(
+        GetMaterialApp(
+          home: const DashboardView(),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Ensure 'Jasa Medis' tab is not present
+      expect(find.text('Jasa Medis'), findsNothing);
     });
 
     testWidgets('navigates to PatientWorkspaceView and filters correctly', (WidgetTester tester) async {

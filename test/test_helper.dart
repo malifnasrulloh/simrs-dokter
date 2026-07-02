@@ -119,6 +119,35 @@ class TestHelper {
           }
         }
 
+        if (path.contains('/auth/harian-access')) {
+          if (options.method == 'GET') {
+            return handler.resolve(Response(
+              requestOptions: options,
+              statusCode: 200,
+              data: {
+                'success': true,
+                'data': [
+                  {
+                    'kd_dokter': 'D0001',
+                    'nm_dokter': 'Dr. Test Provider',
+                    'spesialis': 'Spesialis Anak',
+                    'harian_dokter': true
+                  }
+                ]
+              },
+            ));
+          } else if (options.method == 'PUT') {
+            return handler.resolve(Response(
+              requestOptions: options,
+              statusCode: 200,
+              data: {
+                'success': true,
+                'message': 'Akses Harian Dokter berhasil diperbarui'
+              },
+            ));
+          }
+        }
+
         if (path.contains('/setting')) {
           return handler.resolve(Response(
             requestOptions: options,

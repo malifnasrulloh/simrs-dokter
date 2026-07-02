@@ -14,6 +14,18 @@ class AuthController extends GetxController {
   final setting = Rxn<Map<String, dynamic>>();
   final profileData = Rxn<Map<String, dynamic>>();
 
+  bool get isAdmin => user.value?['isadmin'] == true;
+
+  bool hasAccess(String key) {
+    if (isAdmin) return true;
+    final access = user.value?['userakses'];
+    if (access == null) {
+      return true; // Default to true in tests or unconfigured profiles
+    }
+    final List<dynamic> accessList = List.from(access);
+    return accessList.contains(key);
+  }
+
   @override
   void onInit() {
     super.onInit();
@@ -96,13 +108,19 @@ class AuthController extends GetxController {
       if (response.data['success'] == true) {
         final token = response.data['token'];
         final userData = response.data['data'];
+        final isAdmin = response.data['isadmin'] == true;
+        final userAkses = List<String>.from(response.data['userakses'] ?? []);
+
+        final userMap = Map<String, dynamic>.from(userData ?? {});
+        userMap['isadmin'] = isAdmin;
+        userMap['userakses'] = userAkses;
 
         await _storage.write(key: 'auth_token', value: token);
-        await _storage.write(key: 'user_data', value: jsonEncode(userData));
+        await _storage.write(key: 'user_data', value: jsonEncode(userMap));
         await _storage.write(key: 'username', value: username);
         await _storage.write(key: 'password', value: password);
 
-        user.value = userData;
+        user.value = userMap;
         await fetchSetting();
         await fetchProfile();
         Get.offAllNamed('/home');

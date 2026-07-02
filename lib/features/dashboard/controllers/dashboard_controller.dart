@@ -34,8 +34,11 @@ class DashboardController extends GetxController {
   void onInit() {
     super.onInit();
     fetchDashboard();
-    fetchCaraBayarOptions();
-    fetchHarianDokter();
+    final auth = Get.find<AuthController>();
+    if (!auth.isAdmin && auth.hasAccess('harian_dokter')) {
+      fetchCaraBayarOptions();
+      fetchHarianDokter();
+    }
   }
 
   Future<void> fetchCaraBayarOptions() async {
