@@ -118,7 +118,7 @@ class HarianDokterConfigView extends StatelessWidget {
                               ),
                             ),
                             CupertinoSwitch(
-                              activeColor: AppTheme.primary,
+                              activeTrackColor: AppTheme.primary,
                               value: isEnabled,
                               onChanged: (val) => ctrl.toggleAccess(code, val),
                             ),

@@ -12,3 +12,7 @@
 
 # Secure Storage & Cryptography
 -keep class androidx.security.crypto.** { *; }
+
+# Ignore missing Play Core classes referenced by Flutter deferred components
+-dontwarn com.google.android.play.core.**
+
