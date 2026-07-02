@@ -181,5 +181,29 @@ void main() {
       expect(find.text('Budi Santoso'), findsWidgets);
       expect(find.text('2026/06/20/0001'), findsOneWidget);
     });
+
+    testWidgets('hides all write access UI controls in read-only mode', (WidgetTester tester) async {
+      Get.routing.args = {
+        'no_rawat': '2026/06/20/0001',
+        'no_rkm_medis': 'P00001',
+        'nm_pasien': 'Budi Santoso',
+        '_type': 'RANAP',
+      };
+      Get.put(RekamMedisController());
+      
+      await tester.pumpWidget(
+        GetMaterialApp(
+          home: const RekamMedisView(),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Ensure write control FABs and actions are not present in read-only mode
+      expect(find.text('Tambah SOAP'), findsNothing);
+      expect(find.text('Buat Resep'), findsNothing);
+      expect(find.text('Minta Konsul'), findsNothing);
+      expect(find.byIcon(Icons.edit_rounded), findsNothing);
+      expect(find.byIcon(Icons.delete_outline_rounded), findsNothing);
+    });
   });
 }

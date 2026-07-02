@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../../core/config/app_config.dart';
 import '../../../core/utils/google_fonts.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../auth/controllers/auth_controller.dart';
@@ -280,7 +281,7 @@ class ProfileView extends StatelessWidget {
     return Column(
       children: [
         Text(
-          'CareDoc EMR v1.0.0',
+          '${AppConfig.appName} v${AppConfig.appVersion}',
           style: GoogleFonts.outfit(
             fontSize: 10.5,
             color: AppTheme.textMuted,

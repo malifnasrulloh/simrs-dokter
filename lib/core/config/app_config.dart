@@ -3,8 +3,14 @@ class AppConfig {
     'BASE_URL',
     defaultValue: 'http://localhost:4002/api',
   );
-  static const String appName = 'CareDoc EMR';
-  static const String appVersion = '1.0.0';
+  static const String appName = String.fromEnvironment(
+    'APP_NAME',
+    defaultValue: 'E-Dokter',
+  );
+  static const String appVersion = String.fromEnvironment(
+    'APP_VERSION',
+    defaultValue: '1.0.0',
+  );
   static const int connectTimeout = int.fromEnvironment(
     'CONNECT_TIMEOUT',
     defaultValue: 30000,
@@ -12,5 +18,9 @@ class AppConfig {
   static const int receiveTimeout = int.fromEnvironment(
     'RECEIVE_TIMEOUT',
     defaultValue: 30000,
+  );
+  static const bool enableWriteAccess = bool.fromEnvironment(
+    'ENABLE_WRITE_ACCESS',
+    defaultValue: false,
   );
 }

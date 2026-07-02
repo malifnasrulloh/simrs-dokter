@@ -10,6 +10,7 @@ import 'package:shimmer/shimmer.dart';
 import '../../../core/theme/app_theme.dart';
 import '../controllers/rekam_medis_controller.dart';
 import '../../auth/controllers/auth_controller.dart';
+import '../../../core/config/app_config.dart';
 
 class RekamMedisView extends StatelessWidget {
   const RekamMedisView({super.key});
@@ -684,22 +685,23 @@ class RekamMedisView extends StatelessWidget {
                           );
                         },
                       ),
-                Positioned(
-                  bottom: 16,
-                  right: 16,
-                  child: FloatingActionButton.extended(
-                    onPressed: () => _showSoapForm(context, ctrl),
-                    backgroundColor: AppTheme.primary,
-                    icon: const Icon(Icons.add, color: Colors.white),
-                    label: Text(
-                      'Tambah SOAP',
-                      style: GoogleFonts.outfit(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w700,
+                if (AppConfig.enableWriteAccess)
+                  Positioned(
+                    bottom: 16,
+                    right: 16,
+                    child: FloatingActionButton.extended(
+                      onPressed: () => _showSoapForm(context, ctrl),
+                      backgroundColor: AppTheme.primary,
+                      icon: const Icon(Icons.add, color: Colors.white),
+                      label: Text(
+                        'Tambah SOAP',
+                        style: GoogleFonts.outfit(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                     ),
                   ),
-                ),
               ],
             ),
           ),
@@ -732,56 +734,59 @@ class RekamMedisView extends StatelessWidget {
               color: AppTheme.primary,
             ),
           ),
-          const SizedBox(height: 10),
-          TextField(
-            controller: icd10SearchCtrl,
-            decoration: const InputDecoration(
-              hintText: 'Cari ICD-10 (Kode atau Deskripsi)...',
-              prefixIcon: Icon(Icons.search_rounded),
+          if (AppConfig.enableWriteAccess) ...[
+            const SizedBox(height: 10),
+            TextField(
+              controller: icd10SearchCtrl,
+              decoration: const InputDecoration(
+                hintText: 'Cari ICD-10 (Kode atau Deskripsi)...',
+                prefixIcon: Icon(Icons.search_rounded),
+              ),
+              onChanged: (val) => ctrl.searchICD10(val),
             ),
-            onChanged: (val) => ctrl.searchICD10(val),
-          ),
-          const SizedBox(height: 8),
-          
-          // Autocomplete results ICD-10
-          Obx(() {
-            if (ctrl.isLoadingICD.value) {
-              return const Padding(
-                padding: EdgeInsets.symmetric(vertical: 8),
-                child: Center(child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))),
+            const SizedBox(height: 8),
+            
+            // Autocomplete results ICD-10
+            Obx(() {
+              if (ctrl.isLoadingICD.value) {
+                return const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 8),
+                  child: Center(child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))),
+                );
+              }
+              if (ctrl.searchICD10Results.isEmpty) {
+                return const SizedBox.shrink();
+              }
+              return Container(
+                constraints: const BoxConstraints(maxHeight: 200),
+                decoration: BoxDecoration(
+                  color: AppTheme.bgCard,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppTheme.divider),
+                ),
+                child: ListView.separated(
+                  shrinkWrap: true,
+                  itemCount: ctrl.searchICD10Results.length,
+                  separatorBuilder: (_, __) => const Divider(height: 1, thickness: 0.5),
+                  itemBuilder: (context, idx) {
+                    final item = ctrl.searchICD10Results[idx];
+                    final code = item['kd_penyakit']?.toString() ?? '';
+                    final name = item['nm_penyakit']?.toString() ?? '';
+                    return ListTile(
+                      dense: true,
+                      title: Text('$code - $name', style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.w600)),
+                      onTap: () {
+                        ctrl.searchICD10Results.clear();
+                        icd10SearchCtrl.clear();
+                        _showAddDiagnosaDialog(context, ctrl, code, name);
+                      },
+                    );
+                  },
+                ),
               );
-            }
-            if (ctrl.searchICD10Results.isEmpty) {
-              return const SizedBox.shrink();
-            }
-            return Container(
-              constraints: const BoxConstraints(maxHeight: 200),
-              decoration: BoxDecoration(
-                color: AppTheme.bgCard,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppTheme.divider),
-              ),
-              child: ListView.separated(
-                shrinkWrap: true,
-                itemCount: ctrl.searchICD10Results.length,
-                separatorBuilder: (_, __) => const Divider(height: 1, thickness: 0.5),
-                itemBuilder: (context, idx) {
-                  final item = ctrl.searchICD10Results[idx];
-                  final code = item['kd_penyakit']?.toString() ?? '';
-                  final name = item['nm_penyakit']?.toString() ?? '';
-                  return ListTile(
-                    dense: true,
-                    title: Text('$code - $name', style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.w600)),
-                    onTap: () {
-                      ctrl.searchICD10Results.clear();
-                      icd10SearchCtrl.clear();
-                      _showAddDiagnosaDialog(context, ctrl, code, name);
-                    },
-                  );
-                },
-              ),
-            );
-          }),
+            }),
+            const SizedBox(height: 12),
+          ],
           
           const SizedBox(height: 12),
           
@@ -810,10 +815,12 @@ class RekamMedisView extends StatelessWidget {
                   iconColor: AppTheme.info,
                   title: name,
                   subtitle: 'Kode: $code • Prioritas: $priority • Status: $status',
-                  trailing: IconButton(
-                    icon: const Icon(Icons.delete_outline_rounded, color: AppTheme.danger, size: 18),
-                    onPressed: () => ctrl.deleteDiagnosa(code),
-                  ),
+                  trailing: AppConfig.enableWriteAccess
+                      ? IconButton(
+                          icon: const Icon(Icons.delete_outline_rounded, color: AppTheme.danger, size: 18),
+                          onPressed: () => ctrl.deleteDiagnosa(code),
+                        )
+                      : null,
                 );
               },
             );
@@ -832,56 +839,59 @@ class RekamMedisView extends StatelessWidget {
               color: AppTheme.primary,
             ),
           ),
-          const SizedBox(height: 10),
-          TextField(
-            controller: icd9SearchCtrl,
-            decoration: const InputDecoration(
-              hintText: 'Cari ICD-9 (Kode atau Deskripsi)...',
-              prefixIcon: Icon(Icons.search_rounded),
+          if (AppConfig.enableWriteAccess) ...[
+            const SizedBox(height: 10),
+            TextField(
+              controller: icd9SearchCtrl,
+              decoration: const InputDecoration(
+                hintText: 'Cari ICD-9 (Kode atau Deskripsi)...',
+                prefixIcon: Icon(Icons.search_rounded),
+              ),
+              onChanged: (val) => ctrl.searchICD9(val),
             ),
-            onChanged: (val) => ctrl.searchICD9(val),
-          ),
-          const SizedBox(height: 8),
-          
-          // Autocomplete results ICD-9
-          Obx(() {
-            if (ctrl.isLoadingICD.value) {
-              return const Padding(
-                padding: EdgeInsets.symmetric(vertical: 8),
-                child: Center(child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))),
+            const SizedBox(height: 8),
+            
+            // Autocomplete results ICD-9
+            Obx(() {
+              if (ctrl.isLoadingICD.value) {
+                return const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 8),
+                  child: Center(child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))),
+                );
+              }
+              if (ctrl.searchICD9Results.isEmpty) {
+                return const SizedBox.shrink();
+              }
+              return Container(
+                constraints: const BoxConstraints(maxHeight: 200),
+                decoration: BoxDecoration(
+                  color: AppTheme.bgCard,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppTheme.divider),
+                ),
+                child: ListView.separated(
+                  shrinkWrap: true,
+                  itemCount: ctrl.searchICD9Results.length,
+                  separatorBuilder: (_, __) => const Divider(height: 1, thickness: 0.5),
+                  itemBuilder: (context, idx) {
+                    final item = ctrl.searchICD9Results[idx];
+                    final code = item['kode']?.toString() ?? '';
+                    final name = item['deskripsi_panjang']?.toString() ?? item['deskripsi_pendek']?.toString() ?? '';
+                    return ListTile(
+                      dense: true,
+                      title: Text('$code - $name', style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.w600)),
+                      onTap: () {
+                        ctrl.searchICD9Results.clear();
+                        icd9SearchCtrl.clear();
+                        _showAddProsedurDialog(context, ctrl, code, name);
+                      },
+                    );
+                  },
+                ),
               );
-            }
-            if (ctrl.searchICD9Results.isEmpty) {
-              return const SizedBox.shrink();
-            }
-            return Container(
-              constraints: const BoxConstraints(maxHeight: 200),
-              decoration: BoxDecoration(
-                color: AppTheme.bgCard,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppTheme.divider),
-              ),
-              child: ListView.separated(
-                shrinkWrap: true,
-                itemCount: ctrl.searchICD9Results.length,
-                separatorBuilder: (_, __) => const Divider(height: 1, thickness: 0.5),
-                itemBuilder: (context, idx) {
-                  final item = ctrl.searchICD9Results[idx];
-                  final code = item['kode']?.toString() ?? '';
-                  final name = item['deskripsi_panjang']?.toString() ?? item['deskripsi_pendek']?.toString() ?? '';
-                  return ListTile(
-                    dense: true,
-                    title: Text('$code - $name', style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.w600)),
-                    onTap: () {
-                      ctrl.searchICD9Results.clear();
-                      icd9SearchCtrl.clear();
-                      _showAddProsedurDialog(context, ctrl, code, name);
-                    },
-                  );
-                },
-              ),
-            );
-          }),
+            }),
+            const SizedBox(height: 12),
+          ],
           
           const SizedBox(height: 12),
           
@@ -909,10 +919,12 @@ class RekamMedisView extends StatelessWidget {
                   iconColor: AppTheme.accentAlt,
                   title: name,
                   subtitle: 'Kode: $code • Prioritas: $priority',
-                  trailing: IconButton(
-                    icon: const Icon(Icons.delete_outline_rounded, color: AppTheme.danger, size: 18),
-                    onPressed: () => ctrl.deleteProsedur(code),
-                  ),
+                  trailing: AppConfig.enableWriteAccess
+                      ? IconButton(
+                          icon: const Icon(Icons.delete_outline_rounded, color: AppTheme.danger, size: 18),
+                          onPressed: () => ctrl.deleteProsedur(code),
+                        )
+                      : null,
                 );
               },
             );
@@ -1110,22 +1122,23 @@ class RekamMedisView extends StatelessWidget {
             },
           );
         }),
-        Positioned(
-          bottom: 16,
-          right: 16,
-          child: FloatingActionButton.extended(
-            onPressed: () => _showPrescriptionSheet(context, ctrl),
-            backgroundColor: AppTheme.primary,
-            icon: const Icon(Icons.add_shopping_cart, color: Colors.white),
-            label: Text(
-              'Buat Resep',
-              style: GoogleFonts.outfit(
-                color: Colors.white,
-                fontWeight: FontWeight.w700,
+        if (AppConfig.enableWriteAccess)
+          Positioned(
+            bottom: 16,
+            right: 16,
+            child: FloatingActionButton.extended(
+              onPressed: () => _showPrescriptionSheet(context, ctrl),
+              backgroundColor: AppTheme.primary,
+              icon: const Icon(Icons.add_shopping_cart, color: Colors.white),
+              label: Text(
+                'Buat Resep',
+                style: GoogleFonts.outfit(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ),
           ),
-        ),
       ],
     );
   }
@@ -3413,7 +3426,7 @@ void _confirmDeleteSoap(BuildContext context, RekamMedisController ctrl, String 
                             ),
                             _buildAttachmentsSection(item['jawaban']),
                           ],
-                          if (!isOutgoing && !isAnswered) ...[
+                          if (!isOutgoing && !isAnswered && AppConfig.enableWriteAccess) ...[
                             const SizedBox(height: 12),
                             SizedBox(
                               width: double.infinity,
@@ -3435,7 +3448,7 @@ void _confirmDeleteSoap(BuildContext context, RekamMedisController ctrl, String 
           ],
         ),
         Obx(() {
-          if (activeSubTab.value == 0) {
+          if (activeSubTab.value == 0 && AppConfig.enableWriteAccess) {
             return Positioned(
               bottom: 16,
               right: 16,
@@ -3781,7 +3794,7 @@ class _SoapTileState extends State<_SoapTile> {
             return Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                if (isOwnRecord) ...[
+                if (isOwnRecord && AppConfig.enableWriteAccess) ...[
                   IconButton(
                     icon: const Icon(Icons.edit_rounded, color: AppTheme.primary, size: 18),
                     onPressed: () => _showSoapForm(context, _ctrl, existingData: data),

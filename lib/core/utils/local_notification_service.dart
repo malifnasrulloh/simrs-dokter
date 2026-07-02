@@ -1,13 +1,15 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
+import '../config/app_config.dart';
+
 class LocalNotificationService {
   static final FlutterLocalNotificationsPlugin _notificationsPlugin =
       FlutterLocalNotificationsPlugin();
 
   static const AndroidNotificationChannel _channel = AndroidNotificationChannel(
-    'caredoc_notification_channel', // id
-    'CareDoc Notifications', // title
-    description: 'Channel for CareDoc EMR real-time clinical alerts', // description
+    'edokter_notification_channel', // id
+    '${AppConfig.appName} Notifications', // title
+    description: 'Channel for ${AppConfig.appName} real-time clinical alerts', // description
     importance: Importance.max,
     playSound: true,
     enableVibration: true,

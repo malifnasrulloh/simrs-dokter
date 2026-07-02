@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../../core/config/app_config.dart';
 import '../../../core/theme/app_theme.dart';
 import '../controllers/auth_controller.dart';
 import '../../../core/utils/google_fonts.dart';
@@ -127,7 +128,7 @@ class _LoginViewState extends State<LoginView> with TickerProviderStateMixin {
         ),
         const SizedBox(height: 18),
         Text(
-          'CAREDOC EMR',
+          AppConfig.appName,
           style: GoogleFonts.outfit(
             fontSize: 26,
             fontWeight: FontWeight.w900,
@@ -327,8 +328,8 @@ class _LoginViewState extends State<LoginView> with TickerProviderStateMixin {
     return Obx(() {
       final settingName = _authCtrl.setting.value?['nama_instansi'];
       final footerText = settingName != null && settingName.isNotEmpty
-          ? 'v1.1.0 • $settingName © 2026'
-          : 'v1.1.0 • CareDoc EMR © 2026';
+          ? 'v${AppConfig.appVersion} • $settingName © 2026'
+          : 'v${AppConfig.appVersion} • ${AppConfig.appName} © 2026';
       return Text(
         footerText,
         style: GoogleFonts.outfit(fontSize: 11, color: AppTheme.textMuted, fontWeight: FontWeight.w600),
