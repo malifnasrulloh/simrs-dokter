@@ -1,4 +1,4 @@
-package com.rsiaminah.simrs_dokter
+package com.rsnu.edokter
 
 import io.flutter.embedding.android.FlutterActivity
 

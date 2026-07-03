@@ -122,7 +122,7 @@ class _LoginViewState extends State<LoginView> with TickerProviderStateMixin {
             ],
           ),
           child: Image.asset(
-            'assets/images/CareDoc_EMR.png',
+            'assets/icons/logo.png',
             fit: BoxFit.contain,
           ),
         ),

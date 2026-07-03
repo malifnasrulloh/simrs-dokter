@@ -9,6 +9,11 @@ class ApiClient {
 
   late final Dio _dio;
   final _storage = const FlutterSecureStorage();
+  static String? _cachedToken;
+
+  static void setCachedToken(String? token) {
+    _cachedToken = token;
+  }
 
   ApiClient._internal() {
     _dio = Dio(BaseOptions(
@@ -20,20 +25,20 @@ class ApiClient {
 
     _dio.interceptors.add(InterceptorsWrapper(
       onRequest: (options, handler) async {
-        final token = await _storage.read(key: 'auth_token');
-        if (token != null) {
-          options.headers['Authorization'] = 'Bearer $token';
+        _cachedToken ??= await _storage.read(key: 'auth_token');
+        if (_cachedToken != null) {
+          options.headers['Authorization'] = 'Bearer $_cachedToken';
         }
         return handler.next(options);
       },
       onError: (DioException error, handler) async {
         if (error.response?.statusCode == 401) {
+          _cachedToken = null;
           final username = await _storage.read(key: 'username');
           final password = await _storage.read(key: 'password');
 
           if (username != null && password != null) {
             try {
-              // Perform silent re-login with a clean Dio instance to avoid interceptor loop
               final silentDio = Dio(BaseOptions(
                 baseUrl: AppConfig.baseUrl,
                 connectTimeout: const Duration(milliseconds: AppConfig.connectTimeout),
@@ -47,9 +52,9 @@ class ApiClient {
 
               if (loginRes.data['success'] == true) {
                 final token = loginRes.data['token'];
+                _cachedToken = token;
                 await _storage.write(key: 'auth_token', value: token);
 
-                // Retry original request with updated Bearer token
                 final requestOptions = error.requestOptions;
                 requestOptions.headers['Authorization'] = 'Bearer $token';
 
@@ -62,11 +67,12 @@ class ApiClient {
                 return handler.resolve(response);
               }
             } catch (_) {
-              // Silent re-login failed, wipe credentials and force re-login
+              _cachedToken = null;
               await _storage.deleteAll();
               getx.Get.offAllNamed('/login');
             }
           } else {
+            _cachedToken = null;
             await _storage.deleteAll();
             getx.Get.offAllNamed('/login');
           }

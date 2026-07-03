@@ -120,6 +120,8 @@ class AuthController extends GetxController {
         await _storage.write(key: 'username', value: username);
         await _storage.write(key: 'password', value: password);
 
+        ApiClient.setCachedToken(token);
+
         user.value = userMap;
         await fetchSetting();
         await fetchProfile();
@@ -144,6 +146,7 @@ class AuthController extends GetxController {
   }
 
   Future<void> logout() async {
+    ApiClient.setCachedToken(null);
     await _storage.deleteAll();
     user.value = null;
     setting.value = null;

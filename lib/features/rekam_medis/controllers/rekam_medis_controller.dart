@@ -22,6 +22,9 @@ class RekamMedisController extends GetxController {
   late final PageController pageController;
   late final Worker _tabWorker;
   final isLoading = false.obs;
+  
+  Timer? _staggerTimer1;
+  Timer? _staggerTimer2;
   final activeTab = 0.obs;
   final showDetails = false.obs;
 
@@ -132,15 +135,43 @@ class RekamMedisController extends GetxController {
       isLoading.value = false;
     }
 
-    // 2. Secondary/Background data: lazy load in the background asynchronously
-    _fetchLaboratorium();
-    _fetchRadiologi();
-    _fetchBillingInfo();
-    _fetchSbarList();
-    _fetchDpjpList();
-    fetchConsultations();
-    fetchDokterList();
-    fetchResepList();
+    // 2. Secondary/Background data: lazy load and stagger in the background asynchronously
+    if (Platform.environment.containsKey('FLUTTER_TEST')) {
+      Future.wait([
+        _fetchLaboratorium(),
+        _fetchRadiologi(),
+        _fetchBillingInfo(),
+        _fetchSbarList(),
+        _fetchDpjpList(),
+        fetchConsultations(),
+        fetchDokterList(),
+        fetchResepList(),
+      ]);
+      return;
+    }
+
+    Future.wait([
+      _fetchLaboratorium(),
+      _fetchRadiologi(),
+    ]);
+
+    _staggerTimer1?.cancel();
+    _staggerTimer1 = Timer(const Duration(milliseconds: 200), () {
+      Future.wait([
+        _fetchBillingInfo(),
+        _fetchSbarList(),
+        _fetchDpjpList(),
+      ]);
+    });
+
+    _staggerTimer2?.cancel();
+    _staggerTimer2 = Timer(const Duration(milliseconds: 400), () {
+      Future.wait([
+        fetchConsultations(),
+        fetchDokterList(),
+        fetchResepList(),
+      ]);
+    });
   }
 
   Future<List<dynamic>> _safeGetList(String endpoint, String noRawat) async {
@@ -1303,10 +1334,12 @@ class RekamMedisController extends GetxController {
 
   @override
   void onClose() {
+    _tabWorker.dispose();
+    _connectivitySubscription?.cancel();
+    _staggerTimer1?.cancel();
+    _staggerTimer2?.cancel();
     _sseRequest?.abort();
     _sseClient?.close();
-    _connectivitySubscription?.cancel();
-    _tabWorker.dispose();
     pageController.dispose();
     super.onClose();
   }

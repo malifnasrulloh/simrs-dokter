@@ -24,6 +24,10 @@ void main() {
     };
   });
 
+  tearDown(() {
+    Get.delete<RekamMedisController>();
+  });
+
   group('RekamMedisController Unit Tests', () {
     test('initializes and loads patient data from arguments', () async {
       final mockArgs = {
@@ -149,11 +153,15 @@ void main() {
       // Simple verify that calls didn't crash
       expect(controller.riwayatMedis.length, equals(1));
       debugPrint('=== SSE Test: Finish ===');
+      Get.delete<RekamMedisController>();
     });
   });
 
   group('RekamMedisView Widget Tests', () {
     testWidgets('renders patient details and SOAP entries', (WidgetTester tester) async {
+      addTearDown(() {
+        Get.closeAllSnackbars();
+      });
       Get.routing.args = {
         'no_rawat': '2026/06/20/0001',
         'no_rkm_medis': 'P00001',
@@ -163,10 +171,6 @@ void main() {
       final controller = Get.put(RekamMedisController());
       await tester.runAsync(() async {
         await controller.fetchAllData();
-      });
-
-      addTearDown(() {
-        Get.closeAllSnackbars();
       });
 
       await tester.pumpWidget(
@@ -180,6 +184,7 @@ void main() {
       // Verify patient basic info is rendered on screen
       expect(find.text('Budi Santoso'), findsWidgets);
       expect(find.text('2026/06/20/0001'), findsOneWidget);
+      Get.delete<RekamMedisController>();
     });
 
     testWidgets('hides all write access UI controls in read-only mode', (WidgetTester tester) async {
@@ -204,6 +209,7 @@ void main() {
       expect(find.text('Minta Konsul'), findsNothing);
       expect(find.byIcon(Icons.edit_rounded), findsNothing);
       expect(find.byIcon(Icons.delete_outline_rounded), findsNothing);
+      Get.delete<RekamMedisController>();
     });
   });
 }

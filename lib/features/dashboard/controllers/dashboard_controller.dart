@@ -132,12 +132,6 @@ class DashboardController extends GetxController {
         var data = List<Map<String, dynamic>>.from(res.data['data'] ?? [])
             .map((e) => {...e, '_type': 'RANAP'})
             .toList();
-        if (loggedInDoctorId != null && loggedInDoctorId.toString().isNotEmpty) {
-          data = data.where((e) {
-            final dpjpList = e['dpjp'] as List? ?? [];
-            return dpjpList.any((d) => d['kd_dokter'] == loggedInDoctorId);
-          }).toList();
-        }
         listPasienRanap.value = data;
         totalRanap.value = data.length;
       }
@@ -159,9 +153,6 @@ class DashboardController extends GetxController {
         var data = List<Map<String, dynamic>>.from(res.data['data'] ?? [])
             .map((e) => {...e, '_type': 'RALAN'})
             .toList();
-        if (loggedInDoctorId != null && loggedInDoctorId.toString().isNotEmpty) {
-          data = data.where((e) => e['kd_dokter'] == loggedInDoctorId).toList();
-        }
         listPasienRalan.value = data;
         totalRalan.value = data.length;
       }
@@ -184,9 +175,6 @@ class DashboardController extends GetxController {
         var data = List<Map<String, dynamic>>.from(res.data['data'] ?? [])
             .map((e) => {...e, '_type': 'IGD'})
             .toList();
-        if (loggedInDoctorId != null && loggedInDoctorId.toString().isNotEmpty) {
-          data = data.where((e) => e['kd_dokter'] == loggedInDoctorId).toList();
-        }
         listPasienIGD.value = data;
         totalIGD.value = data.length;
       }

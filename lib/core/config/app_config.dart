@@ -13,11 +13,11 @@ class AppConfig {
   );
   static const int connectTimeout = int.fromEnvironment(
     'CONNECT_TIMEOUT',
-    defaultValue: 30000,
+    defaultValue: 15000,
   );
   static const int receiveTimeout = int.fromEnvironment(
     'RECEIVE_TIMEOUT',
-    defaultValue: 30000,
+    defaultValue: 20000,
   );
   static const bool enableWriteAccess = bool.fromEnvironment(
     'ENABLE_WRITE_ACCESS',
