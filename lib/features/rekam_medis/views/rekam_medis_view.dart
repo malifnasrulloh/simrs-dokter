@@ -901,11 +901,30 @@ class RekamMedisView extends StatelessWidget {
 
           final Map<String, List<Map<String, dynamic>>> groups = {};
 
+          // Create a lookup map of code/name -> no_resep from listPending
+          final Map<String, String> obatToResepMap = {};
+          for (final r in listPending) {
+            final String? noResepVal = r['no_resep']?.toString();
+            final String? kodeBrngVal = r['kode_brng']?.toString();
+            final String? namaBrngVal = r['nama_brng']?.toString();
+            if (noResepVal != null) {
+              if (kodeBrngVal != null) {
+                obatToResepMap[kodeBrngVal] = noResepVal;
+              }
+              if (namaBrngVal != null) {
+                obatToResepMap[namaBrngVal] = noResepVal;
+              }
+            }
+          }
+
           // Add historical (dispensed) medications
           for (final o in listDispensed) {
             final tgl = o['tgl_perawatan']?.toString() ?? '-';
             final jam = o['jam']?.toString() ?? '-';
-            final key = 'Dispensed|$tgl|$jam';
+            final kodeBrng = o['kode_brng']?.toString() ?? '';
+            final namaObat = o['nama_obat']?.toString() ?? o['nama_brng']?.toString() ?? '';
+            final noResep = obatToResepMap[kodeBrng] ?? obatToResepMap[namaObat] ?? 'None';
+            final key = 'Dispensed|$noResep|$tgl|$jam';
             if (!groups.containsKey(key)) {
               groups[key] = [];
             }
@@ -925,9 +944,10 @@ class RekamMedisView extends StatelessWidget {
 
             final tgl = r['tgl_perawatan']?.toString() ?? '-';
             final jam = r['jam']?.toString() ?? '-';
+            final noResep = r['no_resep'].toString();
 
             if (isDispensed) {
-              final key = 'Dispensed|$tgl|$jam';
+              final key = 'Dispensed|$noResep|$tgl|$jam';
               if (!groups.containsKey(key)) {
                 groups[key] = [];
               }
@@ -938,9 +958,12 @@ class RekamMedisView extends StatelessWidget {
                 'aturan': r['aturan_pakai'],
                 'tgl_perawatan': tgl,
                 'jam': jam,
+                'no_resep': noResep,
               });
             } else {
-              final key = 'Pending|${r['no_resep']}|$tgl|$jam';
+              final tglResep = r['tgl_peresepan']?.toString() ?? '-';
+              final jamResep = r['jam_peresepan']?.toString() ?? '-';
+              final key = 'Pending|$noResep|$tglResep|$jamResep';
               if (!groups.containsKey(key)) {
                 groups[key] = [];
               }
@@ -949,9 +972,9 @@ class RekamMedisView extends StatelessWidget {
                 'jumlah': r['jml'],
                 'satuan': r['satuan'],
                 'aturan': r['aturan_pakai'],
-                'tgl_perawatan': tgl,
-                'jam': jam,
-                'no_resep': r['no_resep'],
+                'tgl_perawatan': tglResep,
+                'jam': jamResep,
+                'no_resep': noResep,
               });
             }
           }
@@ -960,10 +983,10 @@ class RekamMedisView extends StatelessWidget {
             ..sort((a, b) {
               final partsA = a.split('|');
               final partsB = b.split('|');
-              final tglA = partsA.length > 2 ? partsA[partsA.length - 2] : '';
-              final tglB = partsB.length > 2 ? partsB[partsB.length - 2] : '';
-              final jamA = partsA.length > 1 ? partsA[partsA.length - 1] : '';
-              final jamB = partsB.length > 1 ? partsB[partsB.length - 1] : '';
+              final tglA = partsA.length > 2 ? partsA[2] : '';
+              final tglB = partsB.length > 2 ? partsB[2] : '';
+              final jamA = partsA.length > 3 ? partsA[3] : '';
+              final jamB = partsB.length > 3 ? partsB[3] : '';
               return '$tglB|$jamB'.compareTo('$tglA|$jamA');
             });
 
@@ -975,9 +998,9 @@ class RekamMedisView extends StatelessWidget {
               final key = sortedKeys[index];
               final parts = key.split('|');
               final isPending = parts[0] == 'Pending';
-              final noResep = isPending ? parts[1] : null;
-              final tgl = isPending ? parts[2] : parts[1];
-              final jam = isPending ? parts[3] : parts[2];
+              final noResep = parts[1] != 'None' ? parts[1] : null;
+              final tgl = parts[2];
+              final jam = parts[3];
               final items = groups[key]!;
               final displayTime = jam == '-' ? '' : ' pukul $jam';
 
@@ -1011,7 +1034,9 @@ class RekamMedisView extends StatelessWidget {
                               ),
                               const SizedBox(width: 8),
                               Text(
-                                isPending ? 'Resep Dokter (Draft/Belum Diproses)' : 'Resep $tgl$displayTime',
+                                isPending
+                                    ? (noResep != null ? 'No Resep: $noResep\nStatus: Draft/Belum Diproses' : 'Resep Dokter\nStatus: Draft/Belum Diproses')
+                                    : (noResep != null ? 'No Resep: $noResep\nTanggal Resep: ($tgl$displayTime)' : 'Tanggal Resep: $tgl$displayTime'),
                                 style: GoogleFonts.outfit(
                                   fontSize: 12.5,
                                   fontWeight: FontWeight.w800,
@@ -3999,8 +4024,32 @@ class _SoapTileState extends State<_SoapTile> {
             spots2.add(FlSpot(i.toDouble(), points[i].rr!));
           }
         }
-        minY = 10;
-        maxY = 150;
+      }
+
+      // Calculate dynamic Y limits to prevent clipping
+      if (spots1.isNotEmpty || spots2.isNotEmpty) {
+        final allY = [
+          ...spots1.map((s) => s.y),
+          ...spots2.map((s) => s.y),
+        ];
+        if (allY.isNotEmpty) {
+          final minVal = allY.reduce(math.min);
+          final maxVal = allY.reduce(math.max);
+          if (type == 1) {
+            // Temperature is Celsius, use a tight 0.5 margin
+            minY = math.max(34.0, minVal - 0.5);
+            maxY = maxVal + 0.5;
+          } else {
+            // Other vitals (BP, Nadi, RR), use a 10 margin
+            minY = math.max(0.0, minVal - 10.0);
+            maxY = maxVal + 10.0;
+          }
+        }
+      }
+
+      if (minY == maxY) {
+        minY -= 1.0;
+        maxY += 1.0;
       }
 
       if (spots1.isEmpty && spots2.isEmpty) {
@@ -4121,6 +4170,8 @@ class _SoapTileState extends State<_SoapTile> {
                       lineTouchData: LineTouchData(
                         touchTooltipData: LineTouchTooltipData(
                           getTooltipColor: (_) => AppTheme.primary,
+                          fitInsideHorizontally: true,
+                          fitInsideVertically: true,
                           getTooltipItems: (touchedSpots) {
                             return touchedSpots.map((spot) {
                               final idx = spot.x.toInt();
@@ -4137,7 +4188,7 @@ class _SoapTileState extends State<_SoapTile> {
                         if (spots1.isNotEmpty)
                           LineChartBarData(
                             spots: spots1,
-                            isCurved: true,
+                            isCurved: false,
                             barWidth: 2.5,
                             color: color1,
                             dotData: FlDotData(
@@ -4153,7 +4204,7 @@ class _SoapTileState extends State<_SoapTile> {
                         if (spots2.isNotEmpty)
                           LineChartBarData(
                             spots: spots2,
-                            isCurved: true,
+                            isCurved: false,
                             barWidth: 2.5,
                             color: color2,
                             dotData: FlDotData(
