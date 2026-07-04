@@ -1036,7 +1036,7 @@ class RekamMedisView extends StatelessWidget {
                               Text(
                                 isPending
                                     ? (noResep != null ? 'No Resep: $noResep\nStatus: Draft/Belum Diproses' : 'Resep Dokter\nStatus: Draft/Belum Diproses')
-                                    : (noResep != null ? 'No Resep: $noResep\nTanggal Resep: ($tgl$displayTime)' : 'Tanggal Resep: $tgl$displayTime'),
+                                    : (noResep != null ? 'No Resep: $noResep\nTanggal Resep: $tgl$displayTime' : 'Tanggal Resep: $tgl$displayTime'),
                                 style: GoogleFonts.outfit(
                                   fontSize: 12.5,
                                   fontWeight: FontWeight.w800,
@@ -3754,7 +3754,7 @@ class _SoapTileState extends State<_SoapTile> {
               const SizedBox(height: 10),
               _clinicalSection('Tanda Vital', [
                 _vitalGrid(data),
-                _buildVitalsChart(),
+                _buildVitalsChart(data),
               ]),
               if (_hasVal('keadaan') || _hasVal('kesadaran') || _hasVal('gcs') || _hasVal('bb') || _hasVal('tb') || _hasVal('lingkar_perut')) ...[
                 const SizedBox(height: 12),
@@ -3967,10 +3967,27 @@ class _SoapTileState extends State<_SoapTile> {
     return AppTheme.success;
   }
 
-  Widget _buildVitalsChart() {
+  Widget _buildVitalsChart(Map<String, dynamic> soap) {
     return Obx(() {
       final points = _ctrl.vitalsChartData;
       if (points.length < 2) {
+        return const SizedBox.shrink();
+      }
+
+      final tglStr = soap['tanggal']?.toString() ?? '1970-01-01';
+      final jamStr = soap['jam']?.toString() ?? '00:00:00';
+      DateTime currentSoapTime;
+      try {
+        currentSoapTime = DateTime.parse('$tglStr $jamStr');
+      } catch (_) {
+        currentSoapTime = DateTime.tryParse(tglStr) ?? DateTime(1970);
+      }
+
+      final filteredPoints = points
+          .where((p) => p.dateTime.isBefore(currentSoapTime) || p.dateTime.isAtSameMomentAs(currentSoapTime))
+          .toList();
+
+      if (filteredPoints.length < 2) {
         return const SizedBox.shrink();
       }
 
@@ -3991,12 +4008,12 @@ class _SoapTileState extends State<_SoapTile> {
         label2 = 'Diastole';
         color1 = AppTheme.danger;
         color2 = AppTheme.info;
-        for (int i = 0; i < points.length; i++) {
-          if (points[i].systole != null) {
-            spots1.add(FlSpot(i.toDouble(), points[i].systole!));
+        for (int i = 0; i < filteredPoints.length; i++) {
+          if (filteredPoints[i].systole != null) {
+            spots1.add(FlSpot(i.toDouble(), filteredPoints[i].systole!));
           }
-          if (points[i].diastole != null) {
-            spots2.add(FlSpot(i.toDouble(), points[i].diastole!));
+          if (filteredPoints[i].diastole != null) {
+            spots2.add(FlSpot(i.toDouble(), filteredPoints[i].diastole!));
           }
         }
         minY = 40;
@@ -4004,9 +4021,9 @@ class _SoapTileState extends State<_SoapTile> {
       } else if (type == 1) {
         label1 = 'Suhu (°C)';
         color1 = AppTheme.accent;
-        for (int i = 0; i < points.length; i++) {
-          if (points[i].suhu != null) {
-            spots1.add(FlSpot(i.toDouble(), points[i].suhu!));
+        for (int i = 0; i < filteredPoints.length; i++) {
+          if (filteredPoints[i].suhu != null) {
+            spots1.add(FlSpot(i.toDouble(), filteredPoints[i].suhu!));
           }
         }
         minY = 35;
@@ -4016,12 +4033,12 @@ class _SoapTileState extends State<_SoapTile> {
         label2 = 'Respirasi (rr)';
         color1 = AppTheme.success;
         color2 = AppTheme.warning;
-        for (int i = 0; i < points.length; i++) {
-          if (points[i].nadi != null) {
-            spots1.add(FlSpot(i.toDouble(), points[i].nadi!));
+        for (int i = 0; i < filteredPoints.length; i++) {
+          if (filteredPoints[i].nadi != null) {
+            spots1.add(FlSpot(i.toDouble(), filteredPoints[i].nadi!));
           }
-          if (points[i].rr != null) {
-            spots2.add(FlSpot(i.toDouble(), points[i].rr!));
+          if (filteredPoints[i].rr != null) {
+            spots2.add(FlSpot(i.toDouble(), filteredPoints[i].rr!));
           }
         }
       }
@@ -4110,7 +4127,7 @@ class _SoapTileState extends State<_SoapTile> {
               scrollDirection: Axis.horizontal,
               physics: const BouncingScrollPhysics(),
               child: SizedBox(
-                width: math.max(MediaQuery.of(context).size.width - 64, points.length * 52.0),
+                width: math.max(MediaQuery.of(context).size.width - 64, filteredPoints.length * 52.0),
                 height: 160,
                 child: Padding(
                   padding: const EdgeInsets.only(right: 16.0),
@@ -4137,8 +4154,8 @@ class _SoapTileState extends State<_SoapTile> {
                             interval: 1,
                             getTitlesWidget: (value, meta) {
                               final int idx = value.toInt();
-                              if (idx >= 0 && idx < points.length) {
-                                final dt = points[idx].dateTime;
+                              if (idx >= 0 && idx < filteredPoints.length) {
+                                final dt = filteredPoints[idx].dateTime;
                                 return Padding(
                                   padding: const EdgeInsets.only(top: 4.0),
                                   child: Transform(
@@ -4175,7 +4192,7 @@ class _SoapTileState extends State<_SoapTile> {
                           getTooltipItems: (touchedSpots) {
                             return touchedSpots.map((spot) {
                               final idx = spot.x.toInt();
-                              final dateStr = DateFormat('dd MMM yyyy HH:mm').format(points[idx].dateTime);
+                              final dateStr = DateFormat('dd MMM yyyy HH:mm').format(filteredPoints[idx].dateTime);
                               return LineTooltipItem(
                                 '$dateStr\n${spot.barIndex == 1 ? label2 : label1}: ${spot.y.toStringAsFixed(1)}',
                                 GoogleFonts.outfit(fontSize: 10, color: Colors.white, fontWeight: FontWeight.w600),
