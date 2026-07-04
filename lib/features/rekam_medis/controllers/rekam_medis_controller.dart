@@ -12,19 +12,19 @@ import '../../auth/controllers/auth_controller.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/local_notification_service.dart';
 import '../../dashboard/controllers/dashboard_controller.dart';
+import '../../../core/utils/google_fonts.dart';
 
 class RekamMedisController extends GetxController {
   final _api = ApiClient();
-  HttpClient? _sseClient;
-  HttpClientRequest? _sseRequest;
-  HttpClientResponse? _sseResponse;
   StreamSubscription? _connectivitySubscription;
   late final PageController pageController;
   late final Worker _tabWorker;
   final isLoading = false.obs;
+  bool _isSubmitting = false;
   
   Timer? _staggerTimer1;
   Timer? _staggerTimer2;
+  Timer? _connectivityDebounce;
   final activeTab = 0.obs;
   final showDetails = false.obs;
 
@@ -94,11 +94,14 @@ class RekamMedisController extends GetxController {
       }
     });
 
-    // Listen to network transitions to automatically sync offline notes
+    // Listen to network transitions to automatically sync offline notes (debounced)
     _connectivitySubscription = Connectivity().onConnectivityChanged.listen((event) {
       final isOnline = event.isNotEmpty && !event.contains(ConnectivityResult.none);
       if (isOnline) {
-        syncOfflineSoap();
+        _connectivityDebounce?.cancel();
+        _connectivityDebounce = Timer(const Duration(milliseconds: 500), () {
+          if (!isClosed) syncOfflineSoap();
+        });
       }
     });
   }
@@ -106,12 +109,17 @@ class RekamMedisController extends GetxController {
   @override
   void onReady() {
     super.onReady();
-    if (pasienData.value != null) {
-      fetchAllData();
-      initNotificationSse();
-      loadDrafts();
-      loadOfflineSoapQueue();
+    if (pasienData.value == null || noRawat.isEmpty) {
+      // Guard: navigated to rekam-medis without valid patient data
+      if (!Platform.environment.containsKey('FLUTTER_TEST')) {
+        Get.offAllNamed('/home');
+      }
+      return;
     }
+    fetchAllData();
+    initNotificationSse();
+    loadDrafts();
+    loadOfflineSoapQueue();
   }
 
   void loadPasien(Map<String, dynamic> data) {
@@ -326,9 +334,10 @@ class RekamMedisController extends GetxController {
       if (res.data['success'] == true && res.data['data'] != null) {
         final list = res.data['data']['list'] as List? ?? [];
         obat.value = list
-            .where((e) => e['kode_brng'] != null) // Filter out summary/retur details if not item
+            .where((e) => e['kode_brng'] != null)
             .map((e) => Map<String, dynamic>.from(e))
             .map((e) => {
+                  'kode_brng': e['kode_brng'],
                   'nama_obat': e['nama_brng'],
                   'jumlah': e['jml'],
                   'satuan': e['satuan'],
@@ -686,6 +695,8 @@ class RekamMedisController extends GetxController {
     String? tglPerawatan,
     String? jamRawat,
   }) async {
+    if (_isSubmitting) return false;
+    _isSubmitting = true;
     try {
       isLoading.value = true;
       final authCtrl = Get.find<AuthController>();
@@ -766,14 +777,31 @@ class RekamMedisController extends GetxController {
         return true;
       }
     } catch (e) {
-      Get.snackbar('Error', 'Gagal menyimpan data SOAP');
+      if (!isClosed) Get.snackbar('Error', 'Gagal menyimpan data SOAP');
     } finally {
-      isLoading.value = false;
+      _isSubmitting = false;
+      if (!isClosed) isLoading.value = false;
     }
     return false;
   }
 
   Future<bool> deleteSoap(String tgl, String jam) async {
+    // Confirmation dialog before destructive action
+    final confirmed = await Get.dialog<bool>(
+      AlertDialog(
+        backgroundColor: AppTheme.bgCard,
+        title: Text('Hapus Catatan SOAP?', style: GoogleFonts.outfit(fontWeight: FontWeight.w700, color: AppTheme.textPrimary)),
+        content: Text('Data SOAP ini akan dihapus secara permanen.', style: GoogleFonts.outfit(color: AppTheme.textSecondary)),
+        actions: [
+          TextButton(onPressed: () => Get.back(result: false), child: Text('Batal', style: GoogleFonts.outfit(color: AppTheme.textMuted))),
+          TextButton(onPressed: () => Get.back(result: true), child: Text('Hapus', style: GoogleFonts.outfit(color: AppTheme.danger, fontWeight: FontWeight.w700))),
+        ],
+      ),
+    );
+    if (confirmed != true) return false;
+
+    if (_isSubmitting) return false;
+    _isSubmitting = true;
     try {
       isLoading.value = true;
       final path = tipeRawat == 'RANAP' ? '/soap/ranap' : '/soap/ralan';
@@ -783,13 +811,14 @@ class RekamMedisController extends GetxController {
         'jam_rawat': jam,
       });
       if (res.statusCode == 200 || (res.data != null && res.data['success'] == true)) {
-        await _fetchRiwayatMedis();
+        if (!isClosed) await _fetchRiwayatMedis();
         return true;
       }
     } catch (e) {
-      Get.snackbar('Error', 'Gagal menghapus data SOAP');
+      if (!isClosed) Get.snackbar('Error', 'Gagal menghapus data SOAP');
     } finally {
-      isLoading.value = false;
+      _isSubmitting = false;
+      if (!isClosed) isLoading.value = false;
     }
     return false;
   }
@@ -843,6 +872,8 @@ class RekamMedisController extends GetxController {
     required String diagnosa,
     required String uraian,
   }) async {
+    if (_isSubmitting) return false;
+    _isSubmitting = true;
     try {
       isLoadingConsult.value = true;
       final res = await _api.dio.post('/konsultasi', data: {
@@ -853,13 +884,14 @@ class RekamMedisController extends GetxController {
         'uraian_konsultasi': uraian,
       });
       if (res.statusCode == 201 || (res.data != null && res.data['success'] == true)) {
-        await fetchConsultations();
+        if (!isClosed) await fetchConsultations();
         return true;
       }
     } catch (_) {
-      Get.snackbar('Error', 'Gagal mengirim konsultasi');
+      if (!isClosed) Get.snackbar('Error', 'Gagal mengirim konsultasi');
     } finally {
-      isLoadingConsult.value = false;
+      _isSubmitting = false;
+      if (!isClosed) isLoadingConsult.value = false;
     }
     return false;
   }
@@ -869,6 +901,8 @@ class RekamMedisController extends GetxController {
     required String diagnosa,
     required String uraian,
   }) async {
+    if (_isSubmitting) return false;
+    _isSubmitting = true;
     try {
       isLoadingConsult.value = true;
       final res = await _api.dio.post('/konsultasi/jawab', data: {
@@ -877,13 +911,14 @@ class RekamMedisController extends GetxController {
         'uraian_jawaban': uraian,
       });
       if (res.statusCode == 200 || (res.data != null && res.data['success'] == true)) {
-        await fetchConsultations();
+        if (!isClosed) await fetchConsultations();
         return true;
       }
     } catch (_) {
-      Get.snackbar('Error', 'Gagal membalas konsultasi');
+      if (!isClosed) Get.snackbar('Error', 'Gagal membalas konsultasi');
     } finally {
-      isLoadingConsult.value = false;
+      _isSubmitting = false;
+      if (!isClosed) isLoadingConsult.value = false;
     }
     return false;
   }
@@ -944,6 +979,8 @@ class RekamMedisController extends GetxController {
 
   Future<bool> submitPrescription() async {
     if (prescriptionDraft.isEmpty) return false;
+    if (_isSubmitting) return false;
+    _isSubmitting = true;
     try {
       isLoading.value = true;
       final res = await _api.dio.post('/resep', data: {
@@ -957,35 +994,57 @@ class RekamMedisController extends GetxController {
       });
       if (res.statusCode == 201 || (res.data != null && res.data['success'] == true)) {
         await clearPrescriptionDraft();
-        await Future.wait([
-          _fetchObat(),
-          fetchResepList(),
-        ]);
+        if (!isClosed) {
+          await Future.wait([
+            _fetchObat(),
+            fetchResepList(),
+          ]);
+        }
         return true;
       }
     } catch (_) {
-      Get.snackbar('Error', 'Gagal mengirim resep');
+      if (!isClosed) Get.snackbar('Error', 'Gagal mengirim resep');
     } finally {
-      isLoading.value = false;
+      _isSubmitting = false;
+      if (!isClosed) isLoading.value = false;
     }
     return false;
   }
 
   Future<bool> deletePrescription(String noResep) async {
+    // Confirmation dialog before destructive action
+    final confirmed = await Get.dialog<bool>(
+      AlertDialog(
+        backgroundColor: AppTheme.bgCard,
+        title: Text('Hapus Resep?', style: GoogleFonts.outfit(fontWeight: FontWeight.w700, color: AppTheme.textPrimary)),
+        content: Text('Resep ini akan dihapus. Resep yang sudah diproses farmasi tidak dapat dihapus.', style: GoogleFonts.outfit(color: AppTheme.textSecondary)),
+        actions: [
+          TextButton(onPressed: () => Get.back(result: false), child: Text('Batal', style: GoogleFonts.outfit(color: AppTheme.textMuted))),
+          TextButton(onPressed: () => Get.back(result: true), child: Text('Hapus', style: GoogleFonts.outfit(color: AppTheme.danger, fontWeight: FontWeight.w700))),
+        ],
+      ),
+    );
+    if (confirmed != true) return false;
+
+    if (_isSubmitting) return false;
+    _isSubmitting = true;
     try {
       isLoading.value = true;
       final res = await _api.dio.delete('/resep/$noResep');
       if (res.statusCode == 200 || (res.data != null && res.data['success'] == true)) {
-        await Future.wait([
-          _fetchObat(),
-          fetchResepList(),
-        ]);
+        if (!isClosed) {
+          await Future.wait([
+            _fetchObat(),
+            fetchResepList(),
+          ]);
+        }
         return true;
       }
     } catch (_) {
-      Get.snackbar('Error', 'Gagal menghapus resep (sudah diproses farmasi)');
+      if (!isClosed) Get.snackbar('Error', 'Gagal menghapus resep (sudah diproses farmasi)');
     } finally {
-      isLoading.value = false;
+      _isSubmitting = false;
+      if (!isClosed) isLoading.value = false;
     }
     return false;
   }
@@ -1193,57 +1252,8 @@ class RekamMedisController extends GetxController {
     } catch (_) {}
   }
 
-  void initNotificationSse() async {
-    _sseRequest?.abort();
-    _sseClient?.close();
-
-    try {
-      const storage = FlutterSecureStorage();
-      final token = await storage.read(key: 'auth_token');
-      if (token == null) return;
-
-      final sseUrl = Uri.parse('${AppConfig.baseUrl}/notifications');
-
-      _sseClient = HttpClient();
-      _sseClient!.connectionTimeout = const Duration(seconds: 10);
-      
-      _sseRequest = await _sseClient!.getUrl(sseUrl);
-      _sseRequest!.headers.set('Authorization', 'Bearer $token');
-      _sseResponse = await _sseRequest!.close();
-
-      if (_sseResponse!.statusCode == 200) {
-        _sseResponse!
-            .transform(utf8.decoder)
-            .transform(const LineSplitter())
-            .listen((line) {
-          _handleSseLine(line);
-        }, onError: (err) {
-          Future.delayed(const Duration(seconds: 10), initNotificationSse);
-        }, onDone: () {
-          Future.delayed(const Duration(seconds: 10), initNotificationSse);
-        });
-      }
-    } catch (_) {
-      Future.delayed(const Duration(seconds: 10), initNotificationSse);
-    }
-  }
-
-  String? _currentEvent;
-
-  void _handleSseLine(String line) {
-    if (line.isEmpty) return;
-    if (line.startsWith('event: ')) {
-      _currentEvent = line.substring(7).trim();
-    } else if (line.startsWith('data: ') && _currentEvent != null) {
-      final dataStr = line.substring(6).trim();
-      if (dataStr != 'keep-alive') {
-        try {
-          final data = jsonDecode(dataStr);
-          _handleSseEvent(_currentEvent!, data);
-        } catch (_) {}
-      }
-      _currentEvent = null;
-    }
+  void initNotificationSse() {
+    // Managed globally by AuthController
   }
 
   void _handleSseEvent(String event, dynamic data) {
@@ -1254,52 +1264,52 @@ class RekamMedisController extends GetxController {
     if (event == 'consultation_request') {
       final drPemberi = data['nm_dokter_pemberi'] ?? 'Rekan Dokter';
       final diagnosa = data['diagnosa_kerja'] ?? '';
-      if (!isTesting) {
-        Get.snackbar(
+      if (AppConfig.enableInAppNotifications && !isTesting) {
+        _showModernInAppNotification(
           'Konsultasi Baru',
           'Permintaan konsultasi dari $drPemberi: "$diagnosa"',
-          duration: const Duration(seconds: 6),
-          snackPosition: SnackPosition.TOP,
         );
       }
-      LocalNotificationService.showNotification(
-        id: notificationId,
-        title: 'Konsultasi Baru',
-        body: 'Permintaan konsultasi dari $drPemberi: "$diagnosa"',
-      );
+      if (AppConfig.enableSystemNotifications) {
+        LocalNotificationService.showNotification(
+          id: notificationId,
+          title: 'Konsultasi Baru',
+          body: 'Permintaan konsultasi dari $drPemberi: "$diagnosa"',
+        );
+      }
       fetchConsultations();
     } else if (event == 'consultation_response') {
       final drPenerima = data['nm_dokter_dikonsuli'] ?? 'Rekan Dokter';
-      if (!isTesting) {
-        Get.snackbar(
+      if (AppConfig.enableInAppNotifications && !isTesting) {
+        _showModernInAppNotification(
           'Konsultasi Dijawab',
           'Balasan dari $drPenerima untuk permintaan ${data['no_permintaan']}',
-          duration: const Duration(seconds: 6),
-          snackPosition: SnackPosition.TOP,
         );
       }
-      LocalNotificationService.showNotification(
-        id: notificationId,
-        title: 'Konsultasi Dijawab',
-        body: 'Balasan dari $drPenerima untuk permintaan ${data['no_permintaan']}',
-      );
+      if (AppConfig.enableSystemNotifications) {
+        LocalNotificationService.showNotification(
+          id: notificationId,
+          title: 'Konsultasi Dijawab',
+          body: 'Balasan dari $drPenerima untuk permintaan ${data['no_permintaan']}',
+        );
+      }
       fetchConsultations();
     } else if (event == 'new_admission') {
       final nmPasien = data['nm_pasien'] ?? 'Pasien Baru';
       final noRawat = data['no_rawat'] ?? '';
-      if (!isTesting) {
-        Get.snackbar(
+      if (AppConfig.enableInAppNotifications && !isTesting) {
+        _showModernInAppNotification(
           'Pasien Baru Terdaftar',
           'Anda telah didelegasikan sebagai DPJP untuk $nmPasien ($noRawat)',
-          duration: const Duration(seconds: 6),
-          snackPosition: SnackPosition.TOP,
         );
       }
-      LocalNotificationService.showNotification(
-        id: notificationId,
-        title: 'Pasien Baru Terdaftar',
-        body: 'Anda telah didelegasikan sebagai DPJP untuk $nmPasien ($noRawat)',
-      );
+      if (AppConfig.enableSystemNotifications) {
+        LocalNotificationService.showNotification(
+          id: notificationId,
+          title: 'Pasien Baru Terdaftar',
+          body: 'Anda telah didelegasikan sebagai DPJP untuk $nmPasien ($noRawat)',
+        );
+      }
       try {
         if (Get.isRegistered<DashboardController>()) {
           Get.find<DashboardController>().fetchDashboard();
@@ -1308,23 +1318,72 @@ class RekamMedisController extends GetxController {
     } else if (event == 'emergency_igd_consultation') {
       final drPemberi = data['nm_dokter_pemberi'] ?? 'Rekan Dokter';
       final nmPasien = data['nm_pasien'] ?? 'Pasien';
-      if (!isTesting) {
-        Get.snackbar(
+      if (AppConfig.enableInAppNotifications && !isTesting) {
+        _showModernInAppNotification(
           '🚨 URGENT: KONSUL IGD',
           'Permintaan konsultasi segera dari $drPemberi untuk pasien $nmPasien',
-          duration: const Duration(seconds: 10),
-          snackPosition: SnackPosition.TOP,
-          backgroundColor: Colors.red[800],
-          colorText: Colors.white,
+          isUrgent: true,
         );
       }
-      LocalNotificationService.showNotification(
-        id: notificationId,
-        title: '🚨 URGENT: KONSUL IGD',
-        body: 'Permintaan konsultasi segera dari $drPemberi untuk pasien $nmPasien',
-      );
+      if (AppConfig.enableSystemNotifications) {
+        LocalNotificationService.showNotification(
+          id: notificationId,
+          title: '🚨 URGENT: KONSUL IGD',
+          body: 'Permintaan konsultasi segera dari $drPemberi untuk pasien $nmPasien',
+        );
+      }
       fetchConsultations();
     }
+  }
+
+  void _showModernInAppNotification(String title, String message, {bool isUrgent = false}) {
+    Get.rawSnackbar(
+      titleText: Text(
+        title,
+        style: GoogleFonts.outfit(
+          fontSize: 13,
+          fontWeight: FontWeight.bold,
+          color: Colors.white,
+        ),
+      ),
+      messageText: Text(
+        message,
+        style: GoogleFonts.outfit(
+          fontSize: 11.5,
+          fontWeight: FontWeight.w500,
+          color: Colors.white.withOpacity(0.9),
+        ),
+      ),
+      backgroundColor: isUrgent 
+          ? const Color(0xFFE11D48).withOpacity(0.95) // Rose 600
+          : const Color(0xFF1E293B).withOpacity(0.95), // Slate 800
+      margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      borderRadius: 14,
+      snackPosition: SnackPosition.TOP,
+      duration: Duration(seconds: isUrgent ? 6 : 4),
+      shouldIconPulse: false,
+      icon: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.1),
+          shape: BoxShape.circle,
+        ),
+        child: Icon(
+          isUrgent ? Icons.warning_amber_rounded : Icons.notifications_active_rounded,
+          color: isUrgent ? Colors.white : const Color(0xFF2DD4BF), // Mint 400
+          size: 18,
+        ),
+      ),
+      boxShadows: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.12),
+          blurRadius: 16,
+          offset: const Offset(0, 8),
+        )
+      ],
+      dismissDirection: DismissDirection.horizontal,
+    );
   }
 
   @visibleForTesting
@@ -1336,10 +1395,9 @@ class RekamMedisController extends GetxController {
   void onClose() {
     _tabWorker.dispose();
     _connectivitySubscription?.cancel();
+    _connectivityDebounce?.cancel();
     _staggerTimer1?.cancel();
     _staggerTimer2?.cancel();
-    _sseRequest?.abort();
-    _sseClient?.close();
     pageController.dispose();
     super.onClose();
   }

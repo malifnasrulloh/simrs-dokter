@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get/get.dart' as getx;
 import '../config/app_config.dart';
+import '../../features/auth/controllers/auth_controller.dart';
 
 class ApiClient {
   static final ApiClient _instance = ApiClient._internal();
@@ -54,6 +55,15 @@ class ApiClient {
                 final token = loginRes.data['token'];
                 _cachedToken = token;
                 await _storage.write(key: 'auth_token', value: token);
+
+                // Restart SSE stream with fresh token
+                try {
+                  if (getx.Get.isRegistered<AuthController>()) {
+                    getx.Get.find<AuthController>().initNotificationSse();
+                  }
+                } catch (_) {
+                  // AuthController may not be registered yet
+                }
 
                 final requestOptions = error.requestOptions;
                 requestOptions.headers['Authorization'] = 'Bearer $token';

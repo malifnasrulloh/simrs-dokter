@@ -23,4 +23,12 @@ class AppConfig {
     'ENABLE_WRITE_ACCESS',
     defaultValue: false,
   );
+  static const bool enableInAppNotifications = bool.fromEnvironment(
+    'ENABLE_IN_APP_NOTIFICATIONS',
+    defaultValue: true,
+  );
+  static const bool enableSystemNotifications = bool.fromEnvironment(
+    'ENABLE_SYSTEM_NOTIFICATIONS',
+    defaultValue: true,
+  );
 }

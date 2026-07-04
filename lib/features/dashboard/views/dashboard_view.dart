@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/connectivity_banner.dart';
 import '../controllers/dashboard_controller.dart';
 import '../../auth/controllers/auth_controller.dart';
 import 'home_dashboard_view.dart';
@@ -68,9 +69,16 @@ class DashboardView extends StatelessWidget {
 
       return Scaffold(
         backgroundColor: AppTheme.bgDark,
-        body: IndexedStack(
-          index: activeIndex,
-          children: pages,
+        body: Column(
+          children: [
+            const ConnectivityBanner(),
+            Expanded(
+              child: IndexedStack(
+                index: activeIndex,
+                children: pages,
+              ),
+            ),
+          ],
         ),
         bottomNavigationBar: NavigationBar(
           selectedIndex: activeIndex,

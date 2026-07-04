@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -23,20 +25,14 @@ class RekamMedisView extends StatelessWidget {
       backgroundColor: AppTheme.bgDark,
       body: SafeArea(
         child: Obx(() {
-          final pasien = ctrl.pasienData.value ??
-              Get.arguments as Map<String, dynamic>? ??
-              {};
+          final pasien = ctrl.pasienData.value ?? Get.arguments as Map<String, dynamic>? ?? {};
           return Column(
             children: [
               _buildAppBar(pasien),
               _buildPatientCard(pasien, ctrl),
               _buildTabBar(ctrl),
               Expanded(
-                child: ctrl.pasienData.value == null
-                    ? const Center(
-                        child:
-                            CircularProgressIndicator(color: AppTheme.accent))
-                    : _buildTabContent(context, ctrl),
+                child: ctrl.pasienData.value == null ? const Center(child: CircularProgressIndicator(color: AppTheme.accent)) : _buildTabContent(context, ctrl),
               ),
             ],
           );
@@ -59,8 +55,7 @@ class RekamMedisView extends StatelessWidget {
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: AppTheme.divider),
               ),
-              child: const Icon(Icons.arrow_back_ios_new_rounded,
-                  color: AppTheme.textPrimary, size: 15),
+              child: const Icon(Icons.arrow_back_ios_new_rounded, color: AppTheme.textPrimary, size: 15),
             ),
           ),
           const SizedBox(width: 14),
@@ -105,10 +100,7 @@ class RekamMedisView extends StatelessWidget {
         children: [
           Text(
             label,
-            style: GoogleFonts.outfit(
-                fontSize: 9.5,
-                color: Colors.white70,
-                fontWeight: FontWeight.w700),
+            style: GoogleFonts.outfit(fontSize: 9.5, color: Colors.white70, fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 2),
           Text(
@@ -128,8 +120,7 @@ class RekamMedisView extends StatelessWidget {
 
   Widget _billingItemSelisih(String label, double selisih) {
     final isNegative = selisih < 0;
-    final color =
-        isNegative ? const Color(0xFFFFD2D2) : const Color(0xFFD2FFD2);
+    final color = isNegative ? const Color(0xFFFFD2D2) : const Color(0xFFD2FFD2);
     final valueStr = _formatRupiah(selisih);
 
     return Expanded(
@@ -138,10 +129,7 @@ class RekamMedisView extends StatelessWidget {
         children: [
           Text(
             label,
-            style: GoogleFonts.outfit(
-                fontSize: 9.5,
-                color: Colors.white70,
-                fontWeight: FontWeight.w700),
+            style: GoogleFonts.outfit(fontSize: 9.5, color: Colors.white70, fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 2),
           Text(
@@ -159,8 +147,7 @@ class RekamMedisView extends StatelessWidget {
     );
   }
 
-  Widget _buildPatientCard(
-      Map<String, dynamic> pasien, RekamMedisController ctrl) {
+  Widget _buildPatientCard(Map<String, dynamic> pasien, RekamMedisController ctrl) {
     final penjamin = pasien['png_jawab']?.toString() ?? 'Umum';
     final isBpjs = penjamin.toUpperCase().contains('BPJS');
     return Container(
@@ -229,8 +216,7 @@ class RekamMedisView extends StatelessWidget {
                         ),
                         const SizedBox(width: 6),
                         Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 6, vertical: 1.5),
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
                           decoration: BoxDecoration(
                             color: Colors.white.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(5),
@@ -253,19 +239,16 @@ class RekamMedisView extends StatelessWidget {
                       }
                       return Container(
                         margin: const EdgeInsets.only(top: 4),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 6, vertical: 2),
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
                           color: const Color(0xFFFFD2D2),
                           borderRadius: BorderRadius.circular(5),
-                          border: Border.all(
-                              color: const Color(0xFFFF8B8B), width: 0.8),
+                          border: Border.all(color: const Color(0xFFFF8B8B), width: 0.8),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.warning_rounded,
-                                color: Color(0xFFD32F2F), size: 10),
+                            const Icon(Icons.warning_rounded, color: Color(0xFFD32F2F), size: 10),
                             const SizedBox(width: 4),
                             Flexible(
                               child: Text(
@@ -292,18 +275,14 @@ class RekamMedisView extends StatelessWidget {
                             child: SizedBox(
                               width: 10,
                               height: 10,
-                              child: CircularProgressIndicator(
-                                  color: Colors.white, strokeWidth: 1),
+                              child: CircularProgressIndicator(color: Colors.white, strokeWidth: 1),
                             ),
                           );
                         }
                         final authCtrl = Get.find<AuthController>();
                         final myNip = authCtrl.user.value?['nip'];
-                        final isAlreadyDpjp =
-                            ctrl.dpjpList.any((d) => d['kd_dokter']?.toString() == myNip);
-                        final names = ctrl.dpjpList
-                            .map((d) => d['nm_dokter']?.toString() ?? '-')
-                            .join(', ');
+                        final isAlreadyDpjp = ctrl.dpjpList.any((d) => d['kd_dokter']?.toString() == myNip);
+                        final names = ctrl.dpjpList.map((d) => d['nm_dokter']?.toString() ?? '-').join(', ');
 
                         return Row(
                           children: [
@@ -325,16 +304,11 @@ class RekamMedisView extends StatelessWidget {
                                 onTap: () async {
                                   final success = await ctrl.setAsDpjp();
                                   if (success) {
-                                    Get.snackbar('Sukses',
-                                        'Anda telah terdaftar sebagai DPJP pasien ini',
-                                        backgroundColor: Colors.white,
-                                        colorText: AppTheme.primary,
-                                        snackPosition: SnackPosition.BOTTOM);
+                                    Get.snackbar('Sukses', 'Anda telah terdaftar sebagai DPJP pasien ini', backgroundColor: Colors.white, colorText: AppTheme.primary, snackPosition: SnackPosition.BOTTOM);
                                   }
                                 },
                                 child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 6, vertical: 2),
+                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                   decoration: BoxDecoration(
                                     color: Colors.white,
                                     borderRadius: BorderRadius.circular(4),
@@ -359,22 +333,20 @@ class RekamMedisView extends StatelessWidget {
               ),
               const SizedBox(width: 10),
               Obx(() => GestureDetector(
-                onTap: () => ctrl.showDetails.toggle(),
-                child: Container(
-                  padding: const EdgeInsets.all(4),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.15),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    ctrl.showDetails.value
-                        ? Icons.keyboard_arrow_up_rounded
-                        : Icons.keyboard_arrow_down_rounded,
-                    color: Colors.white,
-                    size: 18,
-                  ),
-                ),
-              )),
+                    onTap: () => ctrl.showDetails.toggle(),
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.15),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        ctrl.showDetails.value ? Icons.keyboard_arrow_up_rounded : Icons.keyboard_arrow_down_rounded,
+                        color: Colors.white,
+                        size: 18,
+                      ),
+                    ),
+                  )),
             ],
           ),
           Obx(() {
@@ -385,21 +357,13 @@ class RekamMedisView extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 10),
-                Divider(
-                    color: Colors.white.withValues(alpha: 0.2), height: 1, thickness: 1),
+                Divider(color: Colors.white.withValues(alpha: 0.2), height: 1, thickness: 1),
                 const SizedBox(height: 10),
                 Row(
                   children: [
-                    _infoChip(
-                        Icons.badge_rounded, 'No. Rawat', pasien['no_rawat'] ?? '-'),
+                    _infoChip(Icons.badge_rounded, 'No. Rawat', pasien['no_rawat'] ?? '-'),
                     const SizedBox(width: 12),
-                    _infoChip(
-                        Icons.bed_rounded,
-                        'Kamar/Poli',
-                        pasien['nm_ruang'] ??
-                            pasien['nm_poli'] ??
-                            pasien['kamar'] ??
-                            '-'),
+                    _infoChip(Icons.bed_rounded, 'Kamar/Poli', pasien['nm_ruang'] ?? pasien['nm_poli'] ?? pasien['kamar'] ?? '-'),
                   ],
                 ),
                 Obx(() {
@@ -410,8 +374,7 @@ class RekamMedisView extends StatelessWidget {
                         child: SizedBox(
                           width: 14,
                           height: 14,
-                          child: CircularProgressIndicator(
-                              color: Colors.white, strokeWidth: 1.5),
+                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 1.5),
                         ),
                       ),
                     );
@@ -429,10 +392,7 @@ class RekamMedisView extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const SizedBox(height: 10),
-                      Divider(
-                          color: Colors.white.withValues(alpha: 0.2),
-                          height: 1,
-                          thickness: 1),
+                      Divider(color: Colors.white.withValues(alpha: 0.2), height: 1, thickness: 1),
                       const SizedBox(height: 10),
                       if (!isBpjs) ...[
                         Row(
@@ -440,17 +400,11 @@ class RekamMedisView extends StatelessWidget {
                           children: [
                             Text(
                               'Total Billing',
-                              style: GoogleFonts.outfit(
-                                  fontSize: 11,
-                                  color: Colors.white.withValues(alpha: 0.85),
-                                  fontWeight: FontWeight.w700),
+                              style: GoogleFonts.outfit(fontSize: 11, color: Colors.white.withValues(alpha: 0.85), fontWeight: FontWeight.w700),
                             ),
                             Text(
                               _formatRupiah(total),
-                              style: GoogleFonts.robotoMono(
-                                  fontSize: 13,
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w800),
+                              style: GoogleFonts.robotoMono(fontSize: 13, color: Colors.white, fontWeight: FontWeight.w800),
                             ),
                           ],
                         ),
@@ -461,8 +415,7 @@ class RekamMedisView extends StatelessWidget {
                             _billingItem('Total Billing', _formatRupiah(total)),
                             const SizedBox(width: 12),
                             if (hasPerkiraan) ...[
-                              _billingItem(
-                                  'Estimasi Tarif', _formatRupiah(perkiraan)),
+                              _billingItem('Estimasi Tarif', _formatRupiah(perkiraan)),
                               const SizedBox(width: 12),
                               _billingItemSelisih('Selisih', selisih),
                             ] else ...[
@@ -496,10 +449,7 @@ class RekamMedisView extends StatelessWidget {
               const SizedBox(width: 4),
               Text(
                 label,
-                style: GoogleFonts.outfit(
-                    fontSize: 9.5,
-                    color: Colors.white70,
-                    fontWeight: FontWeight.w700),
+                style: GoogleFonts.outfit(fontSize: 9.5, color: Colors.white70, fontWeight: FontWeight.w700),
               ),
             ],
           ),
@@ -544,9 +494,7 @@ class RekamMedisView extends StatelessWidget {
                   color: active ? AppTheme.primary : AppTheme.bgCard,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: active
-                        ? AppTheme.primaryLight.withValues(alpha: 0.3)
-                        : AppTheme.divider,
+                    color: active ? AppTheme.primaryLight.withValues(alpha: 0.3) : AppTheme.divider,
                     width: 1,
                   ),
                   boxShadow: active
@@ -722,218 +670,218 @@ class RekamMedisView extends StatelessWidget {
       }
       return SingleChildScrollView(
         padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // ──── DIAGNOSA (ICD-10) ────
-          Text(
-            'Diagnosa (ICD-10)',
-            style: GoogleFonts.outfit(
-              fontSize: 15,
-              fontWeight: FontWeight.w800,
-              color: AppTheme.primary,
-            ),
-          ),
-          if (AppConfig.enableWriteAccess) ...[
-            const SizedBox(height: 10),
-            TextField(
-              controller: icd10SearchCtrl,
-              decoration: const InputDecoration(
-                hintText: 'Cari ICD-10 (Kode atau Deskripsi)...',
-                prefixIcon: Icon(Icons.search_rounded),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ──── DIAGNOSA (ICD-10) ────
+            Text(
+              'Diagnosa (ICD-10)',
+              style: GoogleFonts.outfit(
+                fontSize: 15,
+                fontWeight: FontWeight.w800,
+                color: AppTheme.primary,
               ),
-              onChanged: (val) => ctrl.searchICD10(val),
             ),
-            const SizedBox(height: 8),
-            
-            // Autocomplete results ICD-10
+            if (AppConfig.enableWriteAccess) ...[
+              const SizedBox(height: 10),
+              TextField(
+                controller: icd10SearchCtrl,
+                decoration: const InputDecoration(
+                  hintText: 'Cari ICD-10 (Kode atau Deskripsi)...',
+                  prefixIcon: Icon(Icons.search_rounded),
+                ),
+                onChanged: (val) => ctrl.searchICD10(val),
+              ),
+              const SizedBox(height: 8),
+
+              // Autocomplete results ICD-10
+              Obx(() {
+                if (ctrl.isLoadingICD.value) {
+                  return const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 8),
+                    child: Center(child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))),
+                  );
+                }
+                if (ctrl.searchICD10Results.isEmpty) {
+                  return const SizedBox.shrink();
+                }
+                return Container(
+                  constraints: const BoxConstraints(maxHeight: 200),
+                  decoration: BoxDecoration(
+                    color: AppTheme.bgCard,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppTheme.divider),
+                  ),
+                  child: ListView.separated(
+                    shrinkWrap: true,
+                    itemCount: ctrl.searchICD10Results.length,
+                    separatorBuilder: (_, __) => const Divider(height: 1, thickness: 0.5),
+                    itemBuilder: (context, idx) {
+                      final item = ctrl.searchICD10Results[idx];
+                      final code = item['kd_penyakit']?.toString() ?? '';
+                      final name = item['nm_penyakit']?.toString() ?? '';
+                      return ListTile(
+                        dense: true,
+                        title: Text('$code - $name', style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.w600)),
+                        onTap: () {
+                          ctrl.searchICD10Results.clear();
+                          icd10SearchCtrl.clear();
+                          _showAddDiagnosaDialog(context, ctrl, code, name);
+                        },
+                      );
+                    },
+                  ),
+                );
+              }),
+              const SizedBox(height: 12),
+            ],
+
+            const SizedBox(height: 12),
+
+            // Active diagnoses list
             Obx(() {
-              if (ctrl.isLoadingICD.value) {
-                return const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 8),
-                  child: Center(child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))),
+              if (ctrl.diagnosa.isEmpty) {
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  child: Center(child: Text('Belum ada diagnosa aktif', style: GoogleFonts.outfit(color: AppTheme.textMuted))),
                 );
               }
-              if (ctrl.searchICD10Results.isEmpty) {
-                return const SizedBox.shrink();
-              }
-              return Container(
-                constraints: const BoxConstraints(maxHeight: 200),
-                decoration: BoxDecoration(
-                  color: AppTheme.bgCard,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppTheme.divider),
-                ),
-                child: ListView.separated(
-                  shrinkWrap: true,
-                  itemCount: ctrl.searchICD10Results.length,
-                  separatorBuilder: (_, __) => const Divider(height: 1, thickness: 0.5),
-                  itemBuilder: (context, idx) {
-                    final item = ctrl.searchICD10Results[idx];
-                    final code = item['kd_penyakit']?.toString() ?? '';
-                    final name = item['nm_penyakit']?.toString() ?? '';
-                    return ListTile(
-                      dense: true,
-                      title: Text('$code - $name', style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.w600)),
-                      onTap: () {
-                        ctrl.searchICD10Results.clear();
-                        icd10SearchCtrl.clear();
-                        _showAddDiagnosaDialog(context, ctrl, code, name);
-                      },
-                    );
-                  },
-                ),
+              return ListView.separated(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: ctrl.diagnosa.length,
+                separatorBuilder: (_, __) => const SizedBox(height: 8),
+                itemBuilder: (_, i) {
+                  final d = ctrl.diagnosa[i];
+                  final code = d['kd_penyakit']?.toString() ?? '';
+                  final name = d['nm_penyakit'] ?? code;
+                  final priority = d['prioritas']?.toString() ?? '-';
+                  final status = d['status_penyakit']?.toString() ?? '-';
+
+                  return _listCard(
+                    icon: Icons.medical_information_rounded,
+                    iconColor: AppTheme.info,
+                    title: name,
+                    subtitle: 'Kode: $code • Prioritas: $priority • Status: $status',
+                    trailing: AppConfig.enableWriteAccess
+                        ? IconButton(
+                            icon: const Icon(Icons.delete_outline_rounded, color: AppTheme.danger, size: 18),
+                            onPressed: () => ctrl.deleteDiagnosa(code),
+                          )
+                        : null,
+                  );
+                },
               );
             }),
-            const SizedBox(height: 12),
-          ],
-          
-          const SizedBox(height: 12),
-          
-          // Active diagnoses list
-          Obx(() {
-            if (ctrl.diagnosa.isEmpty) {
-              return Padding(
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                child: Center(child: Text('Belum ada diagnosa aktif', style: GoogleFonts.outfit(color: AppTheme.textMuted))),
-              );
-            }
-            return ListView.separated(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: ctrl.diagnosa.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 8),
-              itemBuilder: (_, i) {
-                final d = ctrl.diagnosa[i];
-                final code = d['kd_penyakit']?.toString() ?? '';
-                final name = d['nm_penyakit'] ?? code;
-                final priority = d['prioritas']?.toString() ?? '-';
-                final status = d['status_penyakit']?.toString() ?? '-';
-                
-                return _listCard(
-                  icon: Icons.medical_information_rounded,
-                  iconColor: AppTheme.info,
-                  title: name,
-                  subtitle: 'Kode: $code • Prioritas: $priority • Status: $status',
-                  trailing: AppConfig.enableWriteAccess
-                      ? IconButton(
-                          icon: const Icon(Icons.delete_outline_rounded, color: AppTheme.danger, size: 18),
-                          onPressed: () => ctrl.deleteDiagnosa(code),
-                        )
-                      : null,
-                );
-              },
-            );
-          }),
-          
-          const SizedBox(height: 24),
-          const Divider(color: AppTheme.divider),
-          const SizedBox(height: 16),
-          
-          // ──── PROSEDUR (ICD-9-CM) ────
-          Text(
-            'Prosedur (ICD-9-CM)',
-            style: GoogleFonts.outfit(
-              fontSize: 15,
-              fontWeight: FontWeight.w800,
-              color: AppTheme.primary,
-            ),
-          ),
-          if (AppConfig.enableWriteAccess) ...[
-            const SizedBox(height: 10),
-            TextField(
-              controller: icd9SearchCtrl,
-              decoration: const InputDecoration(
-                hintText: 'Cari ICD-9 (Kode atau Deskripsi)...',
-                prefixIcon: Icon(Icons.search_rounded),
+
+            const SizedBox(height: 24),
+            const Divider(color: AppTheme.divider),
+            const SizedBox(height: 16),
+
+            // ──── PROSEDUR (ICD-9-CM) ────
+            Text(
+              'Prosedur (ICD-9-CM)',
+              style: GoogleFonts.outfit(
+                fontSize: 15,
+                fontWeight: FontWeight.w800,
+                color: AppTheme.primary,
               ),
-              onChanged: (val) => ctrl.searchICD9(val),
             ),
-            const SizedBox(height: 8),
-            
-            // Autocomplete results ICD-9
+            if (AppConfig.enableWriteAccess) ...[
+              const SizedBox(height: 10),
+              TextField(
+                controller: icd9SearchCtrl,
+                decoration: const InputDecoration(
+                  hintText: 'Cari ICD-9 (Kode atau Deskripsi)...',
+                  prefixIcon: Icon(Icons.search_rounded),
+                ),
+                onChanged: (val) => ctrl.searchICD9(val),
+              ),
+              const SizedBox(height: 8),
+
+              // Autocomplete results ICD-9
+              Obx(() {
+                if (ctrl.isLoadingICD.value) {
+                  return const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 8),
+                    child: Center(child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))),
+                  );
+                }
+                if (ctrl.searchICD9Results.isEmpty) {
+                  return const SizedBox.shrink();
+                }
+                return Container(
+                  constraints: const BoxConstraints(maxHeight: 200),
+                  decoration: BoxDecoration(
+                    color: AppTheme.bgCard,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppTheme.divider),
+                  ),
+                  child: ListView.separated(
+                    shrinkWrap: true,
+                    itemCount: ctrl.searchICD9Results.length,
+                    separatorBuilder: (_, __) => const Divider(height: 1, thickness: 0.5),
+                    itemBuilder: (context, idx) {
+                      final item = ctrl.searchICD9Results[idx];
+                      final code = item['kode']?.toString() ?? '';
+                      final name = item['deskripsi_panjang']?.toString() ?? item['deskripsi_pendek']?.toString() ?? '';
+                      return ListTile(
+                        dense: true,
+                        title: Text('$code - $name', style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.w600)),
+                        onTap: () {
+                          ctrl.searchICD9Results.clear();
+                          icd9SearchCtrl.clear();
+                          _showAddProsedurDialog(context, ctrl, code, name);
+                        },
+                      );
+                    },
+                  ),
+                );
+              }),
+              const SizedBox(height: 12),
+            ],
+
+            const SizedBox(height: 12),
+
+            // Active procedures list
             Obx(() {
-              if (ctrl.isLoadingICD.value) {
-                return const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 8),
-                  child: Center(child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))),
+              if (ctrl.prosedurList.isEmpty) {
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  child: Center(child: Text('Belum ada prosedur aktif', style: GoogleFonts.outfit(color: AppTheme.textMuted))),
                 );
               }
-              if (ctrl.searchICD9Results.isEmpty) {
-                return const SizedBox.shrink();
-              }
-              return Container(
-                constraints: const BoxConstraints(maxHeight: 200),
-                decoration: BoxDecoration(
-                  color: AppTheme.bgCard,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppTheme.divider),
-                ),
-                child: ListView.separated(
-                  shrinkWrap: true,
-                  itemCount: ctrl.searchICD9Results.length,
-                  separatorBuilder: (_, __) => const Divider(height: 1, thickness: 0.5),
-                  itemBuilder: (context, idx) {
-                    final item = ctrl.searchICD9Results[idx];
-                    final code = item['kode']?.toString() ?? '';
-                    final name = item['deskripsi_panjang']?.toString() ?? item['deskripsi_pendek']?.toString() ?? '';
-                    return ListTile(
-                      dense: true,
-                      title: Text('$code - $name', style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.w600)),
-                      onTap: () {
-                        ctrl.searchICD9Results.clear();
-                        icd9SearchCtrl.clear();
-                        _showAddProsedurDialog(context, ctrl, code, name);
-                      },
-                    );
-                  },
-                ),
+              return ListView.separated(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: ctrl.prosedurList.length,
+                separatorBuilder: (_, __) => const SizedBox(height: 8),
+                itemBuilder: (_, i) {
+                  final p = ctrl.prosedurList[i];
+                  final code = p['kode']?.toString() ?? '';
+                  final name = p['deskripsi_panjang']?.toString() ?? p['deskripsi_pendek']?.toString() ?? code;
+                  final priority = p['prioritas']?.toString() ?? '1';
+
+                  return _listCard(
+                    icon: Icons.settings_accessibility_rounded,
+                    iconColor: AppTheme.accentAlt,
+                    title: name,
+                    subtitle: 'Kode: $code • Prioritas: $priority',
+                    trailing: AppConfig.enableWriteAccess
+                        ? IconButton(
+                            icon: const Icon(Icons.delete_outline_rounded, color: AppTheme.danger, size: 18),
+                            onPressed: () => ctrl.deleteProsedur(code),
+                          )
+                        : null,
+                  );
+                },
               );
             }),
-            const SizedBox(height: 12),
           ],
-          
-          const SizedBox(height: 12),
-          
-          // Active procedures list
-          Obx(() {
-            if (ctrl.prosedurList.isEmpty) {
-              return Padding(
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                child: Center(child: Text('Belum ada prosedur aktif', style: GoogleFonts.outfit(color: AppTheme.textMuted))),
-              );
-            }
-            return ListView.separated(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: ctrl.prosedurList.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 8),
-              itemBuilder: (_, i) {
-                final p = ctrl.prosedurList[i];
-                final code = p['kode']?.toString() ?? '';
-                final name = p['deskripsi_panjang']?.toString() ?? p['deskripsi_pendek']?.toString() ?? code;
-                final priority = p['prioritas']?.toString() ?? '1';
-                
-                return _listCard(
-                  icon: Icons.settings_accessibility_rounded,
-                  iconColor: AppTheme.accentAlt,
-                  title: name,
-                  subtitle: 'Kode: $code • Prioritas: $priority',
-                  trailing: AppConfig.enableWriteAccess
-                      ? IconButton(
-                          icon: const Icon(Icons.delete_outline_rounded, color: AppTheme.danger, size: 18),
-                          onPressed: () => ctrl.deleteProsedur(code),
-                        )
-                      : null,
-                );
-              },
-            );
-          }),
-        ],
-      ),
-    );
-  });
-}
+        ),
+      );
+    });
+  }
 
   Widget _buildObatTab(BuildContext context, RekamMedisController ctrl) {
     return Stack(
@@ -946,13 +894,13 @@ class RekamMedisView extends StatelessWidget {
           }
           final listDispensed = ctrl.obat;
           final listPending = ctrl.resepList;
-          
+
           if (listDispensed.isEmpty && listPending.isEmpty) {
             return _emptyState('Belum ada data obat atau resep');
           }
-          
+
           final Map<String, List<Map<String, dynamic>>> groups = {};
-          
+
           // Add historical (dispensed) medications
           for (final o in listDispensed) {
             final tgl = o['tgl_perawatan']?.toString() ?? '-';
@@ -966,32 +914,58 @@ class RekamMedisView extends StatelessWidget {
 
           // Add pending electronic prescriptions
           for (final r in listPending) {
+            final isAlreadyDispensed = listDispensed.any((o) => (o['kode_brng'] != null && o['kode_brng'] == r['kode_brng']) || o['nama_obat'] == r['nama_brng']);
+
+            if (isAlreadyDispensed) {
+              continue; // Skip already dispensed item to avoid duplicate
+            }
+
+            final tglPenyerahan = r['tgl_penyerahan']?.toString() ?? '';
+            final isDispensed = tglPenyerahan.isNotEmpty && tglPenyerahan != '0000-00-00';
+
             final tgl = r['tgl_perawatan']?.toString() ?? '-';
             final jam = r['jam']?.toString() ?? '-';
-            final key = 'Pending|${r['no_resep']}|$tgl|$jam';
-            if (!groups.containsKey(key)) {
-              groups[key] = [];
+
+            if (isDispensed) {
+              final key = 'Dispensed|$tgl|$jam';
+              if (!groups.containsKey(key)) {
+                groups[key] = [];
+              }
+              groups[key]!.add({
+                'nama_obat': r['nama_brng'],
+                'jumlah': r['jml'],
+                'satuan': r['satuan'],
+                'aturan': r['aturan_pakai'],
+                'tgl_perawatan': tgl,
+                'jam': jam,
+              });
+            } else {
+              final key = 'Pending|${r['no_resep']}|$tgl|$jam';
+              if (!groups.containsKey(key)) {
+                groups[key] = [];
+              }
+              groups[key]!.add({
+                'nama_obat': r['nama_brng'],
+                'jumlah': r['jml'],
+                'satuan': r['satuan'],
+                'aturan': r['aturan_pakai'],
+                'tgl_perawatan': tgl,
+                'jam': jam,
+                'no_resep': r['no_resep'],
+              });
             }
-            groups[key]!.add({
-              'nama_obat': r['nama_brng'],
-              'jumlah': r['jml'],
-              'satuan': r['satuan'],
-              'aturan': r['aturan_pakai'],
-              'tgl_perawatan': tgl,
-              'jam': jam,
-              'no_resep': r['no_resep'],
-            });
           }
 
-          final sortedKeys = groups.keys.toList()..sort((a, b) {
-            final partsA = a.split('|');
-            final partsB = b.split('|');
-            final tglA = partsA.length > 2 ? partsA[partsA.length - 2] : '';
-            final tglB = partsB.length > 2 ? partsB[partsB.length - 2] : '';
-            final jamA = partsA.length > 1 ? partsA[partsA.length - 1] : '';
-            final jamB = partsB.length > 1 ? partsB[partsB.length - 1] : '';
-            return '$tglB|$jamB'.compareTo('$tglA|$jamA');
-          });
+          final sortedKeys = groups.keys.toList()
+            ..sort((a, b) {
+              final partsA = a.split('|');
+              final partsB = b.split('|');
+              final tglA = partsA.length > 2 ? partsA[partsA.length - 2] : '';
+              final tglB = partsB.length > 2 ? partsB[partsB.length - 2] : '';
+              final jamA = partsA.length > 1 ? partsA[partsA.length - 1] : '';
+              final jamB = partsB.length > 1 ? partsB[partsB.length - 1] : '';
+              return '$tglB|$jamB'.compareTo('$tglA|$jamA');
+            });
 
           return ListView.separated(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
@@ -1046,7 +1020,7 @@ class RekamMedisView extends StatelessWidget {
                               ),
                             ],
                           ),
-                          if (isPending && noResep != null)
+                          if (AppConfig.enableWriteAccess && isPending && noResep != null)
                             IconButton(
                               icon: const Icon(Icons.delete_outline_rounded, color: AppTheme.danger, size: 18),
                               onPressed: () => _confirmDeleteResep(context, ctrl, noResep),
@@ -1149,15 +1123,11 @@ class RekamMedisView extends StatelessWidget {
     bool afternoon = false;
     bool night = false;
 
-    if (s.contains('3x') ||
-        s.contains('tiga kali') ||
-        (s.contains('pagi') && s.contains('siang') && s.contains('malam'))) {
+    if (s.contains('3x') || s.contains('tiga kali') || (s.contains('pagi') && s.contains('siang') && s.contains('malam'))) {
       morning = true;
       afternoon = true;
       night = true;
-    } else if (s.contains('2x') ||
-        s.contains('dua kali') ||
-        (s.contains('pagi') && s.contains('malam'))) {
+    } else if (s.contains('2x') || s.contains('dua kali') || (s.contains('pagi') && s.contains('malam'))) {
       morning = true;
       night = true;
     } else if (s.contains('malam') || s.contains('sebelum tidur')) {
@@ -1169,16 +1139,14 @@ class RekamMedisView extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        if (morning)
-          _timingIndicator('Pagi', Icons.light_mode_rounded, Colors.amber),
+        if (morning) _timingIndicator('Pagi', Icons.light_mode_rounded, Colors.amber),
         if (afternoon) ...[
           const SizedBox(width: 4),
           _timingIndicator('Siang', Icons.wb_twilight_rounded, Colors.orange),
         ],
         if (night) ...[
           const SizedBox(width: 4),
-          _timingIndicator(
-              'Malam', Icons.dark_mode_rounded, Colors.indigoAccent),
+          _timingIndicator('Malam', Icons.dark_mode_rounded, Colors.indigoAccent),
         ],
       ],
     );
@@ -1197,9 +1165,7 @@ class RekamMedisView extends StatelessWidget {
         children: [
           Icon(icon, size: 10, color: color),
           const SizedBox(width: 3),
-          Text(label,
-              style: GoogleFonts.outfit(
-                  fontSize: 8.5, color: color, fontWeight: FontWeight.w800)),
+          Text(label, style: GoogleFonts.outfit(fontSize: 8.5, color: color, fontWeight: FontWeight.w800)),
         ],
       ),
     );
@@ -1215,180 +1181,177 @@ class RekamMedisView extends StatelessWidget {
       }
       return ListView.separated(
         padding: const EdgeInsets.all(16),
-      itemCount: ctrl.laboratorium.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 20),
-      itemBuilder: (context, groupIndex) {
-        final group = ctrl.laboratorium[groupIndex];
-        final groupName = group['group_name']?.toString() ?? 'Pemeriksaan Lab';
-        final items = group['items'] as List? ?? [];
+        itemCount: ctrl.laboratorium.length,
+        separatorBuilder: (_, __) => const SizedBox(height: 20),
+        itemBuilder: (context, groupIndex) {
+          final group = ctrl.laboratorium[groupIndex];
+          final groupName = group['group_name']?.toString() ?? 'Pemeriksaan Lab';
+          final items = group['items'] as List? ?? [];
 
-        return Container(
-          decoration: BoxDecoration(
-            color: AppTheme.bgCard,
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: AppTheme.divider),
-            boxShadow: [
-              BoxShadow(
-                color: AppTheme.textPrimary.withValues(alpha: 0.02),
-                blurRadius: 16,
-                offset: const Offset(0, 8),
-              )
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: double.infinity,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                decoration: const BoxDecoration(
-                  color: AppTheme.bgSurface,
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(17)),
-                ),
-                child: Text(
-                  groupName,
-                  style: GoogleFonts.outfit(
-                    fontSize: 13.5,
-                    fontWeight: FontWeight.w800,
-                    color: AppTheme.primary,
+          return Container(
+            decoration: BoxDecoration(
+              color: AppTheme.bgCard,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: AppTheme.divider),
+              boxShadow: [
+                BoxShadow(
+                  color: AppTheme.textPrimary.withValues(alpha: 0.02),
+                  blurRadius: 16,
+                  offset: const Offset(0, 8),
+                )
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  decoration: const BoxDecoration(
+                    color: AppTheme.bgSurface,
+                    borderRadius: BorderRadius.vertical(top: Radius.circular(17)),
+                  ),
+                  child: Text(
+                    groupName,
+                    style: GoogleFonts.outfit(
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w800,
+                      color: AppTheme.primary,
+                    ),
                   ),
                 ),
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-                child: Row(
-                  children: [
-                    Expanded(
-                      flex: 4,
-                      child: Text(
-                        'Pemeriksaan',
-                        style: GoogleFonts.outfit(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w800,
-                          color: AppTheme.textMuted,
-                        ),
-                      ),
-                    ),
-                    Expanded(
-                      flex: 3,
-                      child: Text(
-                        'Hasil',
-                        style: GoogleFonts.outfit(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w800,
-                          color: AppTheme.textMuted,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                    Expanded(
-                      flex: 3,
-                      child: Text(
-                        'Nilai Rujukan',
-                        style: GoogleFonts.outfit(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w800,
-                          color: AppTheme.textMuted,
-                        ),
-                        textAlign: TextAlign.right,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const Divider(height: 1, thickness: 1, color: AppTheme.divider),
-              ListView.separated(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: items.length,
-                separatorBuilder: (_, __) => const Divider(
-                    height: 1, thickness: 0.5, color: AppTheme.divider),
-                itemBuilder: (context, itemIndex) {
-                  final l = items[itemIndex] as Map<String, dynamic>;
-                  final nmPeriksa = l['pemeriksaan']?.toString() ?? '-';
-                  final hasil = l['hasil']?.toString() ?? '-';
-                  final satuan = l['satuan']?.toString() ?? '';
-                  final normal = l['nilai_normal']?.toString() ?? '-';
-                  final ket = l['keterangan']?.toString().toUpperCase() ?? '';
-
-                  Color hasilColor = AppTheme.textPrimary;
-                  FontWeight hasilWeight = FontWeight.w800;
-
-                  if (ket == 'H') {
-                    hasilColor = AppTheme.danger;
-                  } else if (ket == 'L') {
-                    hasilColor = AppTheme.info;
-                  } else if (ket == 'T') {
-                    hasilColor = AppTheme.danger;
-                    hasilWeight = FontWeight.w900;
-                  }
-
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 12),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          flex: 4,
-                          child: Text(
-                            nmPeriksa,
-                            style: GoogleFonts.outfit(
-                              fontSize: 12.5,
-                              fontWeight: FontWeight.w600,
-                              color: AppTheme.textPrimary,
-                            ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        flex: 4,
+                        child: Text(
+                          'Pemeriksaan',
+                          style: GoogleFonts.outfit(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w800,
+                            color: AppTheme.textMuted,
                           ),
                         ),
-                        Expanded(
-                          flex: 3,
-                          child: Text.rich(
-                            TextSpan(
-                              children: [
-                                TextSpan(
-                                  text: hasil,
-                                  style: GoogleFonts.robotoMono(
-                                    fontSize: 13,
-                                    fontWeight: hasilWeight,
-                                    color: hasilColor,
-                                  ),
-                                ),
-                                if (satuan.isNotEmpty)
+                      ),
+                      Expanded(
+                        flex: 3,
+                        child: Text(
+                          'Hasil',
+                          style: GoogleFonts.outfit(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w800,
+                            color: AppTheme.textMuted,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                      Expanded(
+                        flex: 3,
+                        child: Text(
+                          'Nilai Rujukan',
+                          style: GoogleFonts.outfit(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w800,
+                            color: AppTheme.textMuted,
+                          ),
+                          textAlign: TextAlign.right,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const Divider(height: 1, thickness: 1, color: AppTheme.divider),
+                ListView.separated(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: items.length,
+                  separatorBuilder: (_, __) => const Divider(height: 1, thickness: 0.5, color: AppTheme.divider),
+                  itemBuilder: (context, itemIndex) {
+                    final l = items[itemIndex] as Map<String, dynamic>;
+                    final nmPeriksa = l['pemeriksaan']?.toString() ?? '-';
+                    final hasil = l['hasil']?.toString() ?? '-';
+                    final satuan = l['satuan']?.toString() ?? '';
+                    final normal = l['nilai_normal']?.toString() ?? '-';
+                    final ket = l['keterangan']?.toString().toUpperCase() ?? '';
+
+                    Color hasilColor = AppTheme.textPrimary;
+                    FontWeight hasilWeight = FontWeight.w800;
+
+                    if (ket == 'H') {
+                      hasilColor = AppTheme.danger;
+                    } else if (ket == 'L') {
+                      hasilColor = AppTheme.info;
+                    } else if (ket == 'T') {
+                      hasilColor = AppTheme.danger;
+                      hasilWeight = FontWeight.w900;
+                    }
+
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            flex: 4,
+                            child: Text(
+                              nmPeriksa,
+                              style: GoogleFonts.outfit(
+                                fontSize: 12.5,
+                                fontWeight: FontWeight.w600,
+                                color: AppTheme.textPrimary,
+                              ),
+                            ),
+                          ),
+                          Expanded(
+                            flex: 3,
+                            child: Text.rich(
+                              TextSpan(
+                                children: [
                                   TextSpan(
-                                    text: ' $satuan',
-                                    style: GoogleFonts.outfit(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w700,
-                                      color: AppTheme.textSecondary,
+                                    text: hasil,
+                                    style: GoogleFonts.robotoMono(
+                                      fontSize: 13,
+                                      fontWeight: hasilWeight,
+                                      color: hasilColor,
                                     ),
                                   ),
-                              ],
+                                  if (satuan.isNotEmpty)
+                                    TextSpan(
+                                      text: ' $satuan',
+                                      style: GoogleFonts.outfit(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w700,
+                                        color: AppTheme.textSecondary,
+                                      ),
+                                    ),
+                                ],
+                              ),
+                              textAlign: TextAlign.center,
                             ),
-                            textAlign: TextAlign.center,
                           ),
-                        ),
-                        Expanded(
-                          flex: 3,
-                          child: Text(
-                            normal,
-                            style: GoogleFonts.robotoMono(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: AppTheme.textSecondary,
+                          Expanded(
+                            flex: 3,
+                            child: Text(
+                              normal,
+                              style: GoogleFonts.robotoMono(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: AppTheme.textSecondary,
+                              ),
+                              textAlign: TextAlign.right,
                             ),
-                            textAlign: TextAlign.right,
                           ),
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              ),
-            ],
-          ),
-        );
-      },
-    );
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
+          );
+        },
+      );
     });
   }
 
@@ -1400,64 +1363,60 @@ class RekamMedisView extends StatelessWidget {
       return ListView(
         padding: const EdgeInsets.all(16),
         children: [
-        // Section 1: Hasil Bacaan & Foto
-        Row(
-          children: [
-            const Icon(Icons.description_rounded,
-                color: AppTheme.primary, size: 18),
-            const SizedBox(width: 8),
-            Text(
-              'Hasil & Foto Pemeriksaan',
-              style: GoogleFonts.outfit(
-                fontSize: 14,
-                fontWeight: FontWeight.w800,
-                color: AppTheme.textPrimary,
+          // Section 1: Hasil Bacaan & Foto
+          Row(
+            children: [
+              const Icon(Icons.description_rounded, color: AppTheme.primary, size: 18),
+              const SizedBox(width: 8),
+              Text(
+                'Hasil & Foto Pemeriksaan',
+                style: GoogleFonts.outfit(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w800,
+                  color: AppTheme.textPrimary,
+                ),
               ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        if (ctrl.radiologi.isEmpty)
-          _emptyStateMini('Belum ada hasil & foto pemeriksaan')
-        else
-          ...ctrl.radiologi.map((r) => _buildRadiologiCard(r)),
+            ],
+          ),
+          const SizedBox(height: 12),
+          if (ctrl.radiologi.isEmpty) _emptyStateMini('Belum ada hasil & foto pemeriksaan') else ...ctrl.radiologi.map((r) => _buildRadiologiCard(r)),
 
-        const SizedBox(height: 24),
-        const Divider(height: 1, thickness: 1, color: AppTheme.divider),
-        const SizedBox(height: 24),
+          const SizedBox(height: 24),
+          const Divider(height: 1, thickness: 1, color: AppTheme.divider),
+          const SizedBox(height: 24),
 
-        // Section 2: DICOM PACS
-        // Row(
-        //   children: [
-        //     const Icon(Icons.settings_system_daydream_rounded, color: AppTheme.accentAlt, size: 18),
-        //     const SizedBox(width: 8),
-        //     Text(
-        //       'Integrasi PACS (Orthanc DICOM)',
-        //       style: GoogleFonts.outfit(
-        //         fontSize: 14,
-        //         fontWeight: FontWeight.w800,
-        //         color: AppTheme.textPrimary,
-        //       ),
-        //     ),
-        //   ],
-        // ),
-        // const SizedBox(height: 12),
-        // Obx(() {
-        //   if (ctrl.isLoadingDicom.value) {
-        //     return const Padding(
-        //       padding: EdgeInsets.symmetric(vertical: 24),
-        //       child: Center(child: CircularProgressIndicator(color: AppTheme.accent)),
-        //     );
-        //   }
-        //   if (ctrl.dicomStudies.isEmpty) {
-        //     return _emptyStateMini('Tidak ada data DICOM ditemukan di server PACS');
-        //   }
-        //   return Column(
-        //     children: ctrl.dicomStudies.map((study) => _buildDicomCard(ctrl, study)).toList(),
-        //   );
-        // }),
-      ],
-    );
+          // Section 2: DICOM PACS
+          // Row(
+          //   children: [
+          //     const Icon(Icons.settings_system_daydream_rounded, color: AppTheme.accentAlt, size: 18),
+          //     const SizedBox(width: 8),
+          //     Text(
+          //       'Integrasi PACS (Orthanc DICOM)',
+          //       style: GoogleFonts.outfit(
+          //         fontSize: 14,
+          //         fontWeight: FontWeight.w800,
+          //         color: AppTheme.textPrimary,
+          //       ),
+          //     ),
+          //   ],
+          // ),
+          // const SizedBox(height: 12),
+          // Obx(() {
+          //   if (ctrl.isLoadingDicom.value) {
+          //     return const Padding(
+          //       padding: EdgeInsets.symmetric(vertical: 24),
+          //       child: Center(child: CircularProgressIndicator(color: AppTheme.accent)),
+          //     );
+          //   }
+          //   if (ctrl.dicomStudies.isEmpty) {
+          //     return _emptyStateMini('Tidak ada data DICOM ditemukan di server PACS');
+          //   }
+          //   return Column(
+          //     children: ctrl.dicomStudies.map((study) => _buildDicomCard(ctrl, study)).toList(),
+          //   );
+          // }),
+        ],
+      );
     });
   }
 
@@ -1493,8 +1452,7 @@ class RekamMedisView extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.image_search_rounded,
-                      color: AppTheme.primary, size: 16),
+                  const Icon(Icons.image_search_rounded, color: AppTheme.primary, size: 16),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
@@ -1532,9 +1490,7 @@ class RekamMedisView extends StatelessWidget {
                       height: 1.4,
                     ),
                   ),
-                  if (fotoUrl != null &&
-                      fotoUrl.isNotEmpty &&
-                      fotoUrl != '-') ...[
+                  if (fotoUrl != null && fotoUrl.isNotEmpty && fotoUrl != '-') ...[
                     const SizedBox(height: 16),
                     Text(
                       'Foto Radiologi:',
@@ -1561,30 +1517,25 @@ class RekamMedisView extends StatelessWidget {
                                 color: AppTheme.bgSurface,
                                 height: 160,
                                 child: const Center(
-                                  child: CircularProgressIndicator(
-                                      color: AppTheme.primary),
+                                  child: CircularProgressIndicator(color: AppTheme.primary),
                                 ),
                               ),
                               errorWidget: (context, url, error) => Container(
                                 color: AppTheme.bgSurface,
                                 height: 160,
-                                child: const Icon(Icons.broken_image,
-                                    color: AppTheme.textMuted, size: 40),
+                                child: const Icon(Icons.broken_image, color: AppTheme.textMuted, size: 40),
                               ),
                             ),
                             Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 10, vertical: 6),
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                               decoration: BoxDecoration(
                                 color: Colors.black.withValues(alpha: 0.6),
-                                borderRadius: const BorderRadius.only(
-                                    topLeft: Radius.circular(12)),
+                                borderRadius: const BorderRadius.only(topLeft: Radius.circular(12)),
                               ),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  const Icon(Icons.zoom_in,
-                                      color: Colors.white, size: 14),
+                                  const Icon(Icons.zoom_in, color: Colors.white, size: 14),
                                   const SizedBox(width: 4),
                                   Text(
                                     'Perbesar Foto',
@@ -1746,12 +1697,8 @@ class RekamMedisView extends StatelessWidget {
                 maxScale: 4.0,
                 child: CachedNetworkImage(
                   imageUrl: imageUrl,
-                  placeholder: (context, url) =>
-                      const CircularProgressIndicator(color: Colors.white),
-                  errorWidget: (context, url, error) => const Icon(
-                      Icons.broken_image,
-                      color: Colors.white,
-                      size: 40),
+                  placeholder: (context, url) => const CircularProgressIndicator(color: Colors.white),
+                  errorWidget: (context, url, error) => const Icon(Icons.broken_image, color: Colors.white, size: 40),
                 ),
               ),
             ),
@@ -1769,10 +1716,7 @@ class RekamMedisView extends StatelessWidget {
               right: 24,
               child: Text(
                 title,
-                style: GoogleFonts.outfit(
-                    color: Colors.white,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700),
+                style: GoogleFonts.outfit(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w700),
                 textAlign: TextAlign.center,
               ),
             ),
@@ -1783,13 +1727,7 @@ class RekamMedisView extends StatelessWidget {
   }
 
   String _cleanHtml(String html) {
-    return html
-        .replaceAll(RegExp(r'<p>'), '')
-        .replaceAll(RegExp(r'</p>'), '\n')
-        .replaceAll(RegExp(r'<strong>'), '')
-        .replaceAll(RegExp(r'</strong>'), '')
-        .replaceAll(RegExp(r'<br\s*/?>'), '\n')
-        .trim();
+    return html.replaceAll(RegExp(r'<p>'), '').replaceAll(RegExp(r'</p>'), '\n').replaceAll(RegExp(r'<strong>'), '').replaceAll(RegExp(r'</strong>'), '').replaceAll(RegExp(r'<br\s*/?>'), '\n').trim();
   }
 
   Widget _emptyStateMini(String message) {
@@ -1803,8 +1741,7 @@ class RekamMedisView extends StatelessWidget {
       ),
       child: Column(
         children: [
-          Icon(Icons.info_outline_rounded,
-              size: 24, color: AppTheme.textMuted.withValues(alpha: 0.6)),
+          Icon(Icons.info_outline_rounded, size: 24, color: AppTheme.textMuted.withValues(alpha: 0.6)),
           const SizedBox(height: 8),
           Text(
             message,
@@ -1988,8 +1925,7 @@ class RekamMedisView extends StatelessWidget {
               shape: BoxShape.circle,
               border: Border.all(color: AppTheme.divider),
             ),
-            child: Icon(Icons.inventory_2_outlined,
-                size: 40, color: AppTheme.textMuted.withValues(alpha: 0.6)),
+            child: Icon(Icons.inventory_2_outlined, size: 40, color: AppTheme.textMuted.withValues(alpha: 0.6)),
           ),
           const SizedBox(height: 16),
           Text(
@@ -2116,20 +2052,14 @@ class RekamMedisView extends StatelessWidget {
                         children: [
                           Text(
                             'Dilaporkan oleh: ${sbar['petugas']?['nama'] ?? '-'}',
-                            style: GoogleFonts.outfit(
-                                fontSize: 11,
-                                color: AppTheme.textSecondary,
-                                fontWeight: FontWeight.w600),
+                            style: GoogleFonts.outfit(fontSize: 11, color: AppTheme.textSecondary, fontWeight: FontWeight.w600),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
                           const SizedBox(height: 2),
                           Text(
                             'Dokter: ${sbar['dokter']?['nama'] ?? '-'}',
-                            style: GoogleFonts.outfit(
-                                fontSize: 11,
-                                color: AppTheme.textMuted,
-                                fontWeight: FontWeight.w500),
+                            style: GoogleFonts.outfit(fontSize: 11, color: AppTheme.textMuted, fontWeight: FontWeight.w500),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -2138,19 +2068,16 @@ class RekamMedisView extends StatelessWidget {
                     ),
                     if (isValidated) ...[
                       Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 5),
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                         decoration: BoxDecoration(
                           color: AppTheme.success.withValues(alpha: 0.08),
                           borderRadius: BorderRadius.circular(8),
-                          border: Border.all(
-                              color: AppTheme.success.withValues(alpha: 0.2)),
+                          border: Border.all(color: AppTheme.success.withValues(alpha: 0.2)),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.check_circle_rounded,
-                                color: AppTheme.success, size: 14),
+                            const Icon(Icons.check_circle_rounded, color: AppTheme.success, size: 14),
                             const SizedBox(width: 4),
                             Text(
                               'Verified',
@@ -2163,17 +2090,14 @@ class RekamMedisView extends StatelessWidget {
                           ],
                         ),
                       )
-                    ] else if (sbar['dokter']?['nik']?.toString() ==
-                        Get.find<AuthController>().user.value?['nip']) ...[
+                    ] else if (sbar['dokter']?['nik']?.toString() == Get.find<AuthController>().user.value?['nip']) ...[
                       ElevatedButton(
-                        onPressed: () =>
-                            _confirmValidasiSbar(context, ctrl, noPermintaan, tgl, jam),
+                        onPressed: () => _confirmValidasiSbar(context, ctrl, noPermintaan, tgl, jam),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppTheme.primary,
                           foregroundColor: Colors.white,
                           elevation: 0,
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 14, vertical: 8),
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                           minimumSize: Size.zero,
                           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                           shape: RoundedRectangleBorder(
@@ -2190,19 +2114,16 @@ class RekamMedisView extends StatelessWidget {
                       )
                     ] else ...[
                       Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 5),
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                         decoration: BoxDecoration(
                           color: AppTheme.warning.withValues(alpha: 0.08),
                           borderRadius: BorderRadius.circular(8),
-                          border: Border.all(
-                              color: AppTheme.warning.withValues(alpha: 0.2)),
+                          border: Border.all(color: AppTheme.warning.withValues(alpha: 0.2)),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.pending_actions_rounded,
-                                color: AppTheme.warning, size: 14),
+                            const Icon(Icons.pending_actions_rounded, color: AppTheme.warning, size: 14),
                             const SizedBox(width: 4),
                             Text(
                               'Pending',
@@ -2227,11 +2148,7 @@ class RekamMedisView extends StatelessWidget {
   }
 
   Widget _sbarSection(String title, dynamic content) {
-    final text = (content == null ||
-            content.toString().isEmpty ||
-            content.toString() == '-')
-        ? '-'
-        : content.toString();
+    final text = (content == null || content.toString().isEmpty || content.toString() == '-') ? '-' : content.toString();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -2258,11 +2175,7 @@ class RekamMedisView extends StatelessWidget {
   }
 
   Widget _sbarResponseSection(String title, dynamic content) {
-    final text = (content == null ||
-            content.toString().isEmpty ||
-            content.toString() == '-')
-        ? '-'
-        : content.toString();
+    final text = (content == null || content.toString().isEmpty || content.toString() == '-') ? '-' : content.toString();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -2288,8 +2201,7 @@ class RekamMedisView extends StatelessWidget {
     );
   }
 
-  void _confirmValidasiSbar(
-      BuildContext context, RekamMedisController ctrl, String? noPermintaan, String tgl, String jam) {
+  void _confirmValidasiSbar(BuildContext context, RekamMedisController ctrl, String? noPermintaan, String tgl, String jam) {
     final responController = TextEditingController(text: 'Sesuai rencana');
     final instruksiController = TextEditingController();
     final rencanaController = TextEditingController();
@@ -2482,101 +2394,100 @@ class RekamMedisView extends StatelessWidget {
 }
 
 void _confirmDeleteSoap(BuildContext context, RekamMedisController ctrl, String tgl, String jam) {
-    Get.dialog(
-      AlertDialog(
-        title: Text('Hapus SOAP', style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
-        content: Text('Apakah Anda yakin ingin menghapus data SOAP ini?', style: GoogleFonts.outfit()),
-        actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: Text('Batal', style: GoogleFonts.outfit(color: AppTheme.textSecondary)),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              Get.back();
-              final success = await ctrl.deleteSoap(tgl, jam);
-              if (success) {
-                Get.snackbar('Sukses', 'Data SOAP berhasil dihapus',
-                    backgroundColor: Colors.white, colorText: AppTheme.primary);
-              }
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.danger),
-            child: Text('Hapus', style: GoogleFonts.outfit(color: Colors.white)),
-          ),
-        ],
-      ),
-    );
+  Get.dialog(
+    AlertDialog(
+      title: Text('Hapus SOAP', style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
+      content: Text('Apakah Anda yakin ingin menghapus data SOAP ini?', style: GoogleFonts.outfit()),
+      actions: [
+        TextButton(
+          onPressed: () => Get.back(),
+          child: Text('Batal', style: GoogleFonts.outfit(color: AppTheme.textSecondary)),
+        ),
+        ElevatedButton(
+          onPressed: () async {
+            Get.back();
+            final success = await ctrl.deleteSoap(tgl, jam);
+            if (success) {
+              Get.snackbar('Sukses', 'Data SOAP berhasil dihapus', backgroundColor: Colors.white, colorText: AppTheme.primary);
+            }
+          },
+          style: ElevatedButton.styleFrom(backgroundColor: AppTheme.danger),
+          child: Text('Hapus', style: GoogleFonts.outfit(color: Colors.white)),
+        ),
+      ],
+    ),
+  );
+}
+
+void _showSoapForm(BuildContext context, RekamMedisController ctrl, {Map<String, dynamic>? existingData}) {
+  final isEdit = existingData != null;
+
+  final draft = !isEdit ? ctrl.soapDraft : <String, String>{};
+
+  final keluhanCtrl = TextEditingController(text: existingData?['keluhan_utama'] ?? draft['keluhan_utama'] ?? '');
+  final pemeriksaanCtrl = TextEditingController(text: existingData?['pemeriksaan_fisik'] ?? draft['pemeriksaan_fisik'] ?? '');
+  final penilaianCtrl = TextEditingController(text: existingData?['diagnosis'] ?? draft['diagnosis'] ?? '');
+  final rtlCtrl = TextEditingController(text: existingData?['tata'] ?? draft['tata'] ?? '');
+  final instruksiCtrl = TextEditingController(text: existingData?['instruksi'] ?? draft['instruksi'] ?? '');
+  final evaluasiCtrl = TextEditingController(text: existingData?['evaluasi'] ?? draft['evaluasi'] ?? '');
+
+  final suhuCtrl = TextEditingController(text: existingData?['suhu']?.toString() ?? draft['suhu'] ?? '');
+  final tensiCtrl = TextEditingController(text: existingData?['td']?.toString() ?? draft['td'] ?? '');
+  final nadiCtrl = TextEditingController(text: existingData?['nadi']?.toString() ?? draft['nadi'] ?? '');
+  final respirasiCtrl = TextEditingController(text: existingData?['rr']?.toString() ?? draft['rr'] ?? '');
+  final tinggiCtrl = TextEditingController(text: existingData?['tb']?.toString() ?? draft['tb'] ?? '');
+  final beratCtrl = TextEditingController(text: existingData?['bb']?.toString() ?? draft['bb'] ?? '');
+  final spo2Ctrl = TextEditingController(text: existingData?['spo']?.toString() ?? draft['spo'] ?? '');
+  final gcsCtrl = TextEditingController(text: existingData?['gcs']?.toString() ?? draft['gcs'] ?? '');
+  final kesadaranCtrl = TextEditingController(text: existingData?['kesadaran']?.toString() ?? draft['kesadaran'] ?? 'Compos Mentis');
+
+  if (!isEdit) {
+    void save() {
+      ctrl.saveSoapDraft({
+        'keluhan_utama': keluhanCtrl.text,
+        'pemeriksaan_fisik': pemeriksaanCtrl.text,
+        'diagnosis': penilaianCtrl.text,
+        'tata': rtlCtrl.text,
+        'instruksi': instruksiCtrl.text,
+        'evaluasi': evaluasiCtrl.text,
+        'suhu': suhuCtrl.text,
+        'td': tensiCtrl.text,
+        'nadi': nadiCtrl.text,
+        'rr': respirasiCtrl.text,
+        'tb': tinggiCtrl.text,
+        'bb': beratCtrl.text,
+        'spo': spo2Ctrl.text,
+        'gcs': gcsCtrl.text,
+        'kesadaran': kesadaranCtrl.text,
+      });
+    }
+
+    keluhanCtrl.addListener(save);
+    pemeriksaanCtrl.addListener(save);
+    penilaianCtrl.addListener(save);
+    rtlCtrl.addListener(save);
+    instruksiCtrl.addListener(save);
+    evaluasiCtrl.addListener(save);
+    suhuCtrl.addListener(save);
+    tensiCtrl.addListener(save);
+    nadiCtrl.addListener(save);
+    respirasiCtrl.addListener(save);
+    tinggiCtrl.addListener(save);
+    beratCtrl.addListener(save);
+    spo2Ctrl.addListener(save);
+    gcsCtrl.addListener(save);
+    kesadaranCtrl.addListener(save);
   }
 
-  void _showSoapForm(BuildContext context, RekamMedisController ctrl, {Map<String, dynamic>? existingData}) {
-    final isEdit = existingData != null;
-    
-    final draft = !isEdit ? ctrl.soapDraft : <String, String>{};
-
-    final keluhanCtrl = TextEditingController(text: existingData?['keluhan_utama'] ?? draft['keluhan_utama'] ?? '');
-    final pemeriksaanCtrl = TextEditingController(text: existingData?['pemeriksaan_fisik'] ?? draft['pemeriksaan_fisik'] ?? '');
-    final penilaianCtrl = TextEditingController(text: existingData?['diagnosis'] ?? draft['diagnosis'] ?? '');
-    final rtlCtrl = TextEditingController(text: existingData?['tata'] ?? draft['tata'] ?? '');
-    final instruksiCtrl = TextEditingController(text: existingData?['instruksi'] ?? draft['instruksi'] ?? '');
-    final evaluasiCtrl = TextEditingController(text: existingData?['evaluasi'] ?? draft['evaluasi'] ?? '');
-    
-    final suhuCtrl = TextEditingController(text: existingData?['suhu']?.toString() ?? draft['suhu'] ?? '');
-    final tensiCtrl = TextEditingController(text: existingData?['td']?.toString() ?? draft['td'] ?? '');
-    final nadiCtrl = TextEditingController(text: existingData?['nadi']?.toString() ?? draft['nadi'] ?? '');
-    final respirasiCtrl = TextEditingController(text: existingData?['rr']?.toString() ?? draft['rr'] ?? '');
-    final tinggiCtrl = TextEditingController(text: existingData?['tb']?.toString() ?? draft['tb'] ?? '');
-    final beratCtrl = TextEditingController(text: existingData?['bb']?.toString() ?? draft['bb'] ?? '');
-    final spo2Ctrl = TextEditingController(text: existingData?['spo']?.toString() ?? draft['spo'] ?? '');
-    final gcsCtrl = TextEditingController(text: existingData?['gcs']?.toString() ?? draft['gcs'] ?? '');
-    final kesadaranCtrl = TextEditingController(text: existingData?['kesadaran']?.toString() ?? draft['kesadaran'] ?? 'Compos Mentis');
-
-    if (!isEdit) {
-      void save() {
-        ctrl.saveSoapDraft({
-          'keluhan_utama': keluhanCtrl.text,
-          'pemeriksaan_fisik': pemeriksaanCtrl.text,
-          'diagnosis': penilaianCtrl.text,
-          'tata': rtlCtrl.text,
-          'instruksi': instruksiCtrl.text,
-          'evaluasi': evaluasiCtrl.text,
-          'suhu': suhuCtrl.text,
-          'td': tensiCtrl.text,
-          'nadi': nadiCtrl.text,
-          'rr': respirasiCtrl.text,
-          'tb': tinggiCtrl.text,
-          'bb': beratCtrl.text,
-          'spo': spo2Ctrl.text,
-          'gcs': gcsCtrl.text,
-          'kesadaran': kesadaranCtrl.text,
-        });
-      }
-
-      keluhanCtrl.addListener(save);
-      pemeriksaanCtrl.addListener(save);
-      penilaianCtrl.addListener(save);
-      rtlCtrl.addListener(save);
-      instruksiCtrl.addListener(save);
-      evaluasiCtrl.addListener(save);
-      suhuCtrl.addListener(save);
-      tensiCtrl.addListener(save);
-      nadiCtrl.addListener(save);
-      respirasiCtrl.addListener(save);
-      tinggiCtrl.addListener(save);
-      beratCtrl.addListener(save);
-      spo2Ctrl.addListener(save);
-      gcsCtrl.addListener(save);
-      kesadaranCtrl.addListener(save);
-    }
-    
-    Get.bottomSheet(
-      Padding(
-        padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-        child: Container(
-          height: Get.height * 0.85,
-          decoration: const BoxDecoration(
-            color: AppTheme.bgDark,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-          ),
+  Get.bottomSheet(
+    Padding(
+      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      child: Container(
+        height: Get.height * 0.85,
+        decoration: const BoxDecoration(
+          color: AppTheme.bgDark,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
         child: Column(
           children: [
             Container(
@@ -2713,11 +2624,9 @@ void _confirmDeleteSoap(BuildContext context, RekamMedisController ctrl, String 
                     ),
                     const SizedBox(height: 12),
                     _formField('Kesadaran', kesadaranCtrl),
-                    
                     const SizedBox(height: 20),
                     const Divider(color: AppTheme.divider),
                     const SizedBox(height: 16),
-                    
                     Text('Catatan SOAP', style: GoogleFonts.outfit(fontSize: 14, fontWeight: FontWeight.w800, color: AppTheme.primary)),
                     const SizedBox(height: 12),
                     _formField('S (Subjective) - Keluhan Utama', keluhanCtrl, maxLines: 3),
@@ -2732,7 +2641,6 @@ void _confirmDeleteSoap(BuildContext context, RekamMedisController ctrl, String 
                     const SizedBox(height: 12),
                     _formField('Evaluasi', evaluasiCtrl, maxLines: 2),
                     const SizedBox(height: 24),
-                    
                     SizedBox(
                       width: double.infinity,
                       height: 48,
@@ -2755,18 +2663,17 @@ void _confirmDeleteSoap(BuildContext context, RekamMedisController ctrl, String 
                             'gcs': gcsCtrl.text,
                             'kesadaran': kesadaranCtrl.text,
                           };
-                          
+
                           final success = await ctrl.saveSoap(
                             data: data,
                             isEdit: isEdit,
                             tglPerawatan: existingData?['tanggal'],
                             jamRawat: existingData?['jam'],
                           );
-                          
+
                           if (success) {
                             Get.back();
-                            Get.snackbar('Sukses', isEdit ? 'SOAP berhasil diperbarui' : 'SOAP berhasil disimpan',
-                                backgroundColor: Colors.white, colorText: AppTheme.primary);
+                            Get.snackbar('Sukses', isEdit ? 'SOAP berhasil diperbarui' : 'SOAP berhasil disimpan', backgroundColor: Colors.white, colorText: AppTheme.primary);
                           }
                         },
                         style: ElevatedButton.styleFrom(
@@ -2788,188 +2695,179 @@ void _confirmDeleteSoap(BuildContext context, RekamMedisController ctrl, String 
         ),
       ),
     ),
-  isScrollControlled: true,
-);
-  }
+    isScrollControlled: true,
+  );
+}
 
-  Widget _formField(String label, TextEditingController controller, {int maxLines = 1, TextInputType keyboardType = TextInputType.text}) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: GoogleFonts.outfit(fontSize: 11, fontWeight: FontWeight.w700, color: AppTheme.textSecondary),
+Widget _formField(String label, TextEditingController controller, {int maxLines = 1, TextInputType keyboardType = TextInputType.text}) {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        label,
+        style: GoogleFonts.outfit(fontSize: 11, fontWeight: FontWeight.w700, color: AppTheme.textSecondary),
+      ),
+      const SizedBox(height: 6),
+      TextField(
+        controller: controller,
+        maxLines: maxLines,
+        keyboardType: keyboardType,
+        style: GoogleFonts.outfit(fontSize: 13, color: AppTheme.textPrimary, fontWeight: FontWeight.w500),
+        decoration: const InputDecoration(
+          isDense: true,
+          contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         ),
-        const SizedBox(height: 6),
-        TextField(
-          controller: controller,
-          maxLines: maxLines,
-          keyboardType: keyboardType,
-          style: GoogleFonts.outfit(fontSize: 13, color: AppTheme.textPrimary, fontWeight: FontWeight.w500),
-          decoration: const InputDecoration(
-            isDense: true,
-            contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-          ),
-        ),
-      ],
-    );
-  }
+      ),
+    ],
+  );
+}
 
-  void _showAddDiagnosaDialog(BuildContext context, RekamMedisController ctrl, String code, String name) {
-    int priority = 1;
-    String status = 'Baru';
-    
-    Get.dialog(
-      StatefulBuilder(
-        builder: (context, setState) {
-          return AlertDialog(
-            title: Text('Tambah Diagnosa', style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 16)),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
+void _showAddDiagnosaDialog(BuildContext context, RekamMedisController ctrl, String code, String name) {
+  int priority = 1;
+  String status = 'Baru';
+
+  Get.dialog(StatefulBuilder(builder: (context, setState) {
+    return AlertDialog(
+      title: Text('Tambah Diagnosa', style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 16)),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('$code - $name', style: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.textPrimary)),
+          const SizedBox(height: 16),
+          Text('Prioritas', style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.textSecondary)),
+          RadioGroup<int>(
+            groupValue: priority,
+            onChanged: (v) => setState(() => priority = v!),
+            child: Row(
               children: [
-                Text('$code - $name', style: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.textPrimary)),
-                const SizedBox(height: 16),
-                Text('Prioritas', style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.textSecondary)),
-                RadioGroup<int>(
-                  groupValue: priority,
-                  onChanged: (v) => setState(() => priority = v!),
-                  child: Row(
-                    children: [
-                      Radio<int>(value: 1),
-                      Text('1 (Utama)', style: GoogleFonts.outfit(fontSize: 12)),
-                      const SizedBox(width: 12),
-                      Radio<int>(value: 2),
-                      Text('2+ (Sekunder)', style: GoogleFonts.outfit(fontSize: 12)),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Text('Status Kasus', style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.textSecondary)),
-                RadioGroup<String>(
-                  groupValue: status,
-                  onChanged: (v) => setState(() => status = v!),
-                  child: Row(
-                    children: [
-                      Radio<String>(value: 'Baru'),
-                      Text('Baru', style: GoogleFonts.outfit(fontSize: 12)),
-                      const SizedBox(width: 12),
-                      Radio<String>(value: 'Lama'),
-                      Text('Lama', style: GoogleFonts.outfit(fontSize: 12)),
-                    ],
-                  ),
-                ),
+                Radio<int>(value: 1),
+                Text('1 (Utama)', style: GoogleFonts.outfit(fontSize: 12)),
+                const SizedBox(width: 12),
+                Radio<int>(value: 2),
+                Text('2+ (Sekunder)', style: GoogleFonts.outfit(fontSize: 12)),
               ],
             ),
-            actions: [
-              TextButton(onPressed: () => Get.back(), child: Text('Batal', style: GoogleFonts.outfit(color: AppTheme.textSecondary))),
-              ElevatedButton(
-                onPressed: () async {
-                  Get.back();
-                  final success = await ctrl.addDiagnosa(kdPenyakit: code, prioritas: priority, statusPenyakit: status);
-                  if (success) {
-                    Get.snackbar('Sukses', 'Diagnosa berhasil ditambahkan', backgroundColor: Colors.white, colorText: AppTheme.primary);
-                  }
-                },
-                style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primary),
-                child: Text('Simpan', style: GoogleFonts.outfit(color: Colors.white)),
-              ),
-            ],
-          );
-        }
-      )
-    );
-  }
-
-  void _showAddProsedurDialog(BuildContext context, RekamMedisController ctrl, String code, String name) {
-    int priority = 1;
-    
-    Get.dialog(
-      StatefulBuilder(
-        builder: (context, setState) {
-          return AlertDialog(
-            title: Text('Tambah Prosedur', style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 16)),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
+          ),
+          const SizedBox(height: 12),
+          Text('Status Kasus', style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.textSecondary)),
+          RadioGroup<String>(
+            groupValue: status,
+            onChanged: (v) => setState(() => status = v!),
+            child: Row(
               children: [
-                Text('$code - $name', style: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.textPrimary)),
-                const SizedBox(height: 16),
-                Text('Prioritas', style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.textSecondary)),
-                RadioGroup<int>(
-                  groupValue: priority,
-                  onChanged: (v) => setState(() => priority = v!),
-                  child: Row(
-                    children: [
-                      Radio<int>(value: 1),
-                      Text('1 (Utama)', style: GoogleFonts.outfit(fontSize: 12)),
-                      const SizedBox(width: 12),
-                      Radio<int>(value: 2),
-                      Text('2+ (Sekunder)', style: GoogleFonts.outfit(fontSize: 12)),
-                    ],
-                  ),
-                ),
+                Radio<String>(value: 'Baru'),
+                Text('Baru', style: GoogleFonts.outfit(fontSize: 12)),
+                const SizedBox(width: 12),
+                Radio<String>(value: 'Lama'),
+                Text('Lama', style: GoogleFonts.outfit(fontSize: 12)),
               ],
             ),
-            actions: [
-              TextButton(onPressed: () => Get.back(), child: Text('Batal', style: GoogleFonts.outfit(color: AppTheme.textSecondary))),
-              ElevatedButton(
-                onPressed: () async {
-                  Get.back();
-                  final success = await ctrl.addProsedur(kode: code, prioritas: priority);
-                  if (success) {
-                    Get.snackbar('Sukses', 'Prosedur berhasil ditambahkan', backgroundColor: Colors.white, colorText: AppTheme.primary);
-                  }
-                },
-                style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primary),
-                child: Text('Simpan', style: GoogleFonts.outfit(color: Colors.white)),
-              ),
-            ],
-          );
-        }
-      )
-    );
-  }
-
-  void _confirmDeleteResep(BuildContext context, RekamMedisController ctrl, String noResep) {
-    Get.dialog(
-      AlertDialog(
-        title: Text('Hapus Resep', style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
-        content: Text('Apakah Anda yakin ingin menghapus resep $noResep ini?', style: GoogleFonts.outfit()),
-        actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: Text('Batal', style: GoogleFonts.outfit(color: AppTheme.textSecondary)),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              Get.back();
-              final success = await ctrl.deletePrescription(noResep);
-              if (success) {
-                Get.snackbar('Sukses', 'Resep berhasil dihapus',
-                    backgroundColor: Colors.white, colorText: AppTheme.primary);
-              }
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.danger),
-            child: Text('Hapus', style: GoogleFonts.outfit(color: Colors.white)),
           ),
         ],
       ),
+      actions: [
+        TextButton(onPressed: () => Get.back(), child: Text('Batal', style: GoogleFonts.outfit(color: AppTheme.textSecondary))),
+        ElevatedButton(
+          onPressed: () async {
+            Get.back();
+            final success = await ctrl.addDiagnosa(kdPenyakit: code, prioritas: priority, statusPenyakit: status);
+            if (success) {
+              Get.snackbar('Sukses', 'Diagnosa berhasil ditambahkan', backgroundColor: Colors.white, colorText: AppTheme.primary);
+            }
+          },
+          style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primary),
+          child: Text('Simpan', style: GoogleFonts.outfit(color: Colors.white)),
+        ),
+      ],
     );
-  }
+  }));
+}
 
-  void _showPrescriptionSheet(BuildContext context, RekamMedisController ctrl) {
-    final searchCtrl = TextEditingController();
-    
-    Get.bottomSheet(
-      Padding(
-        padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-        child: Container(
-          height: Get.height * 0.85,
-          decoration: const BoxDecoration(
-            color: AppTheme.bgDark,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+void _showAddProsedurDialog(BuildContext context, RekamMedisController ctrl, String code, String name) {
+  int priority = 1;
+
+  Get.dialog(StatefulBuilder(builder: (context, setState) {
+    return AlertDialog(
+      title: Text('Tambah Prosedur', style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 16)),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('$code - $name', style: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.textPrimary)),
+          const SizedBox(height: 16),
+          Text('Prioritas', style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.textSecondary)),
+          RadioGroup<int>(
+            groupValue: priority,
+            onChanged: (v) => setState(() => priority = v!),
+            child: Row(
+              children: [
+                Radio<int>(value: 1),
+                Text('1 (Utama)', style: GoogleFonts.outfit(fontSize: 12)),
+                const SizedBox(width: 12),
+                Radio<int>(value: 2),
+                Text('2+ (Sekunder)', style: GoogleFonts.outfit(fontSize: 12)),
+              ],
+            ),
           ),
+        ],
+      ),
+      actions: [
+        TextButton(onPressed: () => Get.back(), child: Text('Batal', style: GoogleFonts.outfit(color: AppTheme.textSecondary))),
+        ElevatedButton(
+          onPressed: () async {
+            Get.back();
+            final success = await ctrl.addProsedur(kode: code, prioritas: priority);
+            if (success) {
+              Get.snackbar('Sukses', 'Prosedur berhasil ditambahkan', backgroundColor: Colors.white, colorText: AppTheme.primary);
+            }
+          },
+          style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primary),
+          child: Text('Simpan', style: GoogleFonts.outfit(color: Colors.white)),
+        ),
+      ],
+    );
+  }));
+}
+
+void _confirmDeleteResep(BuildContext context, RekamMedisController ctrl, String noResep) {
+  Get.dialog(
+    AlertDialog(
+      title: Text('Hapus Resep', style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
+      content: Text('Apakah Anda yakin ingin menghapus resep $noResep ini?', style: GoogleFonts.outfit()),
+      actions: [
+        TextButton(
+          onPressed: () => Get.back(),
+          child: Text('Batal', style: GoogleFonts.outfit(color: AppTheme.textSecondary)),
+        ),
+        ElevatedButton(
+          onPressed: () async {
+            Get.back();
+            final success = await ctrl.deletePrescription(noResep);
+            if (success) {
+              Get.snackbar('Sukses', 'Resep berhasil dihapus', backgroundColor: Colors.white, colorText: AppTheme.primary);
+            }
+          },
+          style: ElevatedButton.styleFrom(backgroundColor: AppTheme.danger),
+          child: Text('Hapus', style: GoogleFonts.outfit(color: Colors.white)),
+        ),
+      ],
+    ),
+  );
+}
+
+void _showPrescriptionSheet(BuildContext context, RekamMedisController ctrl) {
+  final searchCtrl = TextEditingController();
+
+  Get.bottomSheet(
+    Padding(
+      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      child: Container(
+        height: Get.height * 0.85,
+        decoration: const BoxDecoration(
+          color: AppTheme.bgDark,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
         child: Column(
           children: [
             Container(
@@ -3043,7 +2941,7 @@ void _confirmDeleteSoap(BuildContext context, RekamMedisController ctrl, String 
                             final name = item['nama_brng'] ?? '-';
                             final stock = double.tryParse(item['total_stok']?.toString() ?? '0') ?? 0.0;
                             final isLowStock = stock <= 0;
-                            
+
                             return ListTile(
                               dense: true,
                               title: Text(name, style: GoogleFonts.outfit(fontSize: 12.5, fontWeight: FontWeight.bold)),
@@ -3147,7 +3045,7 @@ void _confirmDeleteSoap(BuildContext context, RekamMedisController ctrl, String 
                           ),
                         );
                       }
-                      
+
                       return ListView.separated(
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
@@ -3158,7 +3056,7 @@ void _confirmDeleteSoap(BuildContext context, RekamMedisController ctrl, String 
                           final code = item['kode_brng'];
                           final qtyCtrl = TextEditingController(text: item['jml']?.toString() ?? '1');
                           final sigCtrl = TextEditingController(text: item['aturan_pakai'] ?? '3x1 tablet');
-                          
+
                           return Container(
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
@@ -3269,343 +3167,343 @@ void _confirmDeleteSoap(BuildContext context, RekamMedisController ctrl, String 
         ),
       ),
     ),
-  isScrollControlled: true,
-);
-  }
+    isScrollControlled: true,
+  );
+}
 
-  Widget _buildKonsultasiTab(BuildContext context, RekamMedisController ctrl) {
-    final activeSubTab = 0.obs;
-    
-    return Stack(
-      children: [
-        Column(
-          children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Obx(() {
-                      final active = activeSubTab.value == 0;
-                      return GestureDetector(
-                        onTap: () => activeSubTab.value = 0,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 8),
-                          alignment: Alignment.center,
-                          decoration: BoxDecoration(
-                            color: active ? AppTheme.primary.withValues(alpha: 0.08) : Colors.transparent,
-                            border: Border(bottom: BorderSide(color: active ? AppTheme.primary : Colors.transparent, width: 2)),
-                          ),
-                          child: Text(
-                            'Konsul Keluar',
-                            style: GoogleFonts.outfit(
-                              fontSize: 12.5,
-                              fontWeight: active ? FontWeight.bold : FontWeight.w600,
-                              color: active ? AppTheme.primary : AppTheme.textSecondary,
-                            ),
-                          ),
-                        ),
-                      );
-                    }),
-                  ),
-                  Expanded(
-                    child: Obx(() {
-                      final active = activeSubTab.value == 1;
-                      return GestureDetector(
-                        onTap: () => activeSubTab.value = 1,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 8),
-                          alignment: Alignment.center,
-                          decoration: BoxDecoration(
-                            color: active ? AppTheme.primary.withValues(alpha: 0.08) : Colors.transparent,
-                            border: Border(bottom: BorderSide(color: active ? AppTheme.primary : Colors.transparent, width: 2)),
-                          ),
-                          child: Text(
-                            'Konsul Masuk',
-                            style: GoogleFonts.outfit(
-                              fontSize: 12.5,
-                              fontWeight: active ? FontWeight.bold : FontWeight.w600,
-                              color: active ? AppTheme.primary : AppTheme.textSecondary,
-                            ),
-                          ),
-                        ),
-                      );
-                    }),
-                  ),
-                ],
-              ),
-            ),
-            Expanded(
-              child: Obx(() {
-                if (ctrl.isLoadingConsult.value) {
-                  return RekamMedisView._buildShimmerLoader();
-                }
-                
-                final isOutgoing = activeSubTab.value == 0;
-                final list = isOutgoing ? ctrl.outgoingConsults : ctrl.incomingConsults;
-                
-                if (list.isEmpty) {
-                  return RekamMedisView._emptyState(isOutgoing ? 'Belum ada permintaan konsul keluar' : 'Belum ada konsul masuk');
-                }
-                
-                return ListView.separated(
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
-                  itemCount: list.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 12),
-                  itemBuilder: (context, idx) {
-                    final item = list[idx];
-                    final tgl = item['tgl_perawatan'] ?? item['tgl_pesan'] ?? '-';
-                    final jam = item['jam_pesan'] ?? '-';
-                    final drPemberi = item['nm_dokter_pemberi'] ?? item['kd_dokter_pemberi'] ?? '-';
-                    final drPeminta = item['nm_dokter_peminta'] ?? item['kd_dokter_peminta'] ?? '-';
-                    
-                    final status = item['status']?.toString() ?? 'Belum Dijawab';
-                    final isAnswered = status.toLowerCase() == 'sudah dijawab' || item['jawaban'] != null;
-                    
-                    return Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: AppTheme.bgCard,
-                        borderRadius: BorderRadius.circular(18),
-                        border: Border.all(color: AppTheme.divider),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                '$tgl pukul $jam',
-                                style: GoogleFonts.outfit(fontSize: 11, color: AppTheme.textMuted, fontWeight: FontWeight.bold),
-                              ),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: (isAnswered ? AppTheme.success : AppTheme.warning).withValues(alpha: 0.12),
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                                child: Text(
-                                  isAnswered ? 'Dijawab' : 'Pending',
-                                  style: GoogleFonts.outfit(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.bold,
-                                    color: isAnswered ? AppTheme.success : AppTheme.warning,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 10),
-                          Text(
-                            isOutgoing ? 'Dokter Penerima: $drPemberi' : 'Dokter Pengirim: $drPeminta',
-                            style: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
-                          ),
-                          const SizedBox(height: 8),
-                          if (item['deskripsi_rujukan'] != null && item['deskripsi_rujukan'].toString().isNotEmpty) ...[
-                            Text(
-                              'Permintaan / Konsultasi:',
-                              style: GoogleFonts.outfit(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.textSecondary),
-                            ),
-                            Text(
-                              _stripAttachment(item['deskripsi_rujukan']),
-                              style: GoogleFonts.outfit(fontSize: 12.5, color: AppTheme.textPrimary),
-                            ),
-                            _buildAttachmentsSection(item['deskripsi_rujukan']),
-                            const SizedBox(height: 8),
-                          ],
-                          if (isAnswered && item['jawaban'] != null) ...[
-                            const Divider(color: AppTheme.divider, height: 16),
-                            Text(
-                              'Jawaban / Balasan:',
-                              style: GoogleFonts.outfit(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.success),
-                            ),
-                            Text(
-                              _stripAttachment(item['jawaban']),
-                              style: GoogleFonts.outfit(fontSize: 12.5, color: AppTheme.textPrimary),
-                            ),
-                            _buildAttachmentsSection(item['jawaban']),
-                          ],
-                          if (!isOutgoing && !isAnswered && AppConfig.enableWriteAccess) ...[
-                            const SizedBox(height: 12),
-                            SizedBox(
-                              width: double.infinity,
-                              height: 36,
-                              child: ElevatedButton(
-                                onPressed: () => _showReplyConsultationDialog(context, ctrl, item),
-                                style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primary, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
-                                child: Text('Jawab Konsultasi', style: GoogleFonts.outfit(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                    );
-                  },
-                );
-              }),
-            ),
-          ],
-        ),
-        Obx(() {
-          if (activeSubTab.value == 0 && AppConfig.enableWriteAccess) {
-            return Positioned(
-              bottom: 16,
-              right: 16,
-              child: FloatingActionButton.extended(
-                onPressed: () => _showConsultationDialog(context, ctrl),
-                backgroundColor: AppTheme.primary,
-                icon: const Icon(Icons.send_rounded, color: Colors.white),
-                label: Text(
-                  'Minta Konsul',
-                  style: GoogleFonts.outfit(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-            );
-          }
-          return const SizedBox.shrink();
-        }),
-      ],
-    );
-  }
+Widget _buildKonsultasiTab(BuildContext context, RekamMedisController ctrl) {
+  final activeSubTab = 0.obs;
 
-  void _showConsultationDialog(BuildContext context, RekamMedisController ctrl) {
-    final selectedDokter = Rxn<Map<String, dynamic>>();
-    final rujukanCtrl = TextEditingController();
-    final diagnosaCtrl = TextEditingController();
-    final attachmentCtrl = TextEditingController();
-    final dokterSearchCtrl = TextEditingController();
-    final filteredDokterList = <Map<String, dynamic>>[].obs;
-    
-    filteredDokterList.value = ctrl.dokterList;
-    
-    Get.dialog(
-      AlertDialog(
-        title: Text('Kirim Permintaan Konsultasi', style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 16)),
-        content: SizedBox(
-          width: Get.width * 0.85,
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
+  return Stack(
+    children: [
+      Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Row(
               children: [
-                Text('Pilih Dokter Tujuan', style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.textSecondary)),
-                const SizedBox(height: 6),
-                TextField(
-                  controller: dokterSearchCtrl,
-                  decoration: const InputDecoration(hintText: 'Cari nama dokter...', prefixIcon: Icon(Icons.search_rounded), isDense: true, contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8)),
-                  onChanged: (val) {
-                    if (val.trim().isEmpty) {
-                      filteredDokterList.value = ctrl.dokterList;
-                    } else {
-                      filteredDokterList.value = ctrl.dokterList.where((d) => (d['nm_dokter'] ?? '').toString().toLowerCase().contains(val.toLowerCase())).toList();
-                    }
-                  },
-                ),
-                const SizedBox(height: 8),
-                Container(
-                  height: 120,
-                  decoration: BoxDecoration(border: Border.all(color: AppTheme.divider), borderRadius: BorderRadius.circular(8)),
+                Expanded(
                   child: Obx(() {
-                    if (filteredDokterList.isEmpty) {
-                      return Center(child: Text('Dokter tidak ditemukan', style: GoogleFonts.outfit(fontSize: 12, color: AppTheme.textMuted)));
-                    }
-                    return ListView.separated(
-                      shrinkWrap: true,
-                      itemCount: filteredDokterList.length,
-                      separatorBuilder: (_, __) => const Divider(height: 1, thickness: 0.5),
-                      itemBuilder: (context, idx) {
-                        final dr = filteredDokterList[idx];
-                        final code = dr['kd_dokter'] ?? '';
-                        final name = dr['nm_dokter'] ?? '';
-                        return Obx(() {
-                          final isSelected = selectedDokter.value?['kd_dokter'] == code;
-                          return ListTile(
-                            dense: true,
-                            title: Text(name, style: GoogleFonts.outfit(fontSize: 12, fontWeight: isSelected ? FontWeight.bold : FontWeight.normal)),
-                            selected: isSelected,
-                            selectedColor: AppTheme.primary,
-                            onTap: () {
-                              selectedDokter.value = dr;
-                              dokterSearchCtrl.text = name;
-                            },
-                          );
-                        });
-                      },
+                    final active = activeSubTab.value == 0;
+                    return GestureDetector(
+                      onTap: () => activeSubTab.value = 0,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: active ? AppTheme.primary.withValues(alpha: 0.08) : Colors.transparent,
+                          border: Border(bottom: BorderSide(color: active ? AppTheme.primary : Colors.transparent, width: 2)),
+                        ),
+                        child: Text(
+                          'Konsul Keluar',
+                          style: GoogleFonts.outfit(
+                            fontSize: 12.5,
+                            fontWeight: active ? FontWeight.bold : FontWeight.w600,
+                            color: active ? AppTheme.primary : AppTheme.textSecondary,
+                          ),
+                        ),
+                      ),
                     );
                   }),
                 ),
-                const SizedBox(height: 16),
-                Text('Diagnosa Kerja', style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.textSecondary)),
-                const SizedBox(height: 6),
-                TextField(
-                  controller: diagnosaCtrl,
-                  decoration: const InputDecoration(hintText: 'Tuliskan diagnosa kerja...', isDense: true, contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 10)),
-                ),
-                const SizedBox(height: 16),
-                Text('Isi Permintaan / Rujukan / Keterangan', style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.textSecondary)),
-                const SizedBox(height: 6),
-                TextField(
-                  controller: rujukanCtrl,
-                  maxLines: 4,
-                  decoration: const InputDecoration(hintText: 'Tuliskan deskripsi rujukan/pertanyaan...', isDense: true, contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 10)),
-                ),
-                const SizedBox(height: 16),
-                Text('URL Lampiran (Opsional, cth: PACS, Lab PDF)', style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.textSecondary)),
-                const SizedBox(height: 6),
-                TextField(
-                  controller: attachmentCtrl,
-                  decoration: const InputDecoration(hintText: 'http://pacs.link/...', isDense: true, contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 10)),
+                Expanded(
+                  child: Obx(() {
+                    final active = activeSubTab.value == 1;
+                    return GestureDetector(
+                      onTap: () => activeSubTab.value = 1,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: active ? AppTheme.primary.withValues(alpha: 0.08) : Colors.transparent,
+                          border: Border(bottom: BorderSide(color: active ? AppTheme.primary : Colors.transparent, width: 2)),
+                        ),
+                        child: Text(
+                          'Konsul Masuk',
+                          style: GoogleFonts.outfit(
+                            fontSize: 12.5,
+                            fontWeight: active ? FontWeight.bold : FontWeight.w600,
+                            color: active ? AppTheme.primary : AppTheme.textSecondary,
+                          ),
+                        ),
+                      ),
+                    );
+                  }),
                 ),
               ],
             ),
           ),
-        ),
-        actions: [
-          TextButton(onPressed: () => Get.back(), child: Text('Batal', style: GoogleFonts.outfit(color: AppTheme.textSecondary))),
-          ElevatedButton(
-            onPressed: () async {
-              if (selectedDokter.value == null) {
-                Get.snackbar('Error', 'Silakan pilih dokter tujuan terlebih dahulu', backgroundColor: Colors.white, colorText: AppTheme.danger);
-                return;
-              }
-              if (rujukanCtrl.text.trim().isEmpty) {
-                Get.snackbar('Error', 'Isi rujukan tidak boleh kosong', backgroundColor: Colors.white, colorText: AppTheme.danger);
-                return;
-              }
-              Get.back();
-              
-              String finalUraian = rujukanCtrl.text;
-              if (attachmentCtrl.text.trim().isNotEmpty) {
-                finalUraian += '\n[Attachment: ${attachmentCtrl.text.trim()}]';
+          Expanded(
+            child: Obx(() {
+              if (ctrl.isLoadingConsult.value) {
+                return RekamMedisView._buildShimmerLoader();
               }
 
-              final success = await ctrl.sendConsultation(
-                targetDokter: selectedDokter.value!['kd_dokter'],
-                jenis: ctrl.tipeRawat.isEmpty ? 'RALAN' : ctrl.tipeRawat,
-                diagnosa: diagnosaCtrl.text,
-                uraian: finalUraian,
-              );
-              if (success) {
-                Get.snackbar('Sukses', 'Permintaan konsultasi berhasil dikirim', backgroundColor: Colors.white, colorText: AppTheme.primary);
+              final isOutgoing = activeSubTab.value == 0;
+              final list = isOutgoing ? ctrl.outgoingConsults : ctrl.incomingConsults;
+
+              if (list.isEmpty) {
+                return RekamMedisView._emptyState(isOutgoing ? 'Belum ada permintaan konsul keluar' : 'Belum ada konsul masuk');
               }
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primary),
-            child: Text('Kirim', style: GoogleFonts.outfit(color: Colors.white)),
+
+              return ListView.separated(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
+                itemCount: list.length,
+                separatorBuilder: (_, __) => const SizedBox(height: 12),
+                itemBuilder: (context, idx) {
+                  final item = list[idx];
+                  final tgl = item['tgl_perawatan'] ?? item['tgl_pesan'] ?? '-';
+                  final jam = item['jam_pesan'] ?? '-';
+                  final drPemberi = item['nm_dokter_pemberi'] ?? item['kd_dokter_pemberi'] ?? '-';
+                  final drPeminta = item['nm_dokter_peminta'] ?? item['kd_dokter_peminta'] ?? '-';
+
+                  final status = item['status']?.toString() ?? 'Belum Dijawab';
+                  final isAnswered = status.toLowerCase() == 'sudah dijawab' || item['jawaban'] != null;
+
+                  return Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: AppTheme.bgCard,
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(color: AppTheme.divider),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              '$tgl pukul $jam',
+                              style: GoogleFonts.outfit(fontSize: 11, color: AppTheme.textMuted, fontWeight: FontWeight.bold),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: (isAnswered ? AppTheme.success : AppTheme.warning).withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                isAnswered ? 'Dijawab' : 'Pending',
+                                style: GoogleFonts.outfit(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                  color: isAnswered ? AppTheme.success : AppTheme.warning,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+                        Text(
+                          isOutgoing ? 'Dokter Penerima: $drPemberi' : 'Dokter Pengirim: $drPeminta',
+                          style: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
+                        ),
+                        const SizedBox(height: 8),
+                        if (item['deskripsi_rujukan'] != null && item['deskripsi_rujukan'].toString().isNotEmpty) ...[
+                          Text(
+                            'Permintaan / Konsultasi:',
+                            style: GoogleFonts.outfit(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.textSecondary),
+                          ),
+                          Text(
+                            _stripAttachment(item['deskripsi_rujukan']),
+                            style: GoogleFonts.outfit(fontSize: 12.5, color: AppTheme.textPrimary),
+                          ),
+                          _buildAttachmentsSection(item['deskripsi_rujukan']),
+                          const SizedBox(height: 8),
+                        ],
+                        if (isAnswered && item['jawaban'] != null) ...[
+                          const Divider(color: AppTheme.divider, height: 16),
+                          Text(
+                            'Jawaban / Balasan:',
+                            style: GoogleFonts.outfit(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.success),
+                          ),
+                          Text(
+                            _stripAttachment(item['jawaban']),
+                            style: GoogleFonts.outfit(fontSize: 12.5, color: AppTheme.textPrimary),
+                          ),
+                          _buildAttachmentsSection(item['jawaban']),
+                        ],
+                        if (!isOutgoing && !isAnswered && AppConfig.enableWriteAccess) ...[
+                          const SizedBox(height: 12),
+                          SizedBox(
+                            width: double.infinity,
+                            height: 36,
+                            child: ElevatedButton(
+                              onPressed: () => _showReplyConsultationDialog(context, ctrl, item),
+                              style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primary, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
+                              child: Text('Jawab Konsultasi', style: GoogleFonts.outfit(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  );
+                },
+              );
+            }),
           ),
         ],
       ),
-    );
-  }
+      Obx(() {
+        if (activeSubTab.value == 0 && AppConfig.enableWriteAccess) {
+          return Positioned(
+            bottom: 16,
+            right: 16,
+            child: FloatingActionButton.extended(
+              onPressed: () => _showConsultationDialog(context, ctrl),
+              backgroundColor: AppTheme.primary,
+              icon: const Icon(Icons.send_rounded, color: Colors.white),
+              label: Text(
+                'Minta Konsul',
+                style: GoogleFonts.outfit(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          );
+        }
+        return const SizedBox.shrink();
+      }),
+    ],
+  );
+}
+
+void _showConsultationDialog(BuildContext context, RekamMedisController ctrl) {
+  final selectedDokter = Rxn<Map<String, dynamic>>();
+  final rujukanCtrl = TextEditingController();
+  final diagnosaCtrl = TextEditingController();
+  final attachmentCtrl = TextEditingController();
+  final dokterSearchCtrl = TextEditingController();
+  final filteredDokterList = <Map<String, dynamic>>[].obs;
+
+  filteredDokterList.value = ctrl.dokterList;
+
+  Get.dialog(
+    AlertDialog(
+      title: Text('Kirim Permintaan Konsultasi', style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 16)),
+      content: SizedBox(
+        width: Get.width * 0.85,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Pilih Dokter Tujuan', style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.textSecondary)),
+              const SizedBox(height: 6),
+              TextField(
+                controller: dokterSearchCtrl,
+                decoration: const InputDecoration(hintText: 'Cari nama dokter...', prefixIcon: Icon(Icons.search_rounded), isDense: true, contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8)),
+                onChanged: (val) {
+                  if (val.trim().isEmpty) {
+                    filteredDokterList.value = ctrl.dokterList;
+                  } else {
+                    filteredDokterList.value = ctrl.dokterList.where((d) => (d['nm_dokter'] ?? '').toString().toLowerCase().contains(val.toLowerCase())).toList();
+                  }
+                },
+              ),
+              const SizedBox(height: 8),
+              Container(
+                height: 120,
+                decoration: BoxDecoration(border: Border.all(color: AppTheme.divider), borderRadius: BorderRadius.circular(8)),
+                child: Obx(() {
+                  if (filteredDokterList.isEmpty) {
+                    return Center(child: Text('Dokter tidak ditemukan', style: GoogleFonts.outfit(fontSize: 12, color: AppTheme.textMuted)));
+                  }
+                  return ListView.separated(
+                    shrinkWrap: true,
+                    itemCount: filteredDokterList.length,
+                    separatorBuilder: (_, __) => const Divider(height: 1, thickness: 0.5),
+                    itemBuilder: (context, idx) {
+                      final dr = filteredDokterList[idx];
+                      final code = dr['kd_dokter'] ?? '';
+                      final name = dr['nm_dokter'] ?? '';
+                      return Obx(() {
+                        final isSelected = selectedDokter.value?['kd_dokter'] == code;
+                        return ListTile(
+                          dense: true,
+                          title: Text(name, style: GoogleFonts.outfit(fontSize: 12, fontWeight: isSelected ? FontWeight.bold : FontWeight.normal)),
+                          selected: isSelected,
+                          selectedColor: AppTheme.primary,
+                          onTap: () {
+                            selectedDokter.value = dr;
+                            dokterSearchCtrl.text = name;
+                          },
+                        );
+                      });
+                    },
+                  );
+                }),
+              ),
+              const SizedBox(height: 16),
+              Text('Diagnosa Kerja', style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.textSecondary)),
+              const SizedBox(height: 6),
+              TextField(
+                controller: diagnosaCtrl,
+                decoration: const InputDecoration(hintText: 'Tuliskan diagnosa kerja...', isDense: true, contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 10)),
+              ),
+              const SizedBox(height: 16),
+              Text('Isi Permintaan / Rujukan / Keterangan', style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.textSecondary)),
+              const SizedBox(height: 6),
+              TextField(
+                controller: rujukanCtrl,
+                maxLines: 4,
+                decoration: const InputDecoration(hintText: 'Tuliskan deskripsi rujukan/pertanyaan...', isDense: true, contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 10)),
+              ),
+              const SizedBox(height: 16),
+              Text('URL Lampiran (Opsional, cth: PACS, Lab PDF)', style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.textSecondary)),
+              const SizedBox(height: 6),
+              TextField(
+                controller: attachmentCtrl,
+                decoration: const InputDecoration(hintText: 'http://pacs.link/...', isDense: true, contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 10)),
+              ),
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(onPressed: () => Get.back(), child: Text('Batal', style: GoogleFonts.outfit(color: AppTheme.textSecondary))),
+        ElevatedButton(
+          onPressed: () async {
+            if (selectedDokter.value == null) {
+              Get.snackbar('Error', 'Silakan pilih dokter tujuan terlebih dahulu', backgroundColor: Colors.white, colorText: AppTheme.danger);
+              return;
+            }
+            if (rujukanCtrl.text.trim().isEmpty) {
+              Get.snackbar('Error', 'Isi rujukan tidak boleh kosong', backgroundColor: Colors.white, colorText: AppTheme.danger);
+              return;
+            }
+            Get.back();
+
+            String finalUraian = rujukanCtrl.text;
+            if (attachmentCtrl.text.trim().isNotEmpty) {
+              finalUraian += '\n[Attachment: ${attachmentCtrl.text.trim()}]';
+            }
+
+            final success = await ctrl.sendConsultation(
+              targetDokter: selectedDokter.value!['kd_dokter'],
+              jenis: ctrl.tipeRawat.isEmpty ? 'RALAN' : ctrl.tipeRawat,
+              diagnosa: diagnosaCtrl.text,
+              uraian: finalUraian,
+            );
+            if (success) {
+              Get.snackbar('Sukses', 'Permintaan konsultasi berhasil dikirim', backgroundColor: Colors.white, colorText: AppTheme.primary);
+            }
+          },
+          style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primary),
+          child: Text('Kirim', style: GoogleFonts.outfit(color: Colors.white)),
+        ),
+      ],
+    ),
+  );
+}
 
 void _showReplyConsultationDialog(BuildContext context, RekamMedisController ctrl, Map<String, dynamic> item) {
   final jawabanCtrl = TextEditingController();
   final diagnosaCtrl = TextEditingController();
   final attachmentCtrl = TextEditingController();
-  
+
   Get.dialog(
     AlertDialog(
       title: Text('Jawab Konsultasi', style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 16)),
@@ -3651,7 +3549,7 @@ void _showReplyConsultationDialog(BuildContext context, RekamMedisController ctr
               return;
             }
             Get.back();
-            
+
             String finalJawaban = jawabanCtrl.text;
             if (attachmentCtrl.text.trim().isNotEmpty) {
               finalJawaban += '\n[Attachment: ${attachmentCtrl.text.trim()}]';
@@ -3751,150 +3649,137 @@ class _SoapTileState extends State<_SoapTile> {
         child: Material(
           color: Colors.transparent,
           child: ExpansionTile(
-          key: ValueKey(uniqueId),
-          initiallyExpanded: _isExpanded,
-          onExpansionChanged: (v) {
-            setState(() => _isExpanded = v);
-            _ctrl.expandedStates[uniqueId] = v;
-          },
-          tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-          leading: Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: AppTheme.primary.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(12),
+            key: ValueKey(uniqueId),
+            initiallyExpanded: _isExpanded,
+            onExpansionChanged: (v) {
+              setState(() => _isExpanded = v);
+              _ctrl.expandedStates[uniqueId] = v;
+            },
+            tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            leading: Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: AppTheme.primary.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(Icons.sticky_note_2_rounded, color: AppTheme.primary, size: 20),
             ),
-            child: const Icon(Icons.sticky_note_2_rounded,
-                color: AppTheme.primary, size: 20),
-          ),
-          title: Text(
-            'Catatan SOAP $formattedDate$timeStr',
-            style: GoogleFonts.outfit(
-              fontSize: 13.5,
-              fontWeight: FontWeight.w800,
-              color: AppTheme.textPrimary,
+            title: Text(
+              'Catatan SOAP $formattedDate$timeStr',
+              style: GoogleFonts.outfit(
+                fontSize: 13.5,
+                fontWeight: FontWeight.w800,
+                color: AppTheme.textPrimary,
+              ),
             ),
-          ),
-          subtitle: Text(
-            jabatan.isNotEmpty && jabatan != '-'
-                ? '$petugas • $jabatan'
-                : 'Petugas: $petugas',
-            style: GoogleFonts.outfit(
-              fontSize: 11.5,
-              color: AppTheme.textSecondary,
+            subtitle: Text(
+              jabatan.isNotEmpty && jabatan != '-' ? '$petugas • $jabatan' : 'Petugas: $petugas',
+              style: GoogleFonts.outfit(
+                fontSize: 11.5,
+                color: AppTheme.textSecondary,
+              ),
             ),
-          ),
-          trailing: Obx(() {
-            final authCtrl = Get.find<AuthController>();
-            final myNip = authCtrl.user.value?['nip'] ?? authCtrl.user.value?['username'] ?? '';
-            final recordNip = data['nip']?.toString() ?? '';
-            final isOwnRecord = recordNip == myNip && myNip.isNotEmpty;
-            
-            return Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (isOwnRecord && AppConfig.enableWriteAccess) ...[
-                  IconButton(
-                    icon: const Icon(Icons.edit_rounded, color: AppTheme.primary, size: 18),
-                    onPressed: () => _showSoapForm(context, _ctrl, existingData: data),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.delete_outline_rounded, color: AppTheme.danger, size: 18),
-                    onPressed: () => _confirmDeleteSoap(context, _ctrl, formattedDate, formattedTime),
+            trailing: Obx(() {
+              final authCtrl = Get.find<AuthController>();
+              final myNip = authCtrl.user.value?['nip'] ?? authCtrl.user.value?['username'] ?? '';
+              final recordNip = data['nip']?.toString() ?? '';
+              final isOwnRecord = recordNip == myNip && myNip.isNotEmpty;
+
+              return Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (isOwnRecord && AppConfig.enableWriteAccess) ...[
+                    IconButton(
+                      icon: const Icon(Icons.edit_rounded, color: AppTheme.primary, size: 18),
+                      onPressed: () => _showSoapForm(context, _ctrl, existingData: data),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.delete_outline_rounded, color: AppTheme.danger, size: 18),
+                      onPressed: () => _confirmDeleteSoap(context, _ctrl, formattedDate, formattedTime),
+                    ),
+                  ],
+                  Icon(
+                    _isExpanded ? Icons.keyboard_arrow_up_rounded : Icons.keyboard_arrow_down_rounded,
+                    color: AppTheme.textSecondary,
                   ),
                 ],
-                Icon(
-                  _isExpanded
-                      ? Icons.keyboard_arrow_up_rounded
-                      : Icons.keyboard_arrow_down_rounded,
-                  color: AppTheme.textSecondary,
-                ),
+              );
+            }),
+            children: [
+              const Divider(height: 24, thickness: 1, color: AppTheme.divider),
+
+              // ── S: SUBJEKTIF ──────────────────────────────────────
+              _soapLabel('S', 'Subjektif', AppTheme.primary),
+              const SizedBox(height: 10),
+              _clinicalSection('Anamnesis', [
+                _row('Keluhan Utama', data['keluhan_utama']),
+                if (_hasVal('rps')) _row('Riwayat Penyakit Sekarang (RPS)', data['rps']),
+                if (_hasVal('rpd')) _row('Riwayat Penyakit Dahulu (RPD)', data['rpd']),
+                if (_hasVal('rpk')) _row('Riwayat Penyakit Keluarga (RPK)', data['rpk']),
+                if (_hasVal('rpo')) _row('Riwayat Pengobatan (RPO)', data['rpo']),
+                if (_hasVal('hubungan')) _row('Diceritakan Oleh', data['hubungan']),
+                _row('Alergi', data['alergi']),
+              ]),
+
+              const SizedBox(height: 16),
+
+              // ── O: OBJEKTIF ───────────────────────────────────────
+              _soapLabel('O', 'Objektif', AppTheme.accent),
+              const SizedBox(height: 10),
+              _clinicalSection('Tanda Vital', [
+                _vitalGrid(data),
+                _buildVitalsChart(),
+              ]),
+              if (_hasVal('keadaan') || _hasVal('kesadaran') || _hasVal('gcs') || _hasVal('bb') || _hasVal('tb')) ...[
+                const SizedBox(height: 12),
+                _clinicalSection('Keadaan Umum', [
+                  if (_hasVal('keadaan')) _row('Keadaan Umum', data['keadaan']),
+                  if (_hasVal('kesadaran')) _row('Kesadaran', data['kesadaran']),
+                  if (_hasVal('gcs')) _row('GCS', data['gcs']),
+                  if (_hasVal('bb')) _row('Berat Badan', '${data['bb']} kg'),
+                  if (_hasVal('tb')) _row('Tinggi Badan', '${data['tb']} cm'),
+                ]),
               ],
-            );
-          }),
-          children: [
-            const Divider(height: 24, thickness: 1, color: AppTheme.divider),
+              if (_hasVal('pemeriksaan_fisik')) ...[
+                const SizedBox(height: 12),
+                _clinicalSection('Pemeriksaan Fisik', [
+                  _row('Hasil Pemeriksaan', data['pemeriksaan_fisik']),
+                ]),
+              ],
+              if (_hasVal('lab') || _hasVal('rad') || _hasVal('penunjang')) ...[
+                const SizedBox(height: 12),
+                _clinicalSection('Penunjang', [
+                  if (_hasVal('lab')) _row('Laboratorium', data['lab']),
+                  if (_hasVal('rad')) _row('Radiologi', data['rad']),
+                  if (_hasVal('penunjang')) _row('Lainnya', data['penunjang']),
+                ]),
+              ],
 
-            // ── S: SUBJEKTIF ──────────────────────────────────────
-            _soapLabel('S', 'Subjektif', AppTheme.primary),
-            const SizedBox(height: 10),
-            _clinicalSection('Anamnesis', [
-              _row('Keluhan Utama', data['keluhan_utama']),
-              if (_hasVal('rps'))
-                _row('Riwayat Penyakit Sekarang (RPS)', data['rps']),
-              if (_hasVal('rpd'))
-                _row('Riwayat Penyakit Dahulu (RPD)', data['rpd']),
-              if (_hasVal('rpk'))
-                _row('Riwayat Penyakit Keluarga (RPK)', data['rpk']),
-              if (_hasVal('rpo')) _row('Riwayat Pengobatan (RPO)', data['rpo']),
-              if (_hasVal('hubungan'))
-                _row('Diceritakan Oleh', data['hubungan']),
-              _row('Alergi', data['alergi']),
-            ]),
+              const SizedBox(height: 16),
 
-            const SizedBox(height: 16),
+              // ── A: ASSESSMENT ─────────────────────────────────────
+              _soapLabel('A', 'Assessment', AppTheme.warning),
+              const SizedBox(height: 10),
+              _clinicalSection('Penilaian / Diagnosis', [
+                _row('Diagnosis / Penilaian', data['diagnosis']),
+              ]),
 
-            // ── O: OBJEKTIF ───────────────────────────────────────
-            _soapLabel('O', 'Objektif', AppTheme.accent),
-            const SizedBox(height: 10),
-            _clinicalSection('Tanda Vital', [
-              _vitalGrid(data),
-              _buildVitalsChart(),
-            ]),
-            if (_hasVal('keadaan') ||
-                _hasVal('kesadaran') ||
-                _hasVal('gcs') ||
-                _hasVal('bb') ||
-                _hasVal('tb')) ...[
-              const SizedBox(height: 12),
-              _clinicalSection('Keadaan Umum', [
-                if (_hasVal('keadaan')) _row('Keadaan Umum', data['keadaan']),
-                if (_hasVal('kesadaran')) _row('Kesadaran', data['kesadaran']),
-                if (_hasVal('gcs')) _row('GCS', data['gcs']),
-                if (_hasVal('bb')) _row('Berat Badan', '${data['bb']} kg'),
-                if (_hasVal('tb')) _row('Tinggi Badan', '${data['tb']} cm'),
+              const SizedBox(height: 16),
+
+              // ── P: PLAN ───────────────────────────────────────────
+              _soapLabel('P', 'Plan', AppTheme.success),
+              const SizedBox(height: 10),
+              _clinicalSection('Rencana & Tindak Lanjut', [
+                if (_hasVal('tata')) _row('Tata Laksana / RTL', data['tata']),
+                if (_hasVal('instruksi')) _row('Instruksi', data['instruksi']),
+                if (_hasVal('evaluasi')) _row('Evaluasi', data['evaluasi']),
+                if (_hasVal('edukasi')) _row('Edukasi', data['edukasi']),
               ]),
             ],
-            if (_hasVal('pemeriksaan_fisik')) ...[
-              const SizedBox(height: 12),
-              _clinicalSection('Pemeriksaan Fisik', [
-                _row('Hasil Pemeriksaan', data['pemeriksaan_fisik']),
-              ]),
-            ],
-            if (_hasVal('lab') || _hasVal('rad') || _hasVal('penunjang')) ...[
-              const SizedBox(height: 12),
-              _clinicalSection('Penunjang', [
-                if (_hasVal('lab')) _row('Laboratorium', data['lab']),
-                if (_hasVal('rad')) _row('Radiologi', data['rad']),
-                if (_hasVal('penunjang')) _row('Lainnya', data['penunjang']),
-              ]),
-            ],
-
-            const SizedBox(height: 16),
-
-            // ── A: ASSESSMENT ─────────────────────────────────────
-            _soapLabel('A', 'Assessment', AppTheme.warning),
-            const SizedBox(height: 10),
-            _clinicalSection('Penilaian / Diagnosis', [
-              _row('Diagnosis / Penilaian', data['diagnosis']),
-            ]),
-
-            const SizedBox(height: 16),
-
-            // ── P: PLAN ───────────────────────────────────────────
-            _soapLabel('P', 'Plan', AppTheme.success),
-            const SizedBox(height: 10),
-            _clinicalSection('Rencana & Tindak Lanjut', [
-              if (_hasVal('tata')) _row('Tata Laksana / RTL', data['tata']),
-              if (_hasVal('instruksi')) _row('Instruksi', data['instruksi']),
-              if (_hasVal('evaluasi')) _row('Evaluasi', data['evaluasi']),
-              if (_hasVal('edukasi')) _row('Edukasi', data['edukasi']),
-            ]),
-          ],
+          ),
         ),
       ),
-     ),
     );
   }
 
@@ -3912,14 +3797,11 @@ class _SoapTileState extends State<_SoapTile> {
           ),
           child: Text(
             letter,
-            style: GoogleFonts.robotoMono(
-                fontSize: 14, fontWeight: FontWeight.w900, color: color),
+            style: GoogleFonts.robotoMono(fontSize: 14, fontWeight: FontWeight.w900, color: color),
           ),
         ),
         const SizedBox(width: 10),
-        Text(label,
-            style: GoogleFonts.outfit(
-                fontSize: 13.5, fontWeight: FontWeight.w800, color: color)),
+        Text(label, style: GoogleFonts.outfit(fontSize: 13.5, fontWeight: FontWeight.w800, color: color)),
       ],
     );
   }
@@ -3939,11 +3821,7 @@ class _SoapTileState extends State<_SoapTile> {
               ),
             ),
             const SizedBox(width: 8),
-            Text(title,
-                style: GoogleFonts.outfit(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w800,
-                    color: AppTheme.textPrimary)),
+            Text(title, style: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.w800, color: AppTheme.textPrimary)),
           ],
         ),
         const SizedBox(height: 12),
@@ -3961,26 +3839,17 @@ class _SoapTileState extends State<_SoapTile> {
       mainAxisSpacing: 10,
       childAspectRatio: 1.15,
       children: [
-        _vitalCard('Tekanan Darah', data['td'], 'mmHg', Icons.speed_rounded,
-            _evalTensi(data['td'])),
-        _vitalCard('Nadi', data['nadi'], 'x/mnt', Icons.favorite_rounded,
-            _evalNadi(data['nadi'])),
-        _vitalCard('Respirasi (RR)', data['rr'], 'x/mnt', Icons.air_rounded,
-            _evalRR(data['rr'])),
-        _vitalCard('Suhu Tubuh', data['suhu'], '°C', Icons.thermostat_rounded,
-            _evalSuhu(data['suhu'])),
-        _vitalCard('SpO₂', data['spo'], '%', Icons.bloodtype_rounded,
-            _evalSpo(data['spo'])),
+        _vitalCard('Tekanan Darah', data['td'], 'mmHg', Icons.speed_rounded, _evalTensi(data['td'])),
+        _vitalCard('Nadi', data['nadi'], 'x/mnt', Icons.favorite_rounded, _evalNadi(data['nadi'])),
+        _vitalCard('Respirasi (RR)', data['rr'], 'x/mnt', Icons.air_rounded, _evalRR(data['rr'])),
+        _vitalCard('Suhu Tubuh', data['suhu'], '°C', Icons.thermostat_rounded, _evalSuhu(data['suhu'])),
+        _vitalCard('SpO₂', data['spo'], '%', Icons.bloodtype_rounded, _evalSpo(data['spo'])),
       ],
     );
   }
 
-  Widget _vitalCard(String label, dynamic value, String unit, IconData icon,
-      Color statusColor) {
-    final displayValue =
-        (value == null || value.toString().isEmpty || value.toString() == '-')
-            ? '-'
-            : value.toString();
+  Widget _vitalCard(String label, dynamic value, String unit, IconData icon, Color statusColor) {
+    final displayValue = (value == null || value.toString().isEmpty || value.toString() == '-') ? '-' : value.toString();
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
       decoration: BoxDecoration(
@@ -3996,28 +3865,12 @@ class _SoapTileState extends State<_SoapTile> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Icon(icon, size: 14, color: statusColor),
-              Text(unit,
-                  style: GoogleFonts.outfit(
-                      fontSize: 9,
-                      color: AppTheme.textSecondary,
-                      fontWeight: FontWeight.w700)),
+              Text(unit, style: GoogleFonts.outfit(fontSize: 9, color: AppTheme.textSecondary, fontWeight: FontWeight.w700)),
             ],
           ),
           const SizedBox(height: 4),
-          Text(displayValue,
-              style: GoogleFonts.robotoMono(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w800,
-                  color: AppTheme.textPrimary),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis),
-          Text(label,
-              style: GoogleFonts.outfit(
-                  fontSize: 8.5,
-                  color: AppTheme.textSecondary,
-                  fontWeight: FontWeight.w700),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis),
+          Text(displayValue, style: GoogleFonts.robotoMono(fontSize: 14, fontWeight: FontWeight.w800, color: AppTheme.textPrimary), maxLines: 1, overflow: TextOverflow.ellipsis),
+          Text(label, style: GoogleFonts.outfit(fontSize: 8.5, color: AppTheme.textSecondary, fontWeight: FontWeight.w700), maxLines: 1, overflow: TextOverflow.ellipsis),
         ],
       ),
     );
@@ -4032,18 +3885,9 @@ class _SoapTileState extends State<_SoapTile> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label,
-              style: GoogleFonts.outfit(
-                  fontSize: 10.5,
-                  color: AppTheme.textMuted,
-                  fontWeight: FontWeight.w800)),
+          Text(label, style: GoogleFonts.outfit(fontSize: 10.5, color: AppTheme.textMuted, fontWeight: FontWeight.w800)),
           const SizedBox(height: 4),
-          Text(value.toString(),
-              style: GoogleFonts.outfit(
-                  fontSize: 13,
-                  color: AppTheme.textPrimary,
-                  fontWeight: FontWeight.w600,
-                  height: 1.4)),
+          Text(value.toString(), style: GoogleFonts.outfit(fontSize: 13, color: AppTheme.textPrimary, fontWeight: FontWeight.w600, height: 1.4)),
         ],
       ),
     );
@@ -4051,8 +3895,7 @@ class _SoapTileState extends State<_SoapTile> {
 
   Color _evalTensi(dynamic td) {
     if (td == null) return AppTheme.textMuted;
-    final sys = int.tryParse(
-        td.toString().split('/')[0].replaceAll(RegExp(r'[^0-9]'), ''));
+    final sys = int.tryParse(td.toString().split('/')[0].replaceAll(RegExp(r'[^0-9]'), ''));
     if (sys != null) {
       if (sys >= 140) return AppTheme.danger;
       if (sys >= 130) return AppTheme.warning;
@@ -4082,8 +3925,7 @@ class _SoapTileState extends State<_SoapTile> {
 
   Color _evalSuhu(dynamic val) {
     if (val == null) return AppTheme.textMuted;
-    final s =
-        double.tryParse(val.toString().replaceAll(RegExp(r'[^0-9.]'), ''));
+    final s = double.tryParse(val.toString().replaceAll(RegExp(r'[^0-9.]'), ''));
     if (s != null) {
       if (s > 37.8 || s < 35.5) return AppTheme.danger;
       if (s > 37.2) return AppTheme.warning;
@@ -4179,7 +4021,7 @@ class _SoapTileState extends State<_SoapTile> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Tren Perkembangan Vital',
+                  'Tren TTV',
                   style: GoogleFonts.outfit(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
@@ -4243,10 +4085,12 @@ class _SoapTileState extends State<_SoapTile> {
                             final dt = points[idx].dateTime;
                             return Padding(
                               padding: const EdgeInsets.only(top: 4.0),
-                              child: Text(
-                                DateFormat('dd/MM').format(dt),
-                                style: GoogleFonts.outfit(fontSize: 8, color: AppTheme.textMuted),
-                              ),
+                              child: Transform(
+                                  transform: Matrix4.skewX(0 * (math.pi / 180)),
+                                  child: Text(
+                                    DateFormat('dd/MM').format(dt),
+                                    style: GoogleFonts.outfit(fontSize: 8, color: AppTheme.textMuted),
+                                  )),
                             );
                           }
                           return const SizedBox.shrink();
@@ -4269,13 +4113,13 @@ class _SoapTileState extends State<_SoapTile> {
                   borderData: FlBorderData(show: false),
                   lineTouchData: LineTouchData(
                     touchTooltipData: LineTouchTooltipData(
-                      getTooltipColor: (_) => AppTheme.bgDark.withValues(alpha: 0.9),
+                      getTooltipColor: (_) => AppTheme.primary,
                       getTooltipItems: (touchedSpots) {
                         return touchedSpots.map((spot) {
                           final idx = spot.x.toInt();
                           final dateStr = DateFormat('dd MMM yyyy HH:mm').format(points[idx].dateTime);
                           return LineTooltipItem(
-                            '$dateStr\n${spot.bar.gradient != null ? label2 : label1}: ${spot.y.toStringAsFixed(1)}',
+                            '$dateStr\n${spot.barIndex == 1 ? label2 : label1}: ${spot.y.toStringAsFixed(1)}',
                             GoogleFonts.outfit(fontSize: 10, color: Colors.white, fontWeight: FontWeight.w600),
                           );
                         }).toList();
@@ -4404,8 +4248,7 @@ class _DicomViewerPageState extends State<DicomViewerPage> {
         iconTheme: const IconThemeData(color: Colors.white),
         title: Text(
           widget.title,
-          style: GoogleFonts.outfit(
-              color: Colors.white, fontSize: 14, fontWeight: FontWeight.w700),
+          style: GoogleFonts.outfit(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w700),
         ),
       ),
       body: Stack(
@@ -4455,10 +4298,7 @@ Widget _buildAttachmentsSection(String content) {
         children: urls.map((url) {
           final uri = Uri.tryParse(url);
           final filename = uri != null ? uri.pathSegments.lastOrNull ?? 'File Lampiran' : 'File Lampiran';
-          final isImage = url.toLowerCase().endsWith('.png') ||
-              url.toLowerCase().endsWith('.jpg') ||
-              url.toLowerCase().endsWith('.jpeg') ||
-              url.toLowerCase().endsWith('.webp');
+          final isImage = url.toLowerCase().endsWith('.png') || url.toLowerCase().endsWith('.jpg') || url.toLowerCase().endsWith('.jpeg') || url.toLowerCase().endsWith('.webp');
           final isPdf = url.toLowerCase().endsWith('.pdf');
 
           return InkWell(
