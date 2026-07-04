@@ -4057,110 +4057,118 @@ class _SoapTileState extends State<_SoapTile> {
               ],
             ),
             const SizedBox(height: 20),
-            SizedBox(
-              height: 160,
-              child: LineChart(
-                LineChartData(
-                  minY: minY,
-                  maxY: maxY,
-                  gridData: FlGridData(
-                    show: true,
-                    drawVerticalLine: false,
-                    getDrawingHorizontalLine: (value) => FlLine(
-                      color: AppTheme.divider.withValues(alpha: 0.5),
-                      strokeWidth: 1,
-                    ),
-                  ),
-                  titlesData: FlTitlesData(
-                    show: true,
-                    rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                    topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                    bottomTitles: AxisTitles(
-                      sideTitles: SideTitles(
-                        showTitles: true,
-                        reservedSize: 22,
-                        interval: 1,
-                        getTitlesWidget: (value, meta) {
-                          final int idx = value.toInt();
-                          if (idx >= 0 && idx < points.length) {
-                            final dt = points[idx].dateTime;
-                            return Padding(
-                              padding: const EdgeInsets.only(top: 4.0),
-                              child: Transform(
-                                  transform: Matrix4.skewX(0 * (math.pi / 180)),
-                                  child: Text(
-                                    DateFormat('dd/MM').format(dt),
-                                    style: GoogleFonts.outfit(fontSize: 8, color: AppTheme.textMuted),
-                                  )),
-                            );
-                          }
-                          return const SizedBox.shrink();
-                        },
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
+              child: SizedBox(
+                width: math.max(MediaQuery.of(context).size.width - 64, points.length * 52.0),
+                height: 160,
+                child: Padding(
+                  padding: const EdgeInsets.only(right: 16.0),
+                  child: LineChart(
+                    LineChartData(
+                      minY: minY,
+                      maxY: maxY,
+                      gridData: FlGridData(
+                        show: true,
+                        drawVerticalLine: false,
+                        getDrawingHorizontalLine: (value) => FlLine(
+                          color: AppTheme.divider.withValues(alpha: 0.5),
+                          strokeWidth: 1,
+                        ),
                       ),
-                    ),
-                    leftTitles: AxisTitles(
-                      sideTitles: SideTitles(
-                        showTitles: true,
-                        reservedSize: 28,
-                        getTitlesWidget: (value, meta) {
-                          return Text(
-                            value.toStringAsFixed(0),
-                            style: GoogleFonts.outfit(fontSize: 8, color: AppTheme.textMuted),
-                          );
-                        },
+                      titlesData: FlTitlesData(
+                        show: true,
+                        rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                        topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                        bottomTitles: AxisTitles(
+                          sideTitles: SideTitles(
+                            showTitles: true,
+                            reservedSize: 22,
+                            interval: 1,
+                            getTitlesWidget: (value, meta) {
+                              final int idx = value.toInt();
+                              if (idx >= 0 && idx < points.length) {
+                                final dt = points[idx].dateTime;
+                                return Padding(
+                                  padding: const EdgeInsets.only(top: 4.0),
+                                  child: Transform(
+                                      transform: Matrix4.skewX(0 * (math.pi / 180)),
+                                      child: Text(
+                                        DateFormat('dd/MM').format(dt),
+                                        style: GoogleFonts.outfit(fontSize: 8, color: AppTheme.textMuted),
+                                      )),
+                                );
+                              }
+                              return const SizedBox.shrink();
+                            },
+                          ),
+                        ),
+                        leftTitles: AxisTitles(
+                          sideTitles: SideTitles(
+                            showTitles: true,
+                            reservedSize: 28,
+                            getTitlesWidget: (value, meta) {
+                              return Text(
+                                value.toStringAsFixed(0),
+                                style: GoogleFonts.outfit(fontSize: 8, color: AppTheme.textMuted),
+                              );
+                            },
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
-                  borderData: FlBorderData(show: false),
-                  lineTouchData: LineTouchData(
-                    touchTooltipData: LineTouchTooltipData(
-                      getTooltipColor: (_) => AppTheme.primary,
-                      getTooltipItems: (touchedSpots) {
-                        return touchedSpots.map((spot) {
-                          final idx = spot.x.toInt();
-                          final dateStr = DateFormat('dd MMM yyyy HH:mm').format(points[idx].dateTime);
-                          return LineTooltipItem(
-                            '$dateStr\n${spot.barIndex == 1 ? label2 : label1}: ${spot.y.toStringAsFixed(1)}',
-                            GoogleFonts.outfit(fontSize: 10, color: Colors.white, fontWeight: FontWeight.w600),
-                          );
-                        }).toList();
-                      },
-                    ),
-                  ),
-                  lineBarsData: [
-                    if (spots1.isNotEmpty)
-                      LineChartBarData(
-                        spots: spots1,
-                        isCurved: true,
-                        barWidth: 2.5,
-                        color: color1,
-                        dotData: FlDotData(
-                          show: true,
-                          getDotPainter: (spot, percent, barData, index) => FlDotCirclePainter(
-                            radius: 3,
+                      borderData: FlBorderData(show: false),
+                      lineTouchData: LineTouchData(
+                        touchTooltipData: LineTouchTooltipData(
+                          getTooltipColor: (_) => AppTheme.primary,
+                          getTooltipItems: (touchedSpots) {
+                            return touchedSpots.map((spot) {
+                              final idx = spot.x.toInt();
+                              final dateStr = DateFormat('dd MMM yyyy HH:mm').format(points[idx].dateTime);
+                              return LineTooltipItem(
+                                '$dateStr\n${spot.barIndex == 1 ? label2 : label1}: ${spot.y.toStringAsFixed(1)}',
+                                GoogleFonts.outfit(fontSize: 10, color: Colors.white, fontWeight: FontWeight.w600),
+                              );
+                            }).toList();
+                          },
+                        ),
+                      ),
+                      lineBarsData: [
+                        if (spots1.isNotEmpty)
+                          LineChartBarData(
+                            spots: spots1,
+                            isCurved: true,
+                            barWidth: 2.5,
                             color: color1,
-                            strokeWidth: 1,
-                            strokeColor: Colors.white,
+                            dotData: FlDotData(
+                              show: true,
+                              getDotPainter: (spot, percent, barData, index) => FlDotCirclePainter(
+                                radius: 3,
+                                color: color1,
+                                strokeWidth: 1,
+                                strokeColor: Colors.white,
+                              ),
+                            ),
                           ),
-                        ),
-                      ),
-                    if (spots2.isNotEmpty)
-                      LineChartBarData(
-                        spots: spots2,
-                        isCurved: true,
-                        barWidth: 2.5,
-                        color: color2,
-                        dotData: FlDotData(
-                          show: true,
-                          getDotPainter: (spot, percent, barData, index) => FlDotCirclePainter(
-                            radius: 3,
+                        if (spots2.isNotEmpty)
+                          LineChartBarData(
+                            spots: spots2,
+                            isCurved: true,
+                            barWidth: 2.5,
                             color: color2,
-                            strokeWidth: 1,
-                            strokeColor: Colors.white,
+                            dotData: FlDotData(
+                              show: true,
+                              getDotPainter: (spot, percent, barData, index) => FlDotCirclePainter(
+                                radius: 3,
+                                color: color2,
+                                strokeWidth: 1,
+                                strokeColor: Colors.white,
+                              ),
+                            ),
                           ),
-                        ),
-                      ),
-                  ],
+                      ],
+                    ),
+                  ),
                 ),
               ),
             ),
