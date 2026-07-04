@@ -920,8 +920,8 @@ class RekamMedisView extends StatelessWidget {
               continue; // Skip already dispensed item to avoid duplicate
             }
 
-            final tglPenyerahan = r['tgl_penyerahan']?.toString() ?? '';
-            final isDispensed = tglPenyerahan.isNotEmpty && tglPenyerahan != '0000-00-00';
+            final tglPerawatan = r['tgl_perawatan']?.toString() ?? '';
+            final isDispensed = tglPerawatan.isNotEmpty && tglPerawatan != '0000-00-00';
 
             final tgl = r['tgl_perawatan']?.toString() ?? '-';
             final jam = r['jam']?.toString() ?? '-';
