@@ -3731,7 +3731,7 @@ class _SoapTileState extends State<_SoapTile> {
                 _vitalGrid(data),
                 _buildVitalsChart(),
               ]),
-              if (_hasVal('keadaan') || _hasVal('kesadaran') || _hasVal('gcs') || _hasVal('bb') || _hasVal('tb')) ...[
+              if (_hasVal('keadaan') || _hasVal('kesadaran') || _hasVal('gcs') || _hasVal('bb') || _hasVal('tb') || _hasVal('lingkar_perut')) ...[
                 const SizedBox(height: 12),
                 _clinicalSection('Keadaan Umum', [
                   if (_hasVal('keadaan')) _row('Keadaan Umum', data['keadaan']),
@@ -3739,6 +3739,7 @@ class _SoapTileState extends State<_SoapTile> {
                   if (_hasVal('gcs')) _row('GCS', data['gcs']),
                   if (_hasVal('bb')) _row('Berat Badan', '${data['bb']} kg'),
                   if (_hasVal('tb')) _row('Tinggi Badan', '${data['tb']} cm'),
+                  if (_hasVal('lingkar_perut')) _row('Lingkar Perut', '${data['lingkar_perut']} cm'),
                 ]),
               ],
               if (_hasVal('pemeriksaan_fisik')) ...[

@@ -296,6 +296,7 @@ class RekamMedisController extends GetxController {
       'keadaan': raw['keadaan'] ?? '-',
       'bb': raw['bb'] ?? raw['berat'] ?? '-',
       'tb': raw['tb'] ?? raw['tinggi'] ?? '-',
+      'lingkar_perut': raw['lingkar_perut'] ?? '-',
       // Tanda Vital
       'td': raw['td'] ?? raw['tensi'] ?? '-',
       'nadi': raw['nadi'] ?? '-',
