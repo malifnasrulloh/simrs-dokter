@@ -10,12 +10,18 @@ import 'features/dashboard/views/patient_list_view.dart';
 import 'features/rekam_medis/views/rekam_medis_view.dart';
 import 'core/utils/google_fonts.dart';
 import 'core/utils/local_notification_service.dart';
+import 'core/utils/notification_action_controller.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   GoogleFonts.config.allowRuntimeFetching = false;
+
+  // Initialize Awesome Notifications
   await LocalNotificationService.initialize();
   await LocalNotificationService.requestPermissions();
+  await NotificationActionController.initializeIsolateReceivePort();
+  NotificationActionController.startListening();
+
   runApp(const SimrsDokterApp());
 }
 

@@ -12,7 +12,7 @@ import '../../../core/utils/google_fonts.dart';
 import '../../dashboard/controllers/dashboard_controller.dart';
 import '../../rekam_medis/controllers/rekam_medis_controller.dart';
 
-class AuthController extends GetxController {
+class AuthController extends GetxController with WidgetsBindingObserver {
   final _storage = const FlutterSecureStorage();
   final _api = ApiClient();
 
@@ -41,6 +41,7 @@ class AuthController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    WidgetsBinding.instance.addObserver(this);
     _checkToken();
   }
 
@@ -408,7 +409,18 @@ class AuthController extends GetxController {
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    if (state == AppLifecycleState.resumed) {
+      // OS may have killed the persistent SSE connection while in background.
+      // Init will abort any stale connection and create a fresh one.
+      initNotificationSse();
+    }
+  }
+
+  @override
   void onClose() {
+    WidgetsBinding.instance.removeObserver(this);
     stopNotificationSse();
     super.onClose();
   }

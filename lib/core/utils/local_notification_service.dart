@@ -1,78 +1,45 @@
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-
-import '../config/app_config.dart';
+import 'package:flutter/material.dart';
+import 'package:awesome_notifications/awesome_notifications.dart';
 
 class LocalNotificationService {
-  static final FlutterLocalNotificationsPlugin _notificationsPlugin =
-      FlutterLocalNotificationsPlugin();
-
-  static const AndroidNotificationChannel _channel = AndroidNotificationChannel(
-    'edokter_notification_channel', // id
-    '${AppConfig.appName} Notifications', // title
-    description: 'Channel for ${AppConfig.appName} real-time clinical alerts', // description
-    importance: Importance.max,
-    playSound: true,
-    enableVibration: true,
-  );
+  static const String channelKey = 'edokter_alerts';
 
   static Future<void> initialize() async {
-    // 1. Android settings
-    const AndroidInitializationSettings initializationSettingsAndroid =
-        AndroidInitializationSettings('ic_notification');
-
-    // 2. iOS (Darwin) settings
-    const DarwinInitializationSettings initializationSettingsDarwin =
-        DarwinInitializationSettings(
-      requestAlertPermission: true,
-      requestBadgePermission: true,
-      requestSoundPermission: true,
+    await AwesomeNotifications().initialize(
+      // Use the launcher icon as default notification icon
+      'resource://mipmap/launcher_icon',
+      [
+        NotificationChannel(
+          channelKey: channelKey,
+          channelName: 'Notifikasi E-Dokter',
+          channelDescription: 'Channel untuk notifikasi klinis real-time E-Dokter',
+          channelGroupKey: 'edokter_group',
+          defaultColor: const Color(0xFF1E293B),
+          ledColor: const Color(0xFF1E293B),
+          importance: NotificationImportance.Max,
+          playSound: true,
+          enableVibration: true,
+          onlyAlertOnce: true,
+          groupAlertBehavior: GroupAlertBehavior.Children,
+          defaultPrivacy: NotificationPrivacy.Private,
+        ),
+      ],
+      channelGroups: [
+        NotificationChannelGroup(
+          channelGroupKey: 'edokter_group',
+          channelGroupName: 'E-Dokter',
+        ),
+      ],
+      debug: false,
     );
-
-    const InitializationSettings initializationSettings = InitializationSettings(
-      android: initializationSettingsAndroid,
-      iOS: initializationSettingsDarwin,
-    );
-
-    // 3. Initialize plugin
-    await _notificationsPlugin.initialize(
-      initializationSettings,
-      onDidReceiveNotificationResponse: (NotificationResponse response) {
-        // Handle notification click if needed
-      },
-    );
-
-    // 4. Create the Android notification channel
-    final AndroidFlutterLocalNotificationsPlugin? androidImplementation =
-        _notificationsPlugin.resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>();
-    
-    if (androidImplementation != null) {
-      await androidImplementation.createNotificationChannel(_channel);
-    }
   }
 
-  /// Request permissions for Android 13+ and iOS.
-  /// Bypasses / resolves automatically to true on Android 12 and below.
-  static Future<void> requestPermissions() async {
-    // Request permission for Android
-    final AndroidFlutterLocalNotificationsPlugin? androidImplementation =
-        _notificationsPlugin.resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>();
-    if (androidImplementation != null) {
-      await androidImplementation.requestNotificationsPermission();
+  static Future<bool> requestPermissions() async {
+    final allowed = await AwesomeNotifications().isNotificationAllowed();
+    if (!allowed) {
+      return await AwesomeNotifications().requestPermissionToSendNotifications();
     }
-
-    // Request permission for iOS
-    final IOSFlutterLocalNotificationsPlugin? iosImplementation =
-        _notificationsPlugin.resolvePlatformSpecificImplementation<
-            IOSFlutterLocalNotificationsPlugin>();
-    if (iosImplementation != null) {
-      await iosImplementation.requestPermissions(
-        alert: true,
-        badge: true,
-        sound: true,
-      );
-    }
+    return true;
   }
 
   static Future<void> showNotification({
@@ -81,33 +48,29 @@ class LocalNotificationService {
     required String body,
     String? payload,
   }) async {
-    final AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
-      _channel.id,
-      _channel.name,
-      channelDescription: _channel.description,
-      importance: Importance.max,
-      priority: Priority.high,
-      ticker: 'ticker',
-      playSound: true,
+    await AwesomeNotifications().createNotification(
+      content: NotificationContent(
+        id: id,
+        channelKey: channelKey,
+        title: title,
+        body: body,
+        notificationLayout: NotificationLayout.Default,
+        payload: payload != null ? {'data': payload} : null,
+        color: const Color(0xFF1E293B),
+        backgroundColor: const Color(0xFFF8FAFC),
+      ),
     );
+  }
 
-    const DarwinNotificationDetails iosDetails = DarwinNotificationDetails(
-      presentAlert: true,
-      presentBadge: true,
-      presentSound: true,
-    );
+  static Future<void> cancelNotification(int id) async {
+    await AwesomeNotifications().cancel(id);
+  }
 
-    final NotificationDetails platformChannelSpecifics = NotificationDetails(
-      android: androidDetails,
-      iOS: iosDetails,
-    );
+  static Future<void> cancelAll() async {
+    await AwesomeNotifications().cancelAll();
+  }
 
-    await _notificationsPlugin.show(
-      id,
-      title,
-      body,
-      platformChannelSpecifics,
-      payload: payload,
-    );
+  static Future<void> resetBadge() async {
+    await AwesomeNotifications().resetGlobalBadge();
   }
 }

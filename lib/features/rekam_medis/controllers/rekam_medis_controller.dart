@@ -1352,12 +1352,12 @@ class RekamMedisController extends GetxController {
         style: GoogleFonts.outfit(
           fontSize: 11.5,
           fontWeight: FontWeight.w500,
-          color: Colors.white.withOpacity(0.9),
+          color: Colors.white.withValues(alpha: 0.9),
         ),
       ),
-      backgroundColor: isUrgent 
-          ? const Color(0xFFE11D48).withOpacity(0.95) // Rose 600
-          : const Color(0xFF1E293B).withOpacity(0.95), // Slate 800
+      backgroundColor: isUrgent
+          ? const Color(0xFFE11D48).withValues(alpha: 0.95) // Rose 600
+          : const Color(0xFF1E293B).withValues(alpha: 0.95), // Slate 800
       margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       borderRadius: 14,
@@ -1367,7 +1367,7 @@ class RekamMedisController extends GetxController {
       icon: Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.1),
+          color: Colors.white.withValues(alpha: 0.1),
           shape: BoxShape.circle,
         ),
         child: Icon(
@@ -1378,7 +1378,7 @@ class RekamMedisController extends GetxController {
       ),
       boxShadows: [
         BoxShadow(
-          color: Colors.black.withOpacity(0.12),
+          color: Colors.black.withValues(alpha: 0.12),
           blurRadius: 16,
           offset: const Offset(0, 8),
         )
