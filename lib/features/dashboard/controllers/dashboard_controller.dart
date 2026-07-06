@@ -103,9 +103,11 @@ class DashboardController extends GetxController {
     }
   }
 
-  Future<void> fetchDashboard() async {
+  Future<void> fetchDashboard({bool isBackground = false}) async {
     try {
-      isLoading.value = true;
+      if (!isBackground) {
+        isLoading.value = true;
+      }
       await Future.wait([
         _fetchPasienRanap(),
         _fetchPasienRalan(),
@@ -114,7 +116,9 @@ class DashboardController extends GetxController {
         _fetchBedAvailability(),
       ]);
     } finally {
-      isLoading.value = false;
+      if (!isBackground) {
+        isLoading.value = false;
+      }
     }
   }
 

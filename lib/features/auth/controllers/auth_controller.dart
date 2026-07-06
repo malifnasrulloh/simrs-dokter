@@ -393,16 +393,16 @@ class AuthController extends GetxController with WidgetsBindingObserver {
 
     try {
       if (Get.isRegistered<DashboardController>()) {
-        Get.find<DashboardController>().fetchDashboard();
+        Get.find<DashboardController>().fetchDashboard(isBackground: true);
       }
     } catch (_) {}
 
     try {
       if (Get.isRegistered<RekamMedisController>()) {
         final rm = Get.find<RekamMedisController>();
-        rm.fetchConsultations();
+        rm.fetchConsultations(isBackground: true);
         if (event == 'sbar_request' || event == 'new_admission') {
-          rm.fetchAllData();
+          rm.fetchAllData(isBackground: true);
         }
       }
     } catch (_) {}

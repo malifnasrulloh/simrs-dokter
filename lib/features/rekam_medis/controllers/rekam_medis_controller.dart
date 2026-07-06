@@ -128,9 +128,11 @@ class RekamMedisController extends GetxController {
     loadDrafts();
   }
 
-  Future<void> fetchAllData() async {
-    isLoading.value = true;
-    expandedStates.clear();
+  Future<void> fetchAllData({bool isBackground = false}) async {
+    if (!isBackground) {
+      isLoading.value = true;
+      expandedStates.clear();
+    }
     try {
       // 1. Core/Primary data: must load to display the initial page content
       await Future.wait([
@@ -140,7 +142,9 @@ class RekamMedisController extends GetxController {
         fetchProsedur(),
       ]);
     } finally {
-      isLoading.value = false;
+      if (!isBackground) {
+        isLoading.value = false;
+      }
     }
 
     // 2. Secondary/Background data: lazy load and stagger in the background asynchronously
@@ -830,9 +834,11 @@ class RekamMedisController extends GetxController {
   final dokterList = <Map<String, dynamic>>[].obs;
   final isLoadingConsult = false.obs;
 
-  Future<void> fetchConsultations() async {
+  Future<void> fetchConsultations({bool isBackground = false}) async {
     try {
-      isLoadingConsult.value = true;
+      if (!isBackground) {
+        isLoadingConsult.value = true;
+      }
       final results = await Future.wait([
         _api.dio.get('/konsultasi/masuk', queryParameters: {'no_rawat': noRawat}),
         _api.dio.get('/konsultasi/keluar', queryParameters: {'no_rawat': noRawat}),
@@ -854,7 +860,9 @@ class RekamMedisController extends GetxController {
             .toList();
       }
     } catch (_) {} finally {
-      isLoadingConsult.value = false;
+      if (!isBackground) {
+        isLoadingConsult.value = false;
+      }
     }
   }
 
