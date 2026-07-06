@@ -65,8 +65,18 @@ class AuthController extends GetxController {
     try {
       final response = await _api.dio.get('/profile');
       if (response.data != null && response.data['success'] == true) {
-        profileData.value = Map<String, dynamic>.from(response.data['data']);
-        await _storage.write(key: 'profile_data', value: jsonEncode(profileData.value));
+        final data = Map<String, dynamic>.from(response.data['data']);
+        profileData.value = data;
+        await _storage.write(key: 'profile_data', value: jsonEncode(data));
+
+        // Dynamically refresh permissions list if returned by profile
+        final newUserAkses = data['userakses'];
+        if (newUserAkses != null && user.value != null) {
+          final updatedUser = Map<String, dynamic>.from(user.value!);
+          updatedUser['userakses'] = newUserAkses;
+          user.value = updatedUser;
+          await _storage.write(key: 'user_data', value: jsonEncode(updatedUser));
+        }
       }
     } catch (_) {
       try {
@@ -330,6 +340,10 @@ class AuthController extends GetxController {
         final drPemberi = data['nm_dokter_pemberi'] ?? 'Rekan Dokter';
         final nmPasien = data['nm_pasien'] ?? 'Pasien';
         _showModernInAppNotification('🚨 URGENT: KONSUL IGD', 'Permintaan konsultasi segera dari $drPemberi untuk pasien $nmPasien', isUrgent: true);
+      } else if (event == 'sbar_request') {
+        final petugas = data['nama_petugas'] ?? 'Perawat';
+        final situation = data['situation'] ?? '';
+        _showModernInAppNotification('Permintaan SBAR Baru', 'Laporan dari $petugas: "$situation"');
       }
     }
 
@@ -365,6 +379,14 @@ class AuthController extends GetxController {
           title: '🚨 URGENT: KONSUL IGD',
           body: 'Permintaan konsultasi segera dari $drPemberi untuk pasien $nmPasien',
         );
+      } else if (event == 'sbar_request') {
+        final petugas = data['nama_petugas'] ?? 'Perawat';
+        final situation = data['situation'] ?? '';
+        LocalNotificationService.showNotification(
+          id: notificationId,
+          title: 'Permintaan SBAR Baru',
+          body: 'Laporan dari $petugas: "$situation"',
+        );
       }
     }
 
@@ -376,7 +398,11 @@ class AuthController extends GetxController {
 
     try {
       if (Get.isRegistered<RekamMedisController>()) {
-        Get.find<RekamMedisController>().fetchConsultations();
+        final rm = Get.find<RekamMedisController>();
+        rm.fetchConsultations();
+        if (event == 'sbar_request' || event == 'new_admission') {
+          rm.fetchAllData();
+        }
       }
     } catch (_) {}
   }

@@ -18,7 +18,7 @@ class LocalNotificationService {
   static Future<void> initialize() async {
     // 1. Android settings
     const AndroidInitializationSettings initializationSettingsAndroid =
-        AndroidInitializationSettings('@mipmap/launcher_icon');
+        AndroidInitializationSettings('ic_notification');
 
     // 2. iOS (Darwin) settings
     const DarwinInitializationSettings initializationSettingsDarwin =
