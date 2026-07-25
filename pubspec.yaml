@@ -38,7 +38,7 @@ dependencies:
   url_launcher: ^6.3.1
   webview_flutter: ^4.10.0
   awesome_notifications: ^0.12.1
-  device_info_plus: ^11.0.0
+  device_info_plus: ^13.2.0
 
 dev_dependencies:
   flutter_test:
