@@ -1,30 +1,21 @@
 import 'dart:convert';
-import 'dart:io';
-import 'dart:async';
 import 'package:get/get.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import '../../../core/network/api_client.dart';
-import '../../../core/config/app_config.dart';
-import '../../../core/utils/local_notification_service.dart';
-import '../../../core/utils/google_fonts.dart';
-import '../../dashboard/controllers/dashboard_controller.dart';
-import '../../rekam_medis/controllers/rekam_medis_controller.dart';
+import '../../../core/services/notification_polling_service.dart';
 
 class AuthController extends GetxController with WidgetsBindingObserver {
   final _storage = const FlutterSecureStorage();
   final _api = ApiClient();
+  NotificationPollingService get _notificationService => Get.find<NotificationPollingService>();
 
   final isLoading = false.obs;
   final errorMsg = ''.obs;
   final user = Rxn<Map<String, dynamic>>();
   final setting = Rxn<Map<String, dynamic>>();
   final profileData = Rxn<Map<String, dynamic>>();
-
-  HttpClient? _sseClient;
-  HttpClientRequest? _sseRequest;
-  HttpClientResponse? _sseResponse;
 
   bool get isAdmin => user.value?['isadmin'] == true;
 
@@ -114,7 +105,7 @@ class AuthController extends GetxController with WidgetsBindingObserver {
         user.value = Map<String, dynamic>.from(jsonDecode(userData));
       } catch (_) {}
       fetchProfile();
-      initNotificationSse();
+      _notificationService.start();
       Get.offAllNamed('/home');
     }
   }
@@ -149,7 +140,7 @@ class AuthController extends GetxController with WidgetsBindingObserver {
         user.value = userMap;
         await fetchSetting();
         await fetchProfile();
-        initNotificationSse();
+        _notificationService.start();
         Get.offAllNamed('/home');
       } else {
         errorMsg.value = response.data['message'] ?? 'Login gagal';
@@ -171,7 +162,7 @@ class AuthController extends GetxController with WidgetsBindingObserver {
   }
 
   Future<void> logout() async {
-    stopNotificationSse();
+    _notificationService.stop();
     ApiClient.setCachedToken(null);
     await _storage.deleteAll();
     user.value = null;
@@ -180,248 +171,25 @@ class AuthController extends GetxController with WidgetsBindingObserver {
     Get.offAllNamed('/login');
   }
 
-  int _sseRetryCount = 0;
-
-  void initNotificationSse() async {
-    if (Platform.environment.containsKey('FLUTTER_TEST')) return;
-    _sseRequest?.abort();
-    _sseClient?.close();
-
-    try {
-      final token = await _storage.read(key: 'auth_token');
-      if (token == null) return;
-
-      final sseUrl = Uri.parse('${AppConfig.baseUrl}/notifications');
-
-      _sseClient = HttpClient();
-      _sseClient!.connectionTimeout = const Duration(seconds: 10);
-      
-      _sseRequest = await _sseClient!.getUrl(sseUrl);
-      _sseRequest!.headers.set('Authorization', 'Bearer $token');
-      _sseResponse = await _sseRequest!.close();
-
-      if (_sseResponse!.statusCode == 200) {
-        // Reset retry counter on successful connection
-        _sseRetryCount = 0;
-        _sseResponse!
-            .transform(utf8.decoder)
-            .transform(const LineSplitter())
-            .listen((line) {
-          _handleSseLine(line);
-        }, onError: (err) {
-          _scheduleReconnect();
-        }, onDone: () {
-          _scheduleReconnect();
-        });
-      } else if (_sseResponse!.statusCode == 401) {
-        // Token expired — trigger silent re-auth, then reconnect
-        _refreshAndReconnectSse();
-      } else {
-        _scheduleReconnect();
-      }
-    } catch (_) {
-      _scheduleReconnect();
-    }
-  }
-
-  /// Exponential backoff: 2s → 4s → 8s → 16s → 30s (cap)
-  void _scheduleReconnect() {
-    if (isClosed) return;
-    final delay = [2, 4, 8, 16, 30][_sseRetryCount.clamp(0, 4)];
-    _sseRetryCount++;
-    Future.delayed(Duration(seconds: delay), () {
-      if (!isClosed) initNotificationSse();
-    });
-  }
-
-  /// Re-read fresh token and restart SSE
-  void _refreshAndReconnectSse() async {
-    try {
-      final token = await _storage.read(key: 'auth_token');
-      if (token != null) {
-        _sseRetryCount = 0;
-        initNotificationSse();
-      }
-    } catch (_) {
-      _scheduleReconnect();
-    }
-  }
-
-  void stopNotificationSse() {
-    _sseRequest?.abort();
-    _sseClient?.close();
-    _sseRetryCount = 0;
-  }
-
-  String? _currentEvent;
-
-  void _handleSseLine(String line) {
-    if (line.isEmpty) return;
-    if (line.startsWith('event: ')) {
-      _currentEvent = line.substring(7).trim();
-    } else if (line.startsWith('data: ') && _currentEvent != null) {
-      final dataStr = line.substring(6).trim();
-      if (dataStr != 'keep-alive') {
-        try {
-          final data = jsonDecode(dataStr);
-          _handleSseEvent(_currentEvent!, data);
-        } catch (_) {}
-      }
-      _currentEvent = null;
-    }
-  }
-
-  void _showModernInAppNotification(String title, String message, {bool isUrgent = false}) {
-    Get.rawSnackbar(
-      titleText: Text(
-        title,
-        style: GoogleFonts.outfit(
-          fontSize: 13,
-          fontWeight: FontWeight.bold,
-          color: Colors.white,
-        ),
-      ),
-      messageText: Text(
-        message,
-        style: GoogleFonts.outfit(
-          fontSize: 11.5,
-          fontWeight: FontWeight.w500,
-          color: Colors.white.withValues(alpha: 0.9),
-        ),
-      ),
-      backgroundColor: isUrgent 
-          ? const Color(0xFFE11D48).withValues(alpha: 0.95) // Rose 600
-          : const Color(0xFF1E293B).withValues(alpha: 0.95), // Slate 800
-      margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      borderRadius: 14,
-      snackPosition: SnackPosition.TOP,
-      duration: Duration(seconds: isUrgent ? 6 : 4),
-      shouldIconPulse: false,
-      icon: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.1),
-          shape: BoxShape.circle,
-        ),
-        child: Icon(
-          isUrgent ? Icons.warning_amber_rounded : Icons.notifications_active_rounded,
-          color: isUrgent ? Colors.white : const Color(0xFF2DD4BF), // Mint 400
-          size: 18,
-        ),
-      ),
-      boxShadows: [
-        BoxShadow(
-          color: Colors.black.withValues(alpha: 0.12),
-          blurRadius: 16,
-          offset: const Offset(0, 8),
-        )
-      ],
-      dismissDirection: DismissDirection.horizontal,
-    );
-  }
-
-  void _handleSseEvent(String event, dynamic data) {
-    final int notificationId = DateTime.now().millisecondsSinceEpoch.remainder(100000);
-    final isTesting = Platform.environment.containsKey('FLUTTER_TEST');
-
-    if (AppConfig.enableInAppNotifications && !isTesting) {
-      if (event == 'consultation_request') {
-        final drPemberi = data['nm_dokter_pemberi'] ?? 'Rekan Dokter';
-        final diagnosa = data['diagnosa_kerja'] ?? '';
-        _showModernInAppNotification('Konsultasi Baru', 'Permintaan konsultasi dari $drPemberi: "$diagnosa"');
-      } else if (event == 'consultation_response') {
-        final drPenerima = data['nm_dokter_dikonsuli'] ?? 'Rekan Dokter';
-        _showModernInAppNotification('Konsultasi Dijawab', 'Balasan dari $drPenerima untuk permintaan ${data['no_permintaan']}');
-      } else if (event == 'new_admission') {
-        final nmPasien = data['nm_pasien'] ?? 'Pasien Baru';
-        final noRawat = data['no_rawat'] ?? '';
-        _showModernInAppNotification('Pasien Baru Terdaftar', 'Anda telah didelegasikan sebagai DPJP untuk $nmPasien ($noRawat)');
-      } else if (event == 'emergency_igd_consultation') {
-        final drPemberi = data['nm_dokter_pemberi'] ?? 'Rekan Dokter';
-        final nmPasien = data['nm_pasien'] ?? 'Pasien';
-        _showModernInAppNotification('🚨 URGENT: KONSUL IGD', 'Permintaan konsultasi segera dari $drPemberi untuk pasien $nmPasien', isUrgent: true);
-      } else if (event == 'sbar_request') {
-        final petugas = data['nama_petugas'] ?? 'Perawat';
-        final situation = data['situation'] ?? '';
-        _showModernInAppNotification('Permintaan SBAR Baru', 'Laporan dari $petugas: "$situation"');
-      }
-    }
-
-    if (AppConfig.enableSystemNotifications) {
-      if (event == 'consultation_request') {
-        final drPemberi = data['nm_dokter_pemberi'] ?? 'Rekan Dokter';
-        final diagnosa = data['diagnosa_kerja'] ?? '';
-        LocalNotificationService.showNotification(
-          id: notificationId,
-          title: 'Konsultasi Baru',
-          body: 'Permintaan konsultasi dari $drPemberi: "$diagnosa"',
-        );
-      } else if (event == 'consultation_response') {
-        final drPenerima = data['nm_dokter_dikonsuli'] ?? 'Rekan Dokter';
-        LocalNotificationService.showNotification(
-          id: notificationId,
-          title: 'Konsultasi Dijawab',
-          body: 'Balasan dari $drPenerima untuk permintaan ${data['no_permintaan']}',
-        );
-      } else if (event == 'new_admission') {
-        final nmPasien = data['nm_pasien'] ?? 'Pasien Baru';
-        final noRawat = data['no_rawat'] ?? '';
-        LocalNotificationService.showNotification(
-          id: notificationId,
-          title: 'Pasien Baru Terdaftar',
-          body: 'Anda telah didelegasikan sebagai DPJP untuk $nmPasien ($noRawat)',
-        );
-      } else if (event == 'emergency_igd_consultation') {
-        final drPemberi = data['nm_dokter_pemberi'] ?? 'Rekan Dokter';
-        final nmPasien = data['nm_pasien'] ?? 'Pasien';
-        LocalNotificationService.showNotification(
-          id: notificationId,
-          title: '🚨 URGENT: KONSUL IGD',
-          body: 'Permintaan konsultasi segera dari $drPemberi untuk pasien $nmPasien',
-        );
-      } else if (event == 'sbar_request') {
-        final petugas = data['nama_petugas'] ?? 'Perawat';
-        final situation = data['situation'] ?? '';
-        LocalNotificationService.showNotification(
-          id: notificationId,
-          title: 'Permintaan SBAR Baru',
-          body: 'Laporan dari $petugas: "$situation"',
-        );
-      }
-    }
-
-    try {
-      if (Get.isRegistered<DashboardController>()) {
-        Get.find<DashboardController>().fetchDashboard(isBackground: true);
-      }
-    } catch (_) {}
-
-    try {
-      if (Get.isRegistered<RekamMedisController>()) {
-        final rm = Get.find<RekamMedisController>();
-        rm.fetchConsultations(isBackground: true);
-        if (event == 'sbar_request' || event == 'new_admission') {
-          rm.fetchAllData(isBackground: true);
-        }
-      }
-    } catch (_) {}
+  /// Called after a silent token refresh in api_client.dart
+  void refreshNotificationPolling() {
+    _notificationService.resetCursor();
+    _notificationService.start();
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
     if (state == AppLifecycleState.resumed) {
-      // OS may have killed the persistent SSE connection while in background.
-      // Init will abort any stale connection and create a fresh one.
-      initNotificationSse();
+      // Fetch any notifications that arrived while app was in background
+      _notificationService.fetchBacklog();
     }
   }
 
   @override
   void onClose() {
     WidgetsBinding.instance.removeObserver(this);
-    stopNotificationSse();
+    _notificationService.stop();
     super.onClose();
   }
 }

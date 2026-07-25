@@ -10,8 +10,6 @@ import '../../../core/config/app_config.dart';
 import '../../../core/network/api_client.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../core/utils/local_notification_service.dart';
-import '../../dashboard/controllers/dashboard_controller.dart';
 import '../../../core/utils/google_fonts.dart';
 
 class RekamMedisController extends GetxController {
@@ -117,7 +115,6 @@ class RekamMedisController extends GetxController {
       return;
     }
     fetchAllData();
-    initNotificationSse();
     loadDrafts();
     loadOfflineSoapQueue();
   }
@@ -1261,144 +1258,7 @@ class RekamMedisController extends GetxController {
     } catch (_) {}
   }
 
-  void initNotificationSse() {
-    // Managed globally by AuthController
-  }
-
-  void _handleSseEvent(String event, dynamic data) {
-    final int notificationId = DateTime.now().millisecondsSinceEpoch.remainder(100000);
-
-    final isTesting = Platform.environment.containsKey('FLUTTER_TEST');
-
-    if (event == 'consultation_request') {
-      final drPemberi = data['nm_dokter_pemberi'] ?? 'Rekan Dokter';
-      final diagnosa = data['diagnosa_kerja'] ?? '';
-      if (AppConfig.enableInAppNotifications && !isTesting) {
-        _showModernInAppNotification(
-          'Konsultasi Baru',
-          'Permintaan konsultasi dari $drPemberi: "$diagnosa"',
-        );
-      }
-      if (AppConfig.enableSystemNotifications) {
-        LocalNotificationService.showNotification(
-          id: notificationId,
-          title: 'Konsultasi Baru',
-          body: 'Permintaan konsultasi dari $drPemberi: "$diagnosa"',
-        );
-      }
-      fetchConsultations();
-    } else if (event == 'consultation_response') {
-      final drPenerima = data['nm_dokter_dikonsuli'] ?? 'Rekan Dokter';
-      if (AppConfig.enableInAppNotifications && !isTesting) {
-        _showModernInAppNotification(
-          'Konsultasi Dijawab',
-          'Balasan dari $drPenerima untuk permintaan ${data['no_permintaan']}',
-        );
-      }
-      if (AppConfig.enableSystemNotifications) {
-        LocalNotificationService.showNotification(
-          id: notificationId,
-          title: 'Konsultasi Dijawab',
-          body: 'Balasan dari $drPenerima untuk permintaan ${data['no_permintaan']}',
-        );
-      }
-      fetchConsultations();
-    } else if (event == 'new_admission') {
-      final nmPasien = data['nm_pasien'] ?? 'Pasien Baru';
-      final noRawat = data['no_rawat'] ?? '';
-      if (AppConfig.enableInAppNotifications && !isTesting) {
-        _showModernInAppNotification(
-          'Pasien Baru Terdaftar',
-          'Anda telah didelegasikan sebagai DPJP untuk $nmPasien ($noRawat)',
-        );
-      }
-      if (AppConfig.enableSystemNotifications) {
-        LocalNotificationService.showNotification(
-          id: notificationId,
-          title: 'Pasien Baru Terdaftar',
-          body: 'Anda telah didelegasikan sebagai DPJP untuk $nmPasien ($noRawat)',
-        );
-      }
-      try {
-        if (Get.isRegistered<DashboardController>()) {
-          Get.find<DashboardController>().fetchDashboard();
-        }
-      } catch (_) {}
-    } else if (event == 'emergency_igd_consultation') {
-      final drPemberi = data['nm_dokter_pemberi'] ?? 'Rekan Dokter';
-      final nmPasien = data['nm_pasien'] ?? 'Pasien';
-      if (AppConfig.enableInAppNotifications && !isTesting) {
-        _showModernInAppNotification(
-          '🚨 URGENT: KONSUL IGD',
-          'Permintaan konsultasi segera dari $drPemberi untuk pasien $nmPasien',
-          isUrgent: true,
-        );
-      }
-      if (AppConfig.enableSystemNotifications) {
-        LocalNotificationService.showNotification(
-          id: notificationId,
-          title: '🚨 URGENT: KONSUL IGD',
-          body: 'Permintaan konsultasi segera dari $drPemberi untuk pasien $nmPasien',
-        );
-      }
-      fetchConsultations();
-    }
-  }
-
-  void _showModernInAppNotification(String title, String message, {bool isUrgent = false}) {
-    Get.rawSnackbar(
-      titleText: Text(
-        title,
-        style: GoogleFonts.outfit(
-          fontSize: 13,
-          fontWeight: FontWeight.bold,
-          color: Colors.white,
-        ),
-      ),
-      messageText: Text(
-        message,
-        style: GoogleFonts.outfit(
-          fontSize: 11.5,
-          fontWeight: FontWeight.w500,
-          color: Colors.white.withValues(alpha: 0.9),
-        ),
-      ),
-      backgroundColor: isUrgent
-          ? const Color(0xFFE11D48).withValues(alpha: 0.95) // Rose 600
-          : const Color(0xFF1E293B).withValues(alpha: 0.95), // Slate 800
-      margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      borderRadius: 14,
-      snackPosition: SnackPosition.TOP,
-      duration: Duration(seconds: isUrgent ? 6 : 4),
-      shouldIconPulse: false,
-      icon: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.1),
-          shape: BoxShape.circle,
-        ),
-        child: Icon(
-          isUrgent ? Icons.warning_amber_rounded : Icons.notifications_active_rounded,
-          color: isUrgent ? Colors.white : const Color(0xFF2DD4BF), // Mint 400
-          size: 18,
-        ),
-      ),
-      boxShadows: [
-        BoxShadow(
-          color: Colors.black.withValues(alpha: 0.12),
-          blurRadius: 16,
-          offset: const Offset(0, 8),
-        )
-      ],
-      dismissDirection: DismissDirection.horizontal,
-    );
-  }
-
-  @visibleForTesting
-  void handleSseEventForTesting(String event, dynamic data) {
-    _handleSseEvent(event, data);
-  }
+  // Notification handling moved to NotificationPollingService
 
   @override
   void onClose() {

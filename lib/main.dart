@@ -11,6 +11,7 @@ import 'features/rekam_medis/views/rekam_medis_view.dart';
 import 'core/utils/google_fonts.dart';
 import 'core/utils/local_notification_service.dart';
 import 'core/utils/notification_action_controller.dart';
+import 'core/services/notification_polling_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -21,6 +22,10 @@ Future<void> main() async {
   await LocalNotificationService.requestPermissions();
   await NotificationActionController.initializeIsolateReceivePort();
   NotificationActionController.startListening();
+
+  // Initialize notification polling service (device ID)
+  final notifService = Get.put(NotificationPollingService());
+  await notifService.init();
 
   runApp(const SimrsDokterApp());
 }

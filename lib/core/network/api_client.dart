@@ -56,10 +56,10 @@ class ApiClient {
                 _cachedToken = token;
                 await _storage.write(key: 'auth_token', value: token);
 
-                // Restart SSE stream with fresh token
+                // Reset notification polling cursor with fresh token
                 try {
                   if (getx.Get.isRegistered<AuthController>()) {
-                    getx.Get.find<AuthController>().initNotificationSse();
+                    getx.Get.find<AuthController>().refreshNotificationPolling();
                   }
                 } catch (_) {
                   // AuthController may not be registered yet
