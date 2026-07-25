@@ -12,8 +12,34 @@ import '../utils/google_fonts.dart';
 import '../../features/dashboard/controllers/dashboard_controller.dart';
 import '../../features/rekam_medis/controllers/rekam_medis_controller.dart';
 
-/// Polls the backend notification_queue table at a regular interval.
-/// Replaces the SSE-based push that never worked reliably.
+class NotifRoute {
+  final String route;
+  final int? tabIndex;
+  const NotifRoute(this.route, {this.tabIndex});
+}
+
+const notificationRoutes = <String, NotifRoute>{
+  'consultation_request': NotifRoute('/rekam-medis', tabIndex: 5),
+  'consultation_response': NotifRoute('/rekam-medis', tabIndex: 5),
+  'emergency_igd_consultation': NotifRoute('/rekam-medis', tabIndex: 5),
+  'sbar_request': NotifRoute('/rekam-medis', tabIndex: 5),
+  'lab_request': NotifRoute('/rekam-medis', tabIndex: 3),
+  'labpa_request': NotifRoute('/rekam-medis', tabIndex: 3),
+  'labmb_request': NotifRoute('/rekam-medis', tabIndex: 3),
+  'radiology_request': NotifRoute('/rekam-medis', tabIndex: 4),
+  'discharge_prescription': NotifRoute('/rekam-medis', tabIndex: 2),
+  'prescription_dispensed': NotifRoute('/rekam-medis', tabIndex: 2),
+  'medication_stock_request': NotifRoute('/rekam-medis', tabIndex: 2),
+  'medication_dispensed': NotifRoute('/rekam-medis', tabIndex: 2),
+  'medication_request': NotifRoute('/rekam-medis', tabIndex: 2),
+  'new_admission': NotifRoute('/patient-list'),
+  'bed_request': NotifRoute('/patient-list'),
+  'surgery_booking': NotifRoute('/patient-list'),
+  'billing_threshold_80': NotifRoute('/rekam-medis'),
+  'billing_threshold_100': NotifRoute('/rekam-medis'),
+  'billing_threshold_120': NotifRoute('/rekam-medis'),
+};
+
 class NotificationPollingService extends GetxService {
   static const String _deviceIdKey = 'notification_device_id';
   static const Duration _pollInterval = Duration(seconds: 5);
@@ -24,35 +50,27 @@ class NotificationPollingService extends GetxService {
   bool _initialized = false;
   final _api = ApiClient();
 
-  // ── Lifecycle ──────────────────────────────────────────────────────
-
-  /// Initialize device ID (call once on app startup).
   Future<void> init() async {
     _deviceId = await _getOrCreateDeviceId();
     _initialized = true;
   }
 
-  /// Start polling. Call after login or when token is refreshed.
   void start() {
     if (!_initialized) return;
     _timer?.cancel();
     _timer = Timer.periodic(_pollInterval, (_) => _poll());
-    // Immediate first poll
     _poll();
   }
 
-  /// Stop polling. Call on logout.
   void stop() {
     _timer?.cancel();
     _timer = null;
   }
 
-  /// One-time backlog fetch. Call on AppLifecycleState.resumed.
   Future<void> fetchBacklog() async {
     await _poll();
   }
 
-  /// Reset cursor to 0 and re-fetch everything (used after token refresh).
   void resetCursor() {
     _lastReadId = 0;
   }
@@ -62,8 +80,6 @@ class NotificationPollingService extends GetxService {
     stop();
     super.onClose();
   }
-
-  // ── Device ID ──────────────────────────────────────────────────────
 
   Future<String> _getOrCreateDeviceId() async {
     final prefs = await SharedPreferences.getInstance();
@@ -86,13 +102,10 @@ class NotificationPollingService extends GetxService {
       rawId = 'fallback_${DateTime.now().millisecondsSinceEpoch}';
     }
 
-    // Truncate if absurdly long (shouldn't happen, but safety)
     final deviceId = rawId.length > 100 ? rawId.substring(0, 100) : rawId;
     await prefs.setString(_deviceIdKey, deviceId);
     return deviceId;
   }
-
-  // ── Polling ────────────────────────────────────────────────────────
 
   Future<void> _poll() async {
     if (_deviceId.isEmpty) return;
@@ -121,13 +134,10 @@ class NotificationPollingService extends GetxService {
           final payloadRaw = item['payload'];
           if (payloadRaw is Map) {
             payload = Map<String, dynamic>.from(payloadRaw);
-          } else if (payloadRaw is String && (payloadRaw as String).isNotEmpty) {
+          } else if (payloadRaw is String && (payloadRaw).isNotEmpty) {
             payload = Map<String, dynamic>.from(
-              // ignore: avoid_dynamic_calls
-              (jsonDecode(payloadRaw as String) as Map?) ?? {},
+              (jsonDecode(payloadRaw) as Map?) ?? {},
             );
-          } else {
-            payload = {};
           }
         } catch (_) {
           payload = {};
@@ -142,18 +152,13 @@ class NotificationPollingService extends GetxService {
         );
       }
 
-      // Track the highest ID for ack
-      // Only advance _lastReadId if the ack succeeds, so a failed ack
-      // does not permanently skip notifications on the next poll.
       if (lastId > _lastReadId) {
         final acked = await _sendAck(lastId);
         if (acked) {
           _lastReadId = lastId;
         }
       }
-    } catch (_) {
-      // Silent fail — polling retries on next timer tick
-    }
+    } catch (_) {}
   }
 
   Future<bool> _sendAck(int lastId) async {
@@ -164,11 +169,9 @@ class NotificationPollingService extends GetxService {
       });
       return res.data?['success'] == true;
     } catch (_) {
-      return false; // Next poll will retry
+      return false;
     }
   }
-
-  // ── Dispatch ───────────────────────────────────────────────────────
 
   void _dispatchNotification({
     required String eventType,
@@ -181,34 +184,42 @@ class NotificationPollingService extends GetxService {
     final isUrgent = eventType == 'emergency_igd_consultation';
     final notifId = notificationId % 100000;
 
-    // ── In-app snackbar ──
     if (AppConfig.enableInAppNotifications && !isTesting) {
       _showInAppNotification(
+        eventType: eventType,
         title: title,
         body: body,
+        payload: payload,
         isUrgent: isUrgent,
       );
     }
 
-    // ── System notification via awesome_notifications ──
     if (AppConfig.enableSystemNotifications && !isTesting) {
+      // Include enough payload for the system notification handler
+      final String sysPayload = jsonEncode({
+        'event_type': eventType,
+        'no_rawat': payload['no_rawat'] ?? '',
+      });
       LocalNotificationService.showNotification(
         id: notifId,
         title: title,
         body: body,
-        payload: payload.toString(),
+        payload: sysPayload,
       );
     }
 
-    // ── Background data refresh ──
     _refreshDashboards(eventType);
   }
 
   void _showInAppNotification({
+    required String eventType,
     required String title,
     required String body,
+    required Map<String, dynamic> payload,
     bool isUrgent = false,
   }) {
+    final route = notificationRoutes[eventType];
+
     Get.rawSnackbar(
       titleText: Text(
         title,
@@ -235,6 +246,9 @@ class NotificationPollingService extends GetxService {
       snackPosition: SnackPosition.TOP,
       duration: Duration(seconds: isUrgent ? 6 : 4),
       shouldIconPulse: false,
+      onTap: route != null
+          ? (_) => _navigateFromNotification(eventType, payload, route)
+          : null,
       icon: Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
@@ -258,6 +272,36 @@ class NotificationPollingService extends GetxService {
     );
   }
 
+  Future<void> _navigateFromNotification(
+    String eventType,
+    Map<String, dynamic> payload,
+    NotifRoute route,
+  ) async {
+    final noRawat = payload['no_rawat'] as String? ?? '';
+
+    // Mark notification as read immediately
+    await _sendAck(_lastReadId);
+
+    if (route.route == '/rekam-medis') {
+      // If already viewing the same patient, just switch tab
+      if (Get.isRegistered<RekamMedisController>() &&
+          Get.find<RekamMedisController>().noRawat == noRawat) {
+        if (route.tabIndex != null) {
+          Get.find<RekamMedisController>().activeTab.value = route.tabIndex!;
+        }
+        return;
+      }
+      Get.toNamed('/rekam-medis', arguments: <String, dynamic>{
+        'no_rawat': noRawat,
+        'nm_pasien': payload['nm_pasien'] ?? 'Pasien',
+        '_type': payload['_type'] ?? 'RANAP',
+        '_targetTab': route.tabIndex,
+      });
+    } else if (route.route == '/patient-list') {
+      Get.toNamed('/patient-list');
+    }
+  }
+
   void _refreshDashboards(String eventType) {
     try {
       if (Get.isRegistered<DashboardController>()) {
@@ -269,37 +313,28 @@ class NotificationPollingService extends GetxService {
       if (Get.isRegistered<RekamMedisController>()) {
         final rm = Get.find<RekamMedisController>();
 
-        // Category A: Consultation/SBAR — refresh consultation tab + full data
         if (eventType == 'consultation_request' ||
             eventType == 'consultation_response' ||
             eventType == 'emergency_igd_consultation' ||
             eventType == 'sbar_request') {
           rm.fetchConsultations(isBackground: true);
           rm.fetchAllData(isBackground: true);
-        }
-        // Category B: Lab / Radiology — refresh lab & radio tabs
-        else if (eventType == 'lab_request' ||
+        } else if (eventType == 'lab_request' ||
             eventType == 'labpa_request' ||
             eventType == 'labmb_request' ||
             eventType == 'radiology_request') {
           rm.fetchAllData(isBackground: true);
-        }
-        // Category C: Medication — refresh obat tab
-        else if (eventType == 'discharge_prescription' ||
+        } else if (eventType == 'discharge_prescription' ||
             eventType == 'prescription_dispensed' ||
             eventType == 'medication_stock_request' ||
             eventType == 'medication_dispensed' ||
             eventType == 'medication_request') {
           rm.fetchAllData(isBackground: true);
-        }
-        // Category D: Patient admission / bed / surgery — refresh all
-        else if (eventType == 'new_admission' ||
+        } else if (eventType == 'new_admission' ||
             eventType == 'bed_request' ||
             eventType == 'surgery_booking') {
           rm.fetchAllData(isBackground: true);
-        }
-        // Category E: Billing threshold — refresh billing section only
-        else if (eventType.startsWith('billing_threshold')) {
+        } else if (eventType.startsWith('billing_threshold')) {
           rm.fetchBillingOnly();
         }
       }

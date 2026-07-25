@@ -117,6 +117,12 @@ class RekamMedisController extends GetxController {
     fetchAllData();
     loadDrafts();
     loadOfflineSoapQueue();
+
+    // Navigate to target tab if specified by notification routing
+    final targetTab = pasienData.value?['_targetTab'] as int?;
+    if (targetTab != null && targetTab >= 0) {
+      activeTab.value = targetTab;
+    }
   }
 
   void loadPasien(Map<String, dynamic> data) {
