@@ -116,7 +116,7 @@ class NotificationPollingService extends GetxService {
         final eventType = item['event_type'] as String? ?? '';
         final title = item['title'] as String? ?? '';
         final body = item['body'] as String? ?? '';
-        final Map<String, dynamic> payload;
+        Map<String, dynamic> payload = {};
         try {
           final payloadRaw = item['payload'];
           if (payloadRaw is Map) {
