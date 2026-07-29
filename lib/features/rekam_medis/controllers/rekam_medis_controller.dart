@@ -451,6 +451,12 @@ class RekamMedisController extends GetxController {
   //   }
   // }
 
+  /// Quick refresh of billing info only (for billing threshold alerts)
+  Future<void> fetchBillingOnly() async {
+    if (noRawat.isEmpty) return;
+    await _fetchBillingInfo();
+  }
+
   Future<void> _fetchBillingInfo() async {
     try {
       isLoadingBilling.value = true;

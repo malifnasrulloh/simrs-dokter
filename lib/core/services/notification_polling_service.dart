@@ -268,9 +268,39 @@ class NotificationPollingService extends GetxService {
     try {
       if (Get.isRegistered<RekamMedisController>()) {
         final rm = Get.find<RekamMedisController>();
-        rm.fetchConsultations(isBackground: true);
-        if (eventType == 'sbar_request' || eventType == 'new_admission') {
+
+        // Category A: Consultation/SBAR — refresh consultation tab + full data
+        if (eventType == 'consultation_request' ||
+            eventType == 'consultation_response' ||
+            eventType == 'emergency_igd_consultation' ||
+            eventType == 'sbar_request') {
+          rm.fetchConsultations(isBackground: true);
           rm.fetchAllData(isBackground: true);
+        }
+        // Category B: Lab / Radiology — refresh lab & radio tabs
+        else if (eventType == 'lab_request' ||
+            eventType == 'labpa_request' ||
+            eventType == 'labmb_request' ||
+            eventType == 'radiology_request') {
+          rm.fetchAllData(isBackground: true);
+        }
+        // Category C: Medication — refresh obat tab
+        else if (eventType == 'discharge_prescription' ||
+            eventType == 'prescription_dispensed' ||
+            eventType == 'medication_stock_request' ||
+            eventType == 'medication_dispensed' ||
+            eventType == 'medication_request') {
+          rm.fetchAllData(isBackground: true);
+        }
+        // Category D: Patient admission / bed / surgery — refresh all
+        else if (eventType == 'new_admission' ||
+            eventType == 'bed_request' ||
+            eventType == 'surgery_booking') {
+          rm.fetchAllData(isBackground: true);
+        }
+        // Category E: Billing threshold — refresh billing section only
+        else if (eventType.startsWith('billing_threshold')) {
+          rm.fetchBillingOnly();
         }
       }
     } catch (_) {}
