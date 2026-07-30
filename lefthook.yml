@@ -1,0 +1,14 @@
+# lefthook.yml — pre-commit hooks for E-Dokter Flutter app
+# Install: npm install -g lefthook && lefthook install
+
+pre-commit:
+  parallel: true
+  commands:
+    analyze:
+      glob: "*.dart"
+      run: flutter analyze --no-fatal-infos --no-fatal-warnings
+    format:
+      glob: "*.dart"
+      run: dart format --set-exit-if-changed {staged_files}
+    test:
+      run: flutter test
