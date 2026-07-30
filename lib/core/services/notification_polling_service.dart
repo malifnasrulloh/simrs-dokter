@@ -56,7 +56,14 @@ class NotificationPollingService extends GetxService {
   }
 
   void start() {
-    if (!_initialized) return;
+    if (!_initialized) {
+      init().then((_) => _startPolling());
+    } else {
+      _startPolling();
+    }
+  }
+
+  void _startPolling() {
     _timer?.cancel();
     _timer = Timer.periodic(_pollInterval, (_) => _poll());
     _poll();
