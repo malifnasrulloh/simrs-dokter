@@ -1,5 +1,6 @@
 import 'package:get/get.dart';
 import '../../../core/network/api_client.dart';
+import '../../../core/utils/app_logger.dart';
 
 class HarianDokterConfigController extends GetxController {
   final _api = ApiClient();
@@ -23,7 +24,7 @@ class HarianDokterConfigController extends GetxController {
         doctorsList.value = list;
         filteredDoctors.value = list;
       }
-    } catch (_) {} finally {
+    } catch (e, s) { AppLogger.error('HarianConfig', e, s); } finally {
       isLoading.value = false;
     }
   }

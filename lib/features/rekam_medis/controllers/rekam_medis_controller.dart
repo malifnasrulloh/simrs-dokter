@@ -8,12 +8,17 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import '../../../core/config/app_config.dart';
 import '../../../core/network/api_client.dart';
+import '../../../core/network/api_parsers.dart';
+import '../../../core/utils/app_logger.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/google_fonts.dart';
 
 class RekamMedisController extends GetxController {
   final _api = ApiClient();
+
+  /// Server-driven write policy; falls back to build-time config offline.
+  bool get writeEnabled => Get.find<AuthController>().writeEnabled;
   StreamSubscription? _connectivitySubscription;
   late final PageController pageController;
   late final Worker _tabWorker;
@@ -195,7 +200,7 @@ class RekamMedisController extends GetxController {
       if (res.statusCode == 200 && res.data != null && res.data['success'] == true && res.data['data'] is List) {
         return res.data['data'] as List;
       }
-    } catch (_) {}
+    } catch (e, s) { AppLogger.error('RekamMedis', e, s); }
     return [];
   }
 
@@ -224,7 +229,7 @@ class RekamMedisController extends GetxController {
         }
         return parsedDate;
       }
-    } catch (_) {}
+    } catch (e, s) { AppLogger.error('RekamMedis', e, s); }
     return DateTime(1970);
   }
 
@@ -333,7 +338,7 @@ class RekamMedisController extends GetxController {
       if (res.data['success'] == true) {
         diagnosa.value = List<Map<String, dynamic>>.from(res.data['data'] ?? []);
       }
-    } catch (_) {}
+    } catch (e, s) { AppLogger.error('RekamMedis', e, s); }
   }
 
   Future<void> _fetchObat() async {
@@ -355,7 +360,7 @@ class RekamMedisController extends GetxController {
                 })
             .toList();
       }
-    } catch (_) {}
+    } catch (e, s) { AppLogger.error('RekamMedis', e, s); }
   }
 
   Future<void> _fetchLaboratorium() async {
@@ -408,7 +413,7 @@ class RekamMedisController extends GetxController {
         }
         laboratorium.value = groupedLab;
       }
-    } catch (_) {} finally {
+    } catch (e, s) { AppLogger.error('RekamMedis', e, s); } finally {
       isLoadingLab.value = false;
     }
   }
@@ -435,7 +440,7 @@ class RekamMedisController extends GetxController {
           };
         }).toList();
       }
-    } catch (_) {} finally {
+    } catch (e, s) { AppLogger.error('RekamMedis', e, s); } finally {
       isLoadingRad.value = false;
     }
   }
@@ -649,14 +654,14 @@ class RekamMedisController extends GetxController {
           }
         }
       }
-    } catch (_) {}
+    } catch (e, s) { AppLogger.error('RekamMedis', e, s); }
   }
 
   Future<void> _saveOfflineQueueToPrefs() async {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('offline_soap_queue_$noRawat', jsonEncode(offlineSoapQueue));
-    } catch (_) {}
+    } catch (e, s) { AppLogger.error('RekamMedis', e, s); }
   }
 
   Future<void> syncOfflineSoap() async {
@@ -688,7 +693,7 @@ class RekamMedisController extends GetxController {
           offlineSoapQueue.removeWhere((x) => x['tanggal'] == item['tanggal'] && x['jam'] == item['jam']);
           anySuccess = true;
         }
-      } catch (_) {}
+      } catch (e, s) { AppLogger.error('RekamMedis', e, s); }
     }
 
     if (anySuccess) {
@@ -868,7 +873,7 @@ class RekamMedisController extends GetxController {
             .where((e) => e['no_rawat'] == noRawat)
             .toList();
       }
-    } catch (_) {} finally {
+    } catch (e, s) { AppLogger.error('RekamMedis', e, s); } finally {
       if (!isBackground) {
         isLoadingConsult.value = false;
       }
@@ -881,7 +886,7 @@ class RekamMedisController extends GetxController {
       if (res.statusCode == 200 && res.data != null && res.data['success'] == true) {
         dokterList.value = List<Map<String, dynamic>>.from(res.data['data'] ?? []);
       }
-    } catch (_) {}
+    } catch (e, s) { AppLogger.error('RekamMedis', e, s); }
   }
 
   Future<bool> sendConsultation({
@@ -905,7 +910,10 @@ class RekamMedisController extends GetxController {
         if (!isClosed) await fetchConsultations();
         return true;
       }
-    } catch (_) {
+      if (res.data != null && res.data['message'] != null) {
+        if (!isClosed) Get.snackbar('Error', res.data['message'].toString());
+      }
+    } catch (e) {
       if (!isClosed) Get.snackbar('Error', 'Gagal mengirim konsultasi');
     } finally {
       _isSubmitting = false;
@@ -953,7 +961,7 @@ class RekamMedisController extends GetxController {
       if (res.statusCode == 200 && res.data != null && res.data['success'] == true) {
         resepList.value = List<Map<String, dynamic>>.from(res.data['data'] ?? []);
       }
-    } catch (_) {}
+    } catch (e, s) { AppLogger.error('RekamMedis', e, s); }
   }
 
   Future<void> searchObat(String keyword) async {
@@ -968,7 +976,7 @@ class RekamMedisController extends GetxController {
         final list = res.data['data']['list'] as List? ?? [];
         searchObatResults.value = List<Map<String, dynamic>>.from(list);
       }
-    } catch (_) {} finally {
+    } catch (e, s) { AppLogger.error('RekamMedis', e, s); } finally {
       isLoadingObat.value = false;
     }
   }
@@ -1072,39 +1080,67 @@ class RekamMedisController extends GetxController {
   final searchICD10Results = <Map<String, dynamic>>[].obs;
   final searchICD9Results = <Map<String, dynamic>>[].obs;
   final isLoadingICD = false.obs;
+  Timer? _icdDebounce;
+
+  static const int _icdPageSize = 50;
 
   Future<void> searchICD10(String keyword) async {
-    if (keyword.trim().isEmpty) {
+    _icdDebounce?.cancel();
+    final query = keyword.trim();
+    if (query.isEmpty) {
       searchICD10Results.clear();
       return;
     }
-    try {
-      isLoadingICD.value = true;
-      final res = await _api.dio.get('/diagnosa-prosedur/penyakit', queryParameters: {'keyword': keyword});
-      if (res.statusCode == 200 && res.data != null && res.data['success'] == true) {
-        final list = res.data['data'] as List? ?? [];
-        searchICD10Results.value = List<Map<String, dynamic>>.from(list);
+    _icdDebounce = Timer(const Duration(milliseconds: 350), () async {
+      try {
+        isLoadingICD.value = true;
+        final res = await _api.dio.get(
+          '/diagnosa-prosedur/penyakit',
+          queryParameters: {'keyword': query, 'limit': '$_icdPageSize'},
+        );
+        if (res.statusCode == 200 && res.data != null && res.data['success'] == true) {
+          // Backend returns `{list, pagination}` under `data`; the old
+          // `raw['data'] as List?` cast threw and silently swallowed the
+          // TypeError — results never rendered. api_parsers handles both.
+          searchICD10Results.value = parseListPayload(res.data['data']);
+        }
+      } catch (e, s) {
+        AppLogger.error('ICD10', e, s);
+        if (!isClosed) {
+          Get.snackbar('Error', 'Gagal mencari diagnosa (ICD-10)');
+        }
+      } finally {
+        if (!isClosed) isLoadingICD.value = false;
       }
-    } catch (_) {} finally {
-      isLoadingICD.value = false;
-    }
+    });
   }
 
   Future<void> searchICD9(String keyword) async {
-    if (keyword.trim().isEmpty) {
+    _icdDebounce?.cancel();
+    final query = keyword.trim();
+    if (query.isEmpty) {
       searchICD9Results.clear();
       return;
     }
-    try {
-      isLoadingICD.value = true;
-      final res = await _api.dio.get('/diagnosa-prosedur/icd9', queryParameters: {'keyword': keyword});
-      if (res.statusCode == 200 && res.data != null && res.data['success'] == true) {
-        final list = res.data['data'] as List? ?? [];
-        searchICD9Results.value = List<Map<String, dynamic>>.from(list);
+    _icdDebounce = Timer(const Duration(milliseconds: 350), () async {
+      try {
+        isLoadingICD.value = true;
+        final res = await _api.dio.get(
+          '/diagnosa-prosedur/icd9',
+          queryParameters: {'keyword': query, 'limit': '$_icdPageSize'},
+        );
+        if (res.statusCode == 200 && res.data != null && res.data['success'] == true) {
+          searchICD9Results.value = parseListPayload(res.data['data']);
+        }
+      } catch (e, s) {
+        AppLogger.error('ICD9', e, s);
+        if (!isClosed) {
+          Get.snackbar('Error', 'Gagal mencari prosedur (ICD-9)');
+        }
+      } finally {
+        if (!isClosed) isLoadingICD.value = false;
       }
-    } catch (_) {} finally {
-      isLoadingICD.value = false;
-    }
+    });
   }
 
   Future<void> fetchProsedur() async {
@@ -1113,7 +1149,7 @@ class RekamMedisController extends GetxController {
       if (res.statusCode == 200 && res.data != null && res.data['success'] == true) {
         prosedurList.value = List<Map<String, dynamic>>.from(res.data['data'] ?? []);
       }
-    } catch (_) {}
+    } catch (e, s) { AppLogger.error('RekamMedis', e, s); }
   }
 
   Future<bool> addDiagnosa({
@@ -1232,7 +1268,7 @@ class RekamMedisController extends GetxController {
       } else {
         prescriptionDraft.clear();
       }
-    } catch (_) {}
+    } catch (e, s) { AppLogger.error('RekamMedis', e, s); }
   }
 
   Future<void> saveSoapDraft(Map<String, String> values) async {
@@ -1241,7 +1277,7 @@ class RekamMedisController extends GetxController {
       final prefs = await SharedPreferences.getInstance();
       soapDraft.value = values;
       await prefs.setString('soap_draft_$noRawat', jsonEncode(values));
-    } catch (_) {}
+    } catch (e, s) { AppLogger.error('RekamMedis', e, s); }
   }
 
   Future<void> clearSoapDraft() async {
@@ -1250,7 +1286,7 @@ class RekamMedisController extends GetxController {
       final prefs = await SharedPreferences.getInstance();
       soapDraft.value = {};
       await prefs.remove('soap_draft_$noRawat');
-    } catch (_) {}
+    } catch (e, s) { AppLogger.error('RekamMedis', e, s); }
   }
 
   Future<void> savePrescriptionDraft() async {
@@ -1258,7 +1294,7 @@ class RekamMedisController extends GetxController {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('resep_draft_$noRawat', jsonEncode(prescriptionDraft.toList()));
-    } catch (_) {}
+    } catch (e, s) { AppLogger.error('RekamMedis', e, s); }
   }
 
   Future<void> clearPrescriptionDraft() async {
@@ -1267,7 +1303,7 @@ class RekamMedisController extends GetxController {
       final prefs = await SharedPreferences.getInstance();
       prescriptionDraft.clear();
       await prefs.remove('resep_draft_$noRawat');
-    } catch (_) {}
+    } catch (e, s) { AppLogger.error('RekamMedis', e, s); }
   }
 
   // Notification handling moved to NotificationPollingService
@@ -1303,7 +1339,7 @@ class RekamMedisController extends GetxController {
             dt = DateTime.parse('${parts[2]}-${parts[1]}-${parts[0]} ${parsedJam.split(' ')[0]}');
           }
         }
-      } catch (_) {}
+      } catch (e, s) { AppLogger.error('RekamMedis', e, s); }
       if (dt == null) continue;
 
       double? systole;

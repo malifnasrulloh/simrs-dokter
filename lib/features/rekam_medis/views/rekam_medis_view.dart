@@ -12,7 +12,6 @@ import 'package:shimmer/shimmer.dart';
 import '../../../core/theme/app_theme.dart';
 import '../controllers/rekam_medis_controller.dart';
 import '../../auth/controllers/auth_controller.dart';
-import '../../../core/config/app_config.dart';
 
 class RekamMedisView extends StatelessWidget {
   const RekamMedisView({super.key});
@@ -633,7 +632,7 @@ class RekamMedisView extends StatelessWidget {
                           );
                         },
                       ),
-                if (AppConfig.enableWriteAccess)
+                if (ctrl.writeEnabled)
                   Positioned(
                     bottom: 16,
                     right: 16,
@@ -682,7 +681,7 @@ class RekamMedisView extends StatelessWidget {
                 color: AppTheme.primary,
               ),
             ),
-            if (AppConfig.enableWriteAccess) ...[
+            if (ctrl.writeEnabled) ...[
               const SizedBox(height: 10),
               TextField(
                 controller: icd10SearchCtrl,
@@ -763,7 +762,7 @@ class RekamMedisView extends StatelessWidget {
                     iconColor: AppTheme.info,
                     title: name,
                     subtitle: 'Kode: $code • Prioritas: $priority • Status: $status',
-                    trailing: AppConfig.enableWriteAccess
+                    trailing: ctrl.writeEnabled
                         ? IconButton(
                             icon: const Icon(Icons.delete_outline_rounded, color: AppTheme.danger, size: 18),
                             onPressed: () => ctrl.deleteDiagnosa(code),
@@ -787,7 +786,7 @@ class RekamMedisView extends StatelessWidget {
                 color: AppTheme.primary,
               ),
             ),
-            if (AppConfig.enableWriteAccess) ...[
+            if (ctrl.writeEnabled) ...[
               const SizedBox(height: 10),
               TextField(
                 controller: icd9SearchCtrl,
@@ -867,7 +866,7 @@ class RekamMedisView extends StatelessWidget {
                     iconColor: AppTheme.accentAlt,
                     title: name,
                     subtitle: 'Kode: $code • Prioritas: $priority',
-                    trailing: AppConfig.enableWriteAccess
+                    trailing: ctrl.writeEnabled
                         ? IconButton(
                             icon: const Icon(Icons.delete_outline_rounded, color: AppTheme.danger, size: 18),
                             onPressed: () => ctrl.deleteProsedur(code),
@@ -1045,7 +1044,7 @@ class RekamMedisView extends StatelessWidget {
                               ),
                             ],
                           ),
-                          if (AppConfig.enableWriteAccess && isPending && noResep != null)
+                          if (ctrl.writeEnabled && isPending && noResep != null)
                             IconButton(
                               icon: const Icon(Icons.delete_outline_rounded, color: AppTheme.danger, size: 18),
                               onPressed: () => _confirmDeleteResep(context, ctrl, noResep),
@@ -1121,7 +1120,7 @@ class RekamMedisView extends StatelessWidget {
             },
           );
         }),
-        if (AppConfig.enableWriteAccess)
+        if (ctrl.writeEnabled)
           Positioned(
             bottom: 16,
             right: 16,
@@ -3349,7 +3348,7 @@ Widget _buildKonsultasiTab(BuildContext context, RekamMedisController ctrl) {
                           ),
                           _buildAttachmentsSection(item['jawaban']),
                         ],
-                        if (!isOutgoing && !isAnswered && AppConfig.enableWriteAccess) ...[
+                        if (!isOutgoing && !isAnswered && ctrl.writeEnabled) ...[
                           const SizedBox(height: 12),
                           SizedBox(
                             width: double.infinity,
@@ -3371,7 +3370,7 @@ Widget _buildKonsultasiTab(BuildContext context, RekamMedisController ctrl) {
         ],
       ),
       Obx(() {
-        if (activeSubTab.value == 0 && AppConfig.enableWriteAccess) {
+        if (activeSubTab.value == 0 && ctrl.writeEnabled) {
           return Positioned(
             bottom: 16,
             right: 16,
@@ -3402,6 +3401,11 @@ void _showConsultationDialog(BuildContext context, RekamMedisController ctrl) {
   final attachmentCtrl = TextEditingController();
   final dokterSearchCtrl = TextEditingController();
   final filteredDokterList = <Map<String, dynamic>>[].obs;
+  // Konsultasi types must match the konsultasi_medik.jenis_permintaan
+  // ENUM — RANAP/RALAN/IGD (rawat type) is NOT a valid value there and
+  // caused MySQL error 1265 on insert.
+  final jenisPermintaan = RxnString('Konsultasi');
+  const jenisOptions = ['Konsultasi', 'Evaluasi', 'Rawat Bersama', 'Alih Rawat', 'Pre/Post Operasi'];
 
   filteredDokterList.value = ctrl.dokterList;
 
@@ -3462,6 +3466,20 @@ void _showConsultationDialog(BuildContext context, RekamMedisController ctrl) {
                 }),
               ),
               const SizedBox(height: 16),
+              Text('Jenis Konsultasi', style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.textSecondary)),
+              const SizedBox(height: 6),
+              Obx(
+                () => DropdownButtonFormField<String>(
+                  initialValue: jenisPermintaan.value,
+                  isDense: true,
+                  decoration: const InputDecoration(isDense: true, contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 10)),
+                  items: jenisOptions
+                      .map((j) => DropdownMenuItem(value: j, child: Text(j, style: GoogleFonts.outfit(fontSize: 12))))
+                      .toList(),
+                  onChanged: (v) => jenisPermintaan.value = v,
+                ),
+              ),
+              const SizedBox(height: 16),
               Text('Diagnosa Kerja', style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.textSecondary)),
               const SizedBox(height: 6),
               TextField(
@@ -3501,6 +3519,9 @@ void _showConsultationDialog(BuildContext context, RekamMedisController ctrl) {
             }
             Get.back();
 
+            // Attachment URL travels inside the text as a marker (the
+            // backend keeps it within the varchar(800) limit and renders
+            // it back as `[Attachment: ...]`).
             String finalUraian = rujukanCtrl.text;
             if (attachmentCtrl.text.trim().isNotEmpty) {
               finalUraian += '\n[Attachment: ${attachmentCtrl.text.trim()}]';
@@ -3508,7 +3529,7 @@ void _showConsultationDialog(BuildContext context, RekamMedisController ctrl) {
 
             final success = await ctrl.sendConsultation(
               targetDokter: selectedDokter.value!['kd_dokter'],
-              jenis: ctrl.tipeRawat.isEmpty ? 'RALAN' : ctrl.tipeRawat,
+              jenis: jenisPermintaan.value ?? 'Konsultasi',
               diagnosa: diagnosaCtrl.text,
               uraian: finalUraian,
             );
@@ -3714,7 +3735,7 @@ class _SoapTileState extends State<_SoapTile> {
               return Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  if (isOwnRecord && AppConfig.enableWriteAccess) ...[
+                  if (isOwnRecord && _ctrl.writeEnabled) ...[
                     IconButton(
                       icon: const Icon(Icons.edit_rounded, color: AppTheme.primary, size: 18),
                       onPressed: () => _showSoapForm(context, _ctrl, existingData: data),

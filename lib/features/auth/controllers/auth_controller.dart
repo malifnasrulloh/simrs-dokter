@@ -3,13 +3,18 @@ import 'package:get/get.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import '../../../core/config/app_config.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/services/notification_polling_service.dart';
+import '../../../core/utils/app_logger.dart';
 
 class AuthController extends GetxController with WidgetsBindingObserver {
   final _storage = const FlutterSecureStorage();
   final _api = ApiClient();
-  NotificationPollingService get _notificationService => Get.find<NotificationPollingService>();
+  NotificationPollingService? get _notificationService =>
+      Get.isRegistered<NotificationPollingService>()
+          ? Get.find<NotificationPollingService>()
+          : null;
 
   final isLoading = false.obs;
   final errorMsg = ''.obs;
@@ -49,7 +54,7 @@ class AuthController extends GetxController with WidgetsBindingObserver {
         if (cached != null) {
           setting.value = Map<String, dynamic>.from(jsonDecode(cached));
         }
-      } catch (_) {}
+      } catch (e, s) { AppLogger.error('Auth', e, s); }
     }
   }
 
@@ -76,7 +81,7 @@ class AuthController extends GetxController with WidgetsBindingObserver {
         if (cached != null) {
           profileData.value = Map<String, dynamic>.from(jsonDecode(cached));
         }
-      } catch (_) {}
+      } catch (e, s) { AppLogger.error('Auth', e, s); }
     }
   }
 
@@ -89,13 +94,13 @@ class AuthController extends GetxController with WidgetsBindingObserver {
     if (cachedSetting != null) {
       try {
         setting.value = Map<String, dynamic>.from(jsonDecode(cachedSetting));
-      } catch (_) {}
+      } catch (e, s) { AppLogger.error('Auth', e, s); }
     }
 
     if (cachedProfile != null) {
       try {
         profileData.value = Map<String, dynamic>.from(jsonDecode(cachedProfile));
-      } catch (_) {}
+      } catch (e, s) { AppLogger.error('Auth', e, s); }
     }
 
     fetchSetting();
@@ -103,10 +108,35 @@ class AuthController extends GetxController with WidgetsBindingObserver {
     if (token != null && userData != null) {
       try {
         user.value = Map<String, dynamic>.from(jsonDecode(userData));
-      } catch (_) {}
+      } catch (e, s) { AppLogger.error('Auth', e, s); }
       fetchProfile();
-      _notificationService.start();
+      _notificationService?.start();
       Get.offAllNamed('/home');
+    }
+  }
+
+  /// Server-driven write policy (decision D1).
+  /// Source of truth: GET /auth/capabilities → write_access.
+  /// Build-time AppConfig.enableWriteAccess is only an offline fallback
+  /// until capabilities load.
+  final canWriteAccess = false.obs;
+  final capabilitiesLoaded = false.obs;
+
+  bool get writeEnabled =>
+      capabilitiesLoaded.value ? canWriteAccess.value : AppConfig.enableWriteAccess;
+
+  Future<void> fetchCapabilities() async {
+    try {
+      final res = await _api.dio.get('/auth/capabilities');
+      if (res.data != null && res.data['success'] == true) {
+        final data = res.data['data'];
+        canWriteAccess.value = data?['write_access'] == true;
+        capabilitiesLoaded.value = true;
+      }
+    } catch (e) {
+      // Offline / backend down → fall back to build-time config.
+      AppLogger.error('Capabilities', e);
+      capabilitiesLoaded.value = false;
     }
   }
 
@@ -140,7 +170,8 @@ class AuthController extends GetxController with WidgetsBindingObserver {
         user.value = userMap;
         await fetchSetting();
         await fetchProfile();
-        _notificationService.start();
+        await fetchCapabilities();
+        _notificationService?.start();
         Get.offAllNamed('/home');
       } else {
         errorMsg.value = response.data['message'] ?? 'Login gagal';
@@ -162,7 +193,7 @@ class AuthController extends GetxController with WidgetsBindingObserver {
   }
 
   Future<void> logout() async {
-    _notificationService.stop();
+    _notificationService?.stop();
     ApiClient.setCachedToken(null);
     await _storage.deleteAll();
     user.value = null;
@@ -173,8 +204,8 @@ class AuthController extends GetxController with WidgetsBindingObserver {
 
   /// Called after a silent token refresh in api_client.dart
   void refreshNotificationPolling() {
-    _notificationService.resetCursor();
-    _notificationService.start();
+    _notificationService?.resetCursor();
+    _notificationService?.start();
   }
 
   @override
@@ -182,14 +213,14 @@ class AuthController extends GetxController with WidgetsBindingObserver {
     super.didChangeAppLifecycleState(state);
     if (state == AppLifecycleState.resumed) {
       // Fetch any notifications that arrived while app was in background
-      _notificationService.fetchBacklog();
+      _notificationService?.fetchBacklog();
     }
   }
 
   @override
   void onClose() {
     WidgetsBinding.instance.removeObserver(this);
-    _notificationService.stop();
+    _notificationService?.stop();
     super.onClose();
   }
 }

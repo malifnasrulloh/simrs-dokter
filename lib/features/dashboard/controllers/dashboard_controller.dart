@@ -1,5 +1,6 @@
 import 'package:get/get.dart';
 import '../../../core/network/api_client.dart';
+import '../../../core/utils/app_logger.dart';
 import '../../auth/controllers/auth_controller.dart';
 
 class DashboardController extends GetxController {
@@ -47,7 +48,7 @@ class DashboardController extends GetxController {
       if (res.data['success'] == true) {
         caraBayarOptions.value = List<Map<String, dynamic>>.from(res.data['data'] ?? []);
       }
-    } catch (_) {}
+    } catch (e, s) { AppLogger.error('Dashboard', e, s); }
   }
 
   Future<void> fetchHarianDokter({bool isLoadMore = false}) async {
@@ -139,7 +140,7 @@ class DashboardController extends GetxController {
         listPasienRanap.value = data;
         totalRanap.value = data.length;
       }
-    } catch (_) {}
+    } catch (e, s) { AppLogger.error('Dashboard', e, s); }
   }
 
   Future<void> _fetchPasienRalan() async {
@@ -160,7 +161,7 @@ class DashboardController extends GetxController {
         listPasienRalan.value = data;
         totalRalan.value = data.length;
       }
-    } catch (_) {}
+    } catch (e, s) { AppLogger.error('Dashboard', e, s); }
   }
 
   Future<void> _fetchPasienIGD() async {
@@ -182,7 +183,7 @@ class DashboardController extends GetxController {
         listPasienIGD.value = data;
         totalIGD.value = data.length;
       }
-    } catch (_) {}
+    } catch (e, s) { AppLogger.error('Dashboard', e, s); }
   }
 
   Future<void> _fetchJadwalOperasi() async {

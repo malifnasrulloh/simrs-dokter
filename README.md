@@ -1,6 +1,6 @@
 # 📱 CareDoc EMR — Aplikasi Mobile Dokter SIMRS
 
-Aplikasi mobile berbasis **Flutter** untuk dokter di **RS Islam Aminah Blitar**, digunakan untuk memonitor pasien rawat inap (RANAP), rawat jalan (RALAN), dan IGD secara real-time langsung dari smartphone.
+Aplikasi mobile berbasis **Flutter** untuk dokter di **RS Islam Aminah Blitar**, digunakan untuk memonitor pasien rawat inap (RANAP), rawat jalan (RALAN), dan IGD secara real-time langsung dari smartphone. Backend: Backend-Dokter (Hono REST API).
 
 ---
 
@@ -67,23 +67,18 @@ cd simrs_dokter
 flutter pub get
 ```
 
-### 2. Konfigurasi `.env`
+### 2. Konfigurasi (build-time `--dart-define`)
+
+Konfigurasi di-inject saat build/run melalui `--dart-define` — **bukan** `.env`
+(Flutter tidak membaca `.env` secara otomatis). Lihat `config-dev.json` /
+`config-prod.json` untuk nilai referensi:
 
 ```bash
-cp .env.example .env   # jika tersedia, atau edit langsung
-```
-
-Edit file `.env`:
-
-```env
 # Emulator Android (10.0.2.2 = localhost host mesin)
-BASE_URL=http://10.0.2.2:4002/api
+flutter run --dart-define=BASE_URL=http://10.0.2.2:4002/api
 
 # Device fisik / production
-# BASE_URL=http://192.168.x.x:4002/api
-
-CONNECT_TIMEOUT=30000
-RECEIVE_TIMEOUT=30000
+flutter run --dart-define=BASE_URL=https://localhost:4002/api
 ```
 
 ### 3. Jalankan Aplikasi
@@ -92,8 +87,8 @@ RECEIVE_TIMEOUT=30000
 # Debug mode
 flutter run
 
-# Build APK
-flutter build apk --release
+# Build APK dengan konfigurasi production
+flutter build apk --release --dart-define=APP_VERSION=1.2.0 --dart-define=BASE_URL=https://localhost:4002/api
 
 # Build APK split per ABI (lebih kecil)
 flutter build apk --split-per-abi --release
@@ -101,13 +96,18 @@ flutter build apk --split-per-abi --release
 
 ---
 
-## ⚙️ Konfigurasi Lengkap `.env`
+## ⚙️ Variabel Konfigurasi (`--dart-define`)
 
 | Variable | Default | Keterangan |
 |---|---|---|
-| `BASE_URL` | `http://10.0.2.2:4002/api` | Base URL API backend dokter |
-| `CONNECT_TIMEOUT` | `30000` | Timeout koneksi (ms) |
-| `RECEIVE_TIMEOUT` | `30000` | Timeout menerima response (ms) |
+| `BASE_URL` | `http://localhost:4002/api` | Base URL API backend dokter |
+| `APP_NAME` | `E-Dokter` | Nama aplikasi |
+| `APP_VERSION` | `1.0.0` | Versi aplikasi |
+| `CONNECT_TIMEOUT` | `15000` | Timeout koneksi (ms) |
+| `RECEIVE_TIMEOUT` | `20000` | Timeout menerima response (ms) |
+| `ENABLE_WRITE_ACCESS` | `false` | **Hanya fallback offline.** Akses tulis utama dikendalikan server melalui `GET /auth/capabilities` (`write_access`). Default deployment read-only |
+| `ENABLE_IN_APP_NOTIFICATIONS` | `true` | Notifikasi in-app (badge/polling 5 detik) |
+| `ENABLE_SYSTEM_NOTIFICATIONS` | `true` | Notifikasi OS (Android) |
 
 ---
 
@@ -169,15 +169,16 @@ flutter build apk --split-per-abi --release
 |---|---|---|
 | `get` | ^4.6.6 | State management & routing |
 | `dio` | ^5.7.0 | HTTP client |
-| `flutter_secure_storage` | ^9.2.2 | Simpan token & kredensial |
-| `flutter_dotenv` | ^5.2.1 | Load konfigurasi `.env` |
+| `flutter_secure_storage` | ^10.3.1 | Simpan token & kredensial |
+| `shared_preferences` | ^2.3.2 | Cache device id & preferensi |
 | `cached_network_image` | ^3.4.1 | Cache gambar radiologi |
-| `fl_chart` | ^0.69.0 | Grafik dashboard |
-| `google_fonts` | ^6.2.1 | Tipografi |
+| `fl_chart` | ^1.2.0 | Grafik dashboard |
+| `google_fonts` | ^8.1.0 | Tipografi |
 | `shimmer` | ^3.0.0 | Loading skeleton |
 | `webview_flutter` | ^4.10.0 | DICOM viewer (OHIF) |
-| `intl` | ^0.19.0 | Format tanggal & angka |
-| `connectivity_plus` | ^6.1.0 | Deteksi koneksi jaringan |
+| `intl` | ^0.20.2 | Format tanggal & angka |
+| `connectivity_plus` | ^7.1.1 | Deteksi koneksi jaringan |
+| `awesome_notifications` | ^0.12.1 | Notifikasi OS |
 
 ---
 
@@ -214,7 +215,7 @@ flutter build apk --release
 
 Edit `pubspec.yaml`:
 ```yaml
-version: 1.0.1+2   # format: versiNama+versiKode
+version: 1.2.0   # versiApplikasi
 ```
 
 ---

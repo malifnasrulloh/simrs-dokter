@@ -66,6 +66,18 @@ void main() {
       expect(controller.profileData.value, isNull);
       expect(TestHelper.mockSecureStorage, isEmpty);
     });
+
+    test('fetchCapabilities applies server write policy', () async {
+      TestHelper.mockWriteAccess = true;
+      addTearDown(() => TestHelper.mockWriteAccess = false);
+      final controller = Get.put(AuthController());
+
+      await controller.fetchCapabilities();
+
+      expect(controller.capabilitiesLoaded.value, isTrue);
+      expect(controller.canWriteAccess.value, isTrue);
+      expect(controller.writeEnabled, isTrue);
+    });
   });
 
   group('LoginView Widget Integration Tests', () {

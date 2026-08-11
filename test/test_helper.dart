@@ -7,6 +7,9 @@ import 'package:simrs_dokter/core/network/api_client.dart';
 class TestHelper {
   static final Map<String, String> mockSecureStorage = {};
 
+  /// Flip to true to simulate a server that grants mobile write access.
+  static bool mockWriteAccess = false;
+
   static void setupTestMockChannels() {
     TestWidgetsFlutterBinding.ensureInitialized();
     Get.testMode = true;
@@ -384,6 +387,57 @@ class TestHelper {
                   '_type': 'SOAP_RANAP',
                 }
               ]
+            },
+          ));
+        }
+
+        if (path.contains('/auth/capabilities')) {
+          return handler.resolve(Response(
+            requestOptions: options,
+            statusCode: 200,
+            data: {
+              'success': true,
+              'data': {
+                'write_access': TestHelper.mockWriteAccess,
+                'write_endpoints': ['/soap', '/resep', '/konsultasi', '/diagnosa-prosedur'],
+                'notifications_enabled': true,
+                'read_only': !TestHelper.mockWriteAccess,
+              }
+            },
+          ));
+        }
+
+        // Backend paginated envelope: {list, pagination} under `data`.
+        // Regression lock for the ICD search contract fix.
+        if (path.contains('/diagnosa-prosedur/penyakit')) {
+          return handler.resolve(Response(
+            requestOptions: options,
+            statusCode: 200,
+            data: {
+              'success': true,
+              'data': {
+                'list': [
+                  {'kd_penyakit': 'J45', 'nm_penyakit': 'Asma'},
+                  {'kd_penyakit': 'J45.9', 'nm_penyakit': 'Asma, tidak spesifik'},
+                ],
+                'pagination': {'total': 2, 'page': 1, 'limit': 50, 'total_pages': 1},
+              }
+            },
+          ));
+        }
+
+        if (path.contains('/diagnosa-prosedur/icd9')) {
+          return handler.resolve(Response(
+            requestOptions: options,
+            statusCode: 200,
+            data: {
+              'success': true,
+              'data': {
+                'list': [
+                  {'kode': '01.01', 'deskripsi_panjang': 'Insisi kulit'},
+                ],
+                'pagination': {'total': 1, 'page': 1, 'limit': 50, 'total_pages': 1},
+              }
             },
           ));
         }

@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import '../config/app_config.dart';
 import '../network/api_client.dart';
+import '../utils/app_logger.dart';
 import '../utils/local_notification_service.dart';
 import '../utils/google_fonts.dart';
 import '../../features/dashboard/controllers/dashboard_controller.dart';
@@ -165,7 +166,7 @@ class NotificationPollingService extends GetxService {
           _lastReadId = lastId;
         }
       }
-    } catch (_) {}
+    } catch (e, s) { AppLogger.error('NotifPolling', e, s); }
   }
 
   Future<bool> _sendAck(int lastId) async {
@@ -314,7 +315,7 @@ class NotificationPollingService extends GetxService {
       if (Get.isRegistered<DashboardController>()) {
         Get.find<DashboardController>().fetchDashboard(isBackground: true);
       }
-    } catch (_) {}
+    } catch (e, s) { AppLogger.error('NotifPolling', e, s); }
 
     try {
       if (Get.isRegistered<RekamMedisController>()) {
@@ -345,6 +346,6 @@ class NotificationPollingService extends GetxService {
           rm.fetchBillingOnly();
         }
       }
-    } catch (_) {}
+    } catch (e, s) { AppLogger.error('NotifPolling', e, s); }
   }
 }

@@ -10,6 +10,9 @@
 .svn/
 migrate_working_dir/
 .env
+config*
+tasks/
+docs/ideas
 key.properties
 
 # IntelliJ related

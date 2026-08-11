@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get/get.dart' as getx;
 import '../config/app_config.dart';
+import '../utils/app_logger.dart';
 import '../../features/auth/controllers/auth_controller.dart';
 
 class ApiClient {
@@ -33,6 +34,13 @@ class ApiClient {
         return handler.next(options);
       },
       onError: (DioException error, handler) async {
+        if (error.response?.statusCode != 401) {
+          AppLogger.error(
+            'Api',
+            '${error.requestOptions.method} ${error.requestOptions.path} -> '
+            '${error.response?.statusCode ?? 'no-response'}: ${error.message}',
+          );
+        }
         if (error.response?.statusCode == 401) {
           _cachedToken = null;
           final username = await _storage.read(key: 'username');
