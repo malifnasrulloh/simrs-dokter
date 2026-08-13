@@ -24,6 +24,7 @@ const notificationRoutes = <String, NotifRoute>{
   'consultation_response': NotifRoute('/rekam-medis', tabIndex: 5),
   'emergency_igd_consultation': NotifRoute('/rekam-medis', tabIndex: 5),
   'sbar_request': NotifRoute('/rekam-medis', tabIndex: 5),
+  'second_opinion_request': NotifRoute('/rekam-medis', tabIndex: 5),
   'lab_request': NotifRoute('/rekam-medis', tabIndex: 3),
   'labpa_request': NotifRoute('/rekam-medis', tabIndex: 3),
   'labmb_request': NotifRoute('/rekam-medis', tabIndex: 3),
@@ -33,6 +34,8 @@ const notificationRoutes = <String, NotifRoute>{
   'medication_stock_request': NotifRoute('/rekam-medis', tabIndex: 2),
   'medication_dispensed': NotifRoute('/rekam-medis', tabIndex: 2),
   'medication_request': NotifRoute('/rekam-medis', tabIndex: 2),
+  'spiritual_guidance_request': NotifRoute('/rekam-medis', tabIndex: 0),
+  'violence_protection_letter': NotifRoute('/rekam-medis', tabIndex: 0),
   'new_admission': NotifRoute('/patient-list'),
   'bed_request': NotifRoute('/patient-list'),
   'surgery_booking': NotifRoute('/patient-list'),
@@ -40,6 +43,12 @@ const notificationRoutes = <String, NotifRoute>{
   'billing_threshold_100': NotifRoute('/rekam-medis'),
   'billing_threshold_120': NotifRoute('/rekam-medis'),
 };
+
+/// Fallback target for any event type the triggers emit but the app does
+/// not map explicitly (kitchen, medical/non-medical supplies, inventory,
+/// leave applications, ...): land on the dashboard home tab instead of
+/// silently ignoring the tap.
+const NotifRoute defaultNotifRoute = NotifRoute('/home');
 
 class NotificationPollingService extends GetxService {
   static const String _deviceIdKey = 'notification_device_id';
@@ -102,7 +111,8 @@ class NotificationPollingService extends GetxService {
         rawId = 'android_${androidInfo.id}';
       } else if (Platform.isIOS) {
         final iosInfo = await deviceInfo.iosInfo;
-        rawId = 'ios_${iosInfo.identifierForVendor ?? DateTime.now().millisecondsSinceEpoch}';
+        rawId =
+            'ios_${iosInfo.identifierForVendor ?? DateTime.now().millisecondsSinceEpoch}';
       } else {
         rawId = 'unknown_${DateTime.now().millisecondsSinceEpoch}';
       }
@@ -166,7 +176,9 @@ class NotificationPollingService extends GetxService {
           _lastReadId = lastId;
         }
       }
-    } catch (e, s) { AppLogger.error('NotifPolling', e, s); }
+    } catch (e, s) {
+      AppLogger.error('NotifPolling', e, s);
+    }
   }
 
   Future<bool> _sendAck(int lastId) async {
@@ -226,7 +238,7 @@ class NotificationPollingService extends GetxService {
     required Map<String, dynamic> payload,
     bool isUrgent = false,
   }) {
-    final route = notificationRoutes[eventType];
+    final route = notificationRoutes[eventType] ?? defaultNotifRoute;
 
     Get.rawSnackbar(
       titleText: Text(
@@ -254,9 +266,7 @@ class NotificationPollingService extends GetxService {
       snackPosition: SnackPosition.TOP,
       duration: Duration(seconds: isUrgent ? 6 : 4),
       shouldIconPulse: false,
-      onTap: route != null
-          ? (_) => _navigateFromNotification(eventType, payload, route)
-          : null,
+      onTap: (_) => _navigateFromNotification(eventType, payload, route),
       icon: Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
@@ -264,7 +274,9 @@ class NotificationPollingService extends GetxService {
           shape: BoxShape.circle,
         ),
         child: Icon(
-          isUrgent ? Icons.warning_amber_rounded : Icons.notifications_active_rounded,
+          isUrgent
+              ? Icons.warning_amber_rounded
+              : Icons.notifications_active_rounded,
           color: isUrgent ? Colors.white : const Color(0xFF2DD4BF),
           size: 18,
         ),
@@ -291,6 +303,14 @@ class NotificationPollingService extends GetxService {
     await _sendAck(_lastReadId);
 
     if (route.route == '/rekam-medis') {
+      // Some events (e.g. kitchen/supply) carry no patient context; the
+      // payload might lack no_rawat even on mapped clinical events.
+      if (noRawat.isEmpty) {
+        if (Get.currentRoute != '/home') {
+          Get.offAllNamed('/home');
+        }
+        return;
+      }
       // If already viewing the same patient, just switch tab
       if (Get.isRegistered<RekamMedisController>() &&
           Get.find<RekamMedisController>().noRawat == noRawat) {
@@ -307,6 +327,11 @@ class NotificationPollingService extends GetxService {
       });
     } else if (route.route == '/patient-list') {
       Get.toNamed('/patient-list');
+    } else {
+      // Default fallback: return to the dashboard shell.
+      if (Get.currentRoute != '/home') {
+        Get.offAllNamed('/home');
+      }
     }
   }
 
@@ -315,7 +340,9 @@ class NotificationPollingService extends GetxService {
       if (Get.isRegistered<DashboardController>()) {
         Get.find<DashboardController>().fetchDashboard(isBackground: true);
       }
-    } catch (e, s) { AppLogger.error('NotifPolling', e, s); }
+    } catch (e, s) {
+      AppLogger.error('NotifPolling', e, s);
+    }
 
     try {
       if (Get.isRegistered<RekamMedisController>()) {
@@ -324,7 +351,8 @@ class NotificationPollingService extends GetxService {
         if (eventType == 'consultation_request' ||
             eventType == 'consultation_response' ||
             eventType == 'emergency_igd_consultation' ||
-            eventType == 'sbar_request') {
+            eventType == 'sbar_request' ||
+            eventType == 'second_opinion_request') {
           rm.fetchConsultations(isBackground: true);
           rm.fetchAllData(isBackground: true);
         } else if (eventType == 'lab_request' ||
@@ -336,7 +364,9 @@ class NotificationPollingService extends GetxService {
             eventType == 'prescription_dispensed' ||
             eventType == 'medication_stock_request' ||
             eventType == 'medication_dispensed' ||
-            eventType == 'medication_request') {
+            eventType == 'medication_request' ||
+            eventType == 'spiritual_guidance_request' ||
+            eventType == 'violence_protection_letter') {
           rm.fetchAllData(isBackground: true);
         } else if (eventType == 'new_admission' ||
             eventType == 'bed_request' ||
@@ -344,8 +374,14 @@ class NotificationPollingService extends GetxService {
           rm.fetchAllData(isBackground: true);
         } else if (eventType.startsWith('billing_threshold')) {
           rm.fetchBillingOnly();
+        } else {
+          // Unmapped support/facility events (kitchen, supplies, inventory,
+          // leave, ...): refresh the open record in the background.
+          rm.fetchAllData(isBackground: true);
         }
       }
-    } catch (e, s) { AppLogger.error('NotifPolling', e, s); }
+    } catch (e, s) {
+      AppLogger.error('NotifPolling', e, s);
+    }
   }
 }

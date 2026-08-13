@@ -143,6 +143,7 @@ void main() {
         'consultation_response',
         'emergency_igd_consultation',
         'sbar_request',
+        'second_opinion_request',
         'lab_request',
         'labpa_request',
         'labmb_request',
@@ -152,6 +153,8 @@ void main() {
         'medication_stock_request',
         'medication_dispensed',
         'medication_request',
+        'spiritual_guidance_request',
+        'violence_protection_letter',
         'new_admission',
         'bed_request',
         'surgery_booking',
@@ -171,6 +174,39 @@ void main() {
       expect(notificationRoutes.containsKey('billing_threshold_80'), isTrue);
       expect(notificationRoutes.containsKey('billing_threshold_100'), isTrue);
       expect(notificationRoutes.containsKey('billing_threshold_120'), isTrue);
+    });
+
+    test('support/facility events fall back to the dashboard home', () {
+      // kitchen / supply / inventory / leave triggers from the DB trigger
+      // set are not patient-bound; they must still be routable (default).
+      const facilityEvents = [
+        'kitchen_request',
+        'kitchen_approved',
+        'kitchen_rejected',
+        'medical_supply_request',
+        'medical_supply_approved',
+        'medical_supply_rejected',
+        'non_medical_request',
+        'non_medical_approved',
+        'non_medical_rejected',
+        'inventory_repair_request',
+        'inventory_application',
+        'inventory_approved',
+        'inventory_rejected',
+        'leave_application',
+        'leave_approved',
+        'leave_rejected',
+        'leave_approved_manajemen',
+        'leave_rejected_manajemen',
+      ];
+      for (final event in facilityEvents) {
+        expect(notificationRoutes.containsKey(event), isFalse);
+        expect(
+          notificationRoutes[event] ?? defaultNotifRoute,
+          same(defaultNotifRoute),
+          reason: '$event should use the /home fallback',
+        );
+      }
     });
   });
 

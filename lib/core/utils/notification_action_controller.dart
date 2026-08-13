@@ -42,7 +42,7 @@ class NotificationActionController {
 
     final eventType = payload['event_type'] as String? ?? '';
     final noRawat = payload['no_rawat'] as String? ?? '';
-    if (noRawat.isEmpty || eventType.isEmpty) return;
+    if (eventType.isEmpty) return;
 
     pendingNavigation.value = _NavigationRequest(
       eventType: eventType,

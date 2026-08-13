@@ -114,8 +114,13 @@ class _NotificationNavigationHandlerState
     ever(NotificationActionController.pendingNavigation, (nav) async {
       if (nav == null) return;
 
-      final route = notificationRoutes[nav.eventType];
-      if (route == null) return;
+      final route = notificationRoutes[nav.eventType] ?? defaultNotifRoute;
+
+      // Events without a patient context just land on the dashboard shell.
+      if (route.route != '/rekam-medis' || nav.noRawat.isEmpty) {
+        Get.offAllNamed(route.route);
+        return;
+      }
 
       // Fetch patient data from backend
       try {
