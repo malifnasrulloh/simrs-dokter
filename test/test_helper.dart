@@ -2,6 +2,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:dio/dio.dart';
 import 'package:get/get.dart' hide Response;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:simrs_dokter/core/network/api_client.dart';
 
 class TestHelper {
@@ -13,6 +14,9 @@ class TestHelper {
   static void setupTestMockChannels() {
     TestWidgetsFlutterBinding.ensureInitialized();
     Get.testMode = true;
+
+    // Mock SharedPreferences (draft persistence in RekamMedisController)
+    SharedPreferences.setMockInitialValues({});
 
     // Mock FlutterSecureStorage
     const MethodChannel secureStorageChannel =
@@ -223,6 +227,22 @@ class TestHelper {
           ));
         }
 
+        // Must precede the broader `/harian-dokter` match below:
+        // cara-bayar returns a bare list, not the paginated envelope.
+        if (path.contains('/harian-dokter/cara-bayar')) {
+          return handler.resolve(Response(
+            requestOptions: options,
+            statusCode: 200,
+            data: {
+              'success': true,
+              'data': [
+                {'kd_pj': '1', 'png_jawab': 'Umum'},
+                {'kd_pj': '2', 'png_jawab': 'BPJS'},
+              ]
+            },
+          ));
+        }
+
         if (path.contains('/harian-dokter')) {
           return handler.resolve(Response(
             requestOptions: options,
@@ -385,6 +405,83 @@ class TestHelper {
                   'Usia kehamilan 37 minggu'
                 ],
                 'rencana_kebidanan': ['Observasi his', 'Monitoring BJJ'],
+              }
+            },
+          ));
+        }
+
+        if (path.contains('/riwayat/pasien/pemberian-obat')) {
+          return handler.resolve(Response(
+            requestOptions: options,
+            statusCode: 200,
+            data: {
+              'success': true,
+              'data': {
+                'list': [
+                  {
+                    'kode_brng': 'OBT001',
+                    'nama_brng': 'Paracetamol 500mg',
+                    'jml': 10,
+                    'satuan': 'tablet',
+                    'aturan': '3x sehari',
+                    'tgl_perawatan': '2026-06-20',
+                    'jam': '08:00:00',
+                  }
+                ],
+                'total_biaya': 5000,
+              }
+            },
+          ));
+        }
+
+        if (path.contains('/riwayat/pasien/laboratorium')) {
+          return handler.resolve(Response(
+            requestOptions: options,
+            statusCode: 200,
+            data: {
+              'success': true,
+              'data': {
+                'list': [
+                  {
+                    'nm_perawatan': 'Cek Darah Lengkap',
+                    'tgl_periksa': '2026-06-20',
+                    'jam': '08:00:00',
+                    'periksa': [
+                      {
+                        'nm_perawatan': 'Hematologi',
+                        'nilai': [
+                          {
+                            'Pemeriksaan': 'Hemoglobin',
+                            'nilai': '13.5',
+                            'satuan': 'g/dL',
+                            'nilai_rujukan': '12-16',
+                          }
+                        ],
+                      }
+                    ],
+                  }
+                ],
+                'total_biaya': 75000,
+              }
+            },
+          ));
+        }
+
+        if (path.contains('/riwayat/pasien/radiologi')) {
+          return handler.resolve(Response(
+            requestOptions: options,
+            statusCode: 200,
+            data: {
+              'success': true,
+              'data': {
+                'list': [
+                  {
+                    'nm_perawatan': 'Foto Thorax',
+                    'tgl_periksa': '2026-06-20',
+                    'jam': '08:00:00',
+                  }
+                ],
+                'total_biaya': 120000,
               }
             },
           ));

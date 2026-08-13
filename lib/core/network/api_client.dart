@@ -165,7 +165,13 @@ class ApiClient {
       }
       return token;
     } catch (e, s) {
-      AppLogger.error('Api', 'Token refresh failed: $e', s);
+      // A 401 from the refresh endpoint is the expected outcome when the
+      // session is beyond the grace window (clean logout follows); only
+      // genuine failures (network, 5xx) are worth logging as errors.
+      final isExpiredSession = e is DioException && e.response?.statusCode == 401;
+      if (!isExpiredSession) {
+        AppLogger.error('Api', 'Token refresh failed: $e', s);
+      }
       return null;
     }
   }
