@@ -352,6 +352,44 @@ class TestHelper {
           ));
         }
 
+        if (path.contains('/riwayat/pasien/igd-kebidanan')) {
+          return handler.resolve(Response(
+            requestOptions: options,
+            statusCode: 200,
+            data: {
+              'success': true,
+              'data': {
+                'kebidanan': {
+                  'no_rawat': '2026/06/20/0001',
+                  'tanggal': '2026-06-20 08:45:00',
+                  'gcs': '15',
+                  'td': '110/70',
+                  'nadi': '88',
+                  'rr': '22',
+                  'suhu': '36.9',
+                  'bb': '60',
+                  'tb': '158',
+                  'tfu': '32',
+                  'letak': 'Memanjang',
+                  'presentasi': 'Kepala',
+                  'bjj': '144',
+                  'ket_bjj': 'Teratur',
+                  'ctg': 'Dilakukan',
+                  'inspekulo': 'Tidak',
+                  'skala_nyeri': '4',
+                  'lokasi': 'Perut bawah',
+                  'nama_petugas': 'Bidan Rina',
+                },
+                'masalah_kebidanan': [
+                  'Kontraksi teratur',
+                  'Usia kehamilan 37 minggu'
+                ],
+                'rencana_kebidanan': ['Observasi his', 'Monitoring BJJ'],
+              }
+            },
+          ));
+        }
+
         if (path.contains('/riwayat/pasien/soap')) {
           return handler.resolve(Response(
             requestOptions: options,

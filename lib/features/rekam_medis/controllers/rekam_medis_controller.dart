@@ -22,7 +22,7 @@ class RekamMedisController extends GetxController {
   late final Worker _tabWorker;
   final isLoading = false.obs;
   bool _isSubmitting = false;
-  
+
   Timer? _staggerTimer1;
   Timer? _staggerTimer2;
   Timer? _connectivityDebounce;
@@ -39,7 +39,7 @@ class RekamMedisController extends GetxController {
   final laboratorium = <Map<String, dynamic>>[].obs;
   final radiologi = <Map<String, dynamic>>[].obs;
   final expandedStates = <String, bool>{}.obs;
-  
+
   // Vitals Chart and Offline Queue observables
   final activeChartType = 0.obs;
   final offlineSoapQueue = <Map<String, dynamic>>[].obs;
@@ -60,7 +60,8 @@ class RekamMedisController extends GetxController {
   final isLoadingRad = false.obs;
 
   String get noRawat => pasienData.value?['no_rawat'] ?? '';
-  String get noRkmMedis => pasienData.value?['no_rkm_medis'] ?? pasienData.value?['no_rm'] ?? '';
+  String get noRkmMedis =>
+      pasienData.value?['no_rkm_medis'] ?? pasienData.value?['no_rm'] ?? '';
   String get tipeRawat => pasienData.value?['_type'] ?? 'RANAP';
 
   String get alergiInfo {
@@ -80,7 +81,7 @@ class RekamMedisController extends GetxController {
     if (args is Map<String, dynamic>) {
       pasienData.value = args;
     }
-    
+
     pageController = PageController(initialPage: activeTab.value);
     _tabWorker = ever(activeTab, (int index) {
       if (pageController.hasClients && pageController.page?.round() != index) {
@@ -93,8 +94,10 @@ class RekamMedisController extends GetxController {
     });
 
     // Listen to network transitions to automatically sync offline notes (debounced)
-    _connectivitySubscription = Connectivity().onConnectivityChanged.listen((event) {
-      final isOnline = event.isNotEmpty && !event.contains(ConnectivityResult.none);
+    _connectivitySubscription =
+        Connectivity().onConnectivityChanged.listen((event) {
+      final isOnline =
+          event.isNotEmpty && !event.contains(ConnectivityResult.none);
       if (isOnline) {
         _connectivityDebounce?.cancel();
         _connectivityDebounce = Timer(const Duration(milliseconds: 500), () {
@@ -185,11 +188,93 @@ class RekamMedisController extends GetxController {
 
   Future<List<dynamic>> _safeGetList(String endpoint, String noRawat) async {
     try {
-      final res = await _api.dio.get(endpoint, queryParameters: {'no_rawat': noRawat});
-      if (res.statusCode == 200 && res.data != null && res.data['success'] == true && res.data['data'] is List) {
+      final res =
+          await _api.dio.get(endpoint, queryParameters: {'no_rawat': noRawat});
+      if (res.statusCode == 200 &&
+          res.data != null &&
+          res.data['success'] == true &&
+          res.data['data'] is List) {
         return res.data['data'] as List;
       }
-    } catch (e, s) { AppLogger.error('RekamMedis', e, s); }
+    } catch (e, s) {
+      AppLogger.error('RekamMedis', e, s);
+    }
+    return [];
+  }
+
+  /// Fetches the IGD obstetric triage (penilaian_awal_keperawatan_kebidanan)
+  /// and normalizes it into a single medis-timeline entry. The backend
+  /// returns an object (not a list), so this builds the raw-vocabulary row
+  /// that [_normalizeMedisData] understands.
+  Future<List<dynamic>> _safeGetKebidananIgd(String noRawat) async {
+    try {
+      final res = await _api.dio.get(
+        '/riwayat/pasien/igd-kebidanan',
+        queryParameters: {'no_rawat': noRawat},
+      );
+      if (res.statusCode == 200 &&
+          res.data != null &&
+          res.data['success'] == true &&
+          res.data['data'] is Map) {
+        final data = Map<String, dynamic>.from(res.data['data']);
+        final keb = data['kebidanan'];
+        if (keb is! Map) return [];
+
+        final row = Map<String, dynamic>.from(keb);
+        final tanggalStr = row['tanggal']?.toString() ?? '';
+        final masalah =
+            (data['masalah_kebidanan'] as List?)?.cast<String>() ?? [];
+        final rencana =
+            (data['rencana_kebidanan'] as List?)?.cast<String>() ?? [];
+
+        String v(dynamic value) => value?.toString().trim() ?? '';
+
+        final obstetricFindings = <String>[
+          if (v(row['tfu']).isNotEmpty) 'TFU: ${row['tfu']}',
+          if (v(row['tbj']).isNotEmpty) 'TBJ: ${row['tbj']}',
+          if (v(row['letak']).isNotEmpty) 'Letak: ${row['letak']}',
+          if (v(row['presentasi']).isNotEmpty)
+            'Presentasi: ${row['presentasi']}',
+          if (v(row['penurunan']).isNotEmpty) 'Penurunan: ${row['penurunan']}',
+          if (v(row['his']).isNotEmpty) 'His: ${row['his']}',
+          if (v(row['kekuatan']).isNotEmpty) 'Kekuatan: ${row['kekuatan']}',
+          if (v(row['lamanya']).isNotEmpty) 'Lamanya: ${row['lamanya']}',
+          if (v(row['bjj']).isNotEmpty)
+            'BJJ: ${row['bjj']}${v(row['ket_bjj']).isNotEmpty ? ' (${row['ket_bjj']})' : ''}',
+          if (v(row['portio']).isNotEmpty) 'Portio: ${row['portio']}',
+          if (v(row['serviks']).isNotEmpty) 'Serviks: ${row['serviks']}',
+          if (v(row['ketuban']).isNotEmpty) 'Ketuban: ${row['ketuban']}',
+          if (v(row['hodge']).isNotEmpty) 'Hodge: ${row['hodge']}',
+          if (v(row['skala_nyeri']).isNotEmpty)
+            'Nyeri: skala ${row['skala_nyeri']}${v(row['lokasi']).isNotEmpty ? ', ${row['lokasi']}' : ''}${v(row['quality']).isNotEmpty ? ', ${row['quality']}' : ''}',
+          if (row['ctg'] == 'Dilakukan') 'CTG: dilakukan',
+          if (row['inspekulo'] == 'Dilakukan')
+            'Inspekulo: ${v(row['ket_inspekulo']).isNotEmpty ? row['ket_inspekulo'] : 'dilakukan'}',
+        ];
+
+        return [
+          {
+            'tanggal': tanggalStr,
+            'jam': tanggalStr.length >= 19 ? tanggalStr.substring(11, 19) : '-',
+            'nama': v(row['nama_petugas']),
+            'keluhan': '-',
+            'gcs': row['gcs'] ?? '-',
+            'td': row['td'] ?? '-',
+            'nadi': row['nadi'] ?? '-',
+            'rr': row['rr'] ?? '-',
+            'suhu': row['suhu'] ?? '-',
+            'bb': row['bb'] ?? '-',
+            'tb': row['tb'] ?? '-',
+            'pemeriksaan':
+                obstetricFindings.isEmpty ? '-' : obstetricFindings.join(' • '),
+            'penilaian': masalah.isEmpty ? '-' : masalah.join('; '),
+            'rtl': rencana.isEmpty ? '-' : rencana.join('; '),
+          },
+        ];
+      }
+    } catch (e, s) {
+      AppLogger.error('RekamMedis', e, s);
+    }
     return [];
   }
 
@@ -197,7 +282,7 @@ class RekamMedisController extends GetxController {
     try {
       final tgl = item['tanggal'];
       final jam = item['jam'];
-      
+
       if (tgl != null && tgl.toString() != '-') {
         final parsedDate = DateTime.parse(tgl.toString()).toLocal();
         if (jam != null && jam.toString() != '-') {
@@ -218,7 +303,9 @@ class RekamMedisController extends GetxController {
         }
         return parsedDate;
       }
-    } catch (e, s) { AppLogger.error('RekamMedis', e, s); }
+    } catch (e, s) {
+      AppLogger.error('RekamMedis', e, s);
+    }
     return DateTime(1970);
   }
 
@@ -242,6 +329,7 @@ class RekamMedisController extends GetxController {
         final results = await Future.wait([
           _safeGetList('/riwayat/pasien/medis-igd', noRawat),
           _safeGetList('/riwayat/pasien/soap-ralan', noRawat),
+          _safeGetKebidananIgd(noRawat),
         ]);
         for (var list in results) {
           for (var item in list) {
@@ -320,19 +408,23 @@ class RekamMedisController extends GetxController {
     };
   }
 
-
   Future<void> _fetchDiagnosa() async {
     try {
-      final res = await _api.dio.get('/riwayat/pasien/diagnosa', queryParameters: {'no_rawat': noRawat});
+      final res = await _api.dio.get('/riwayat/pasien/diagnosa',
+          queryParameters: {'no_rawat': noRawat});
       if (res.data['success'] == true) {
-        diagnosa.value = List<Map<String, dynamic>>.from(res.data['data'] ?? []);
+        diagnosa.value =
+            List<Map<String, dynamic>>.from(res.data['data'] ?? []);
       }
-    } catch (e, s) { AppLogger.error('RekamMedis', e, s); }
+    } catch (e, s) {
+      AppLogger.error('RekamMedis', e, s);
+    }
   }
 
   Future<void> _fetchObat() async {
     try {
-      final res = await _api.dio.get('/riwayat/pasien/pemberian-obat', queryParameters: {'no_rawat': noRawat});
+      final res = await _api.dio.get('/riwayat/pasien/pemberian-obat',
+          queryParameters: {'no_rawat': noRawat});
       if (res.data['success'] == true && res.data['data'] != null) {
         final list = res.data['data']['list'] as List? ?? [];
         obat.value = list
@@ -349,25 +441,29 @@ class RekamMedisController extends GetxController {
                 })
             .toList();
       }
-    } catch (e, s) { AppLogger.error('RekamMedis', e, s); }
+    } catch (e, s) {
+      AppLogger.error('RekamMedis', e, s);
+    }
   }
 
   Future<void> _fetchLaboratorium() async {
     isLoadingLab.value = true;
     try {
-      final res = await _api.dio.get('/riwayat/pasien/laboratorium', queryParameters: {'no_rawat': noRawat});
+      final res = await _api.dio.get('/riwayat/pasien/laboratorium',
+          queryParameters: {'no_rawat': noRawat});
       if (res.data['success'] == true && res.data['data'] != null) {
         final listData = res.data['data']['list'] as List? ?? [];
         final List<Map<String, dynamic>> groupedLab = [];
         for (var group in listData) {
           final periksaList = group['periksa'] as List? ?? [];
           for (var periksa in periksaList) {
-            final String nmPerawatan = periksa['nm_perawatan']?.toString() ?? '';
+            final String nmPerawatan =
+                periksa['nm_perawatan']?.toString() ?? '';
             if (nmPerawatan.toUpperCase().contains('BHP')) {
               continue;
             }
             final nilaiList = periksa['nilai'] as List? ?? [];
-            
+
             final List<Map<String, dynamic>> items = [];
             for (var n in nilaiList) {
               items.add({
@@ -378,7 +474,7 @@ class RekamMedisController extends GetxController {
                 'keterangan': n['keterangan'] ?? '',
               });
             }
-            
+
             if (items.isNotEmpty) {
               groupedLab.add({
                 'group_name': nmPerawatan,
@@ -402,7 +498,9 @@ class RekamMedisController extends GetxController {
         }
         laboratorium.value = groupedLab;
       }
-    } catch (e, s) { AppLogger.error('RekamMedis', e, s); } finally {
+    } catch (e, s) {
+      AppLogger.error('RekamMedis', e, s);
+    } finally {
       isLoadingLab.value = false;
     }
   }
@@ -410,7 +508,8 @@ class RekamMedisController extends GetxController {
   Future<void> _fetchRadiologi() async {
     isLoadingRad.value = true;
     try {
-      final res = await _api.dio.get('/riwayat/pasien/radiologi', queryParameters: {'no_rawat': noRawat});
+      final res = await _api.dio.get('/riwayat/pasien/radiologi',
+          queryParameters: {'no_rawat': noRawat});
       if (res.data['success'] == true && res.data['data'] != null) {
         final listData = res.data['data']['list'] as List? ?? [];
         radiologi.value = listData.map((e) {
@@ -429,7 +528,9 @@ class RekamMedisController extends GetxController {
           };
         }).toList();
       }
-    } catch (e, s) { AppLogger.error('RekamMedis', e, s); } finally {
+    } catch (e, s) {
+      AppLogger.error('RekamMedis', e, s);
+    } finally {
       isLoadingRad.value = false;
     }
   }
@@ -449,23 +550,34 @@ class RekamMedisController extends GetxController {
       hasPerkiraan.value = false;
 
       // 1. Fetch total tagihan
-      final resBilling = await _api.dio.get('/riwayat/pasien/total-tagihan', queryParameters: {'no_rawat': noRawat});
-      if (resBilling.statusCode == 200 && resBilling.data != null && resBilling.data['success'] == true) {
-        totalBilling.value = double.tryParse(resBilling.data['data']['total_biaya']?.toString() ?? '') ?? 0.0;
+      final resBilling = await _api.dio.get('/riwayat/pasien/total-tagihan',
+          queryParameters: {'no_rawat': noRawat});
+      if (resBilling.statusCode == 200 &&
+          resBilling.data != null &&
+          resBilling.data['success'] == true) {
+        totalBilling.value = double.tryParse(
+                resBilling.data['data']['total_biaya']?.toString() ?? '') ??
+            0.0;
       }
 
       // 2. If BPJS patient, fetch perkiraan biaya
       final penjamin = pasienData.value?['png_jawab']?.toString() ?? 'Umum';
       final isBpjs = penjamin.toUpperCase().contains('BPJS');
       if (isBpjs) {
-        final resPerkiraan = await _api.dio.get('/perkiraan-biaya', queryParameters: {'search': noRawat});
-        if (resPerkiraan.statusCode == 200 && resPerkiraan.data != null && resPerkiraan.data['success'] == true && resPerkiraan.data['data'] is List) {
+        final resPerkiraan = await _api.dio
+            .get('/perkiraan-biaya', queryParameters: {'search': noRawat});
+        if (resPerkiraan.statusCode == 200 &&
+            resPerkiraan.data != null &&
+            resPerkiraan.data['success'] == true &&
+            resPerkiraan.data['data'] is List) {
           final list = resPerkiraan.data['data'] as List;
           if (list.isNotEmpty) {
             final item = list[0] as Map<String, dynamic>;
             final costDetails = item['cost_details'] as Map<String, dynamic>?;
             if (costDetails != null) {
-              final perkiraan = double.tryParse(costDetails['perkiraan_tarif']?.toString() ?? '') ?? 0.0;
+              final perkiraan = double.tryParse(
+                      costDetails['perkiraan_tarif']?.toString() ?? '') ??
+                  0.0;
               if (perkiraan > 0) {
                 perkiraanBiaya.value = perkiraan;
                 selisihBiaya.value = perkiraan - totalBilling.value;
@@ -489,8 +601,12 @@ class RekamMedisController extends GetxController {
     }
     try {
       isLoadingSbar.value = true;
-      final res = await _api.dio.get('/pemeriksaan', queryParameters: {'no_rawat': noRawat});
-      if (res.statusCode == 200 && res.data != null && res.data['success'] == true && res.data['data'] is List) {
+      final res = await _api.dio
+          .get('/pemeriksaan', queryParameters: {'no_rawat': noRawat});
+      if (res.statusCode == 200 &&
+          res.data != null &&
+          res.data['success'] == true &&
+          res.data['data'] is List) {
         sbarList.value = List<Map<String, dynamic>>.from(res.data['data']);
       } else {
         sbarList.clear();
@@ -509,8 +625,12 @@ class RekamMedisController extends GetxController {
     }
     try {
       isLoadingDpjp.value = true;
-      final res = await _api.dio.get('/dpjp-ranap', queryParameters: {'no_rawat': noRawat});
-      if (res.statusCode == 200 && res.data != null && res.data['success'] == true && res.data['data'] is List) {
+      final res = await _api.dio
+          .get('/dpjp-ranap', queryParameters: {'no_rawat': noRawat});
+      if (res.statusCode == 200 &&
+          res.data != null &&
+          res.data['success'] == true &&
+          res.data['data'] is List) {
         dpjpList.value = List<Map<String, dynamic>>.from(res.data['data']);
       } else {
         dpjpList.clear();
@@ -547,7 +667,8 @@ class RekamMedisController extends GetxController {
         'instruksi': instruksi,
         'rencana': rencana,
       });
-      if (res.statusCode == 201 || (res.data != null && res.data['success'] == true)) {
+      if (res.statusCode == 201 ||
+          (res.data != null && res.data['success'] == true)) {
         await _fetchSbarList();
         return true;
       }
@@ -585,7 +706,9 @@ class RekamMedisController extends GetxController {
         'pjranap_ke': pjranapKe,
       });
 
-      if (res.statusCode == 201 || res.statusCode == 200 || (res.data != null && res.data['success'] == true)) {
+      if (res.statusCode == 201 ||
+          res.statusCode == 200 ||
+          (res.data != null && res.data['success'] == true)) {
         await _fetchDpjpList();
         return true;
       }
@@ -604,31 +727,39 @@ class RekamMedisController extends GetxController {
       final raw = prefs.getString('offline_soap_queue_$noRawat');
       if (raw != null) {
         final List decoded = jsonDecode(raw);
-        offlineSoapQueue.value = decoded.map((e) => Map<String, dynamic>.from(e)).toList();
-        
+        offlineSoapQueue.value =
+            decoded.map((e) => Map<String, dynamic>.from(e)).toList();
+
         // Inject offline records into UI immediately
         for (var item in offlineSoapQueue) {
           final mockSoap = _normalizeMedisData(item);
           mockSoap['isOfflineDraft'] = true;
-          final exists = riwayatMedis.any((x) => x['tanggal'] == mockSoap['tanggal'] && x['jam'] == mockSoap['jam']);
+          final exists = riwayatMedis.any((x) =>
+              x['tanggal'] == mockSoap['tanggal'] &&
+              x['jam'] == mockSoap['jam']);
           if (!exists) {
             riwayatMedis.add(mockSoap);
           }
         }
       }
-    } catch (e, s) { AppLogger.error('RekamMedis', e, s); }
+    } catch (e, s) {
+      AppLogger.error('RekamMedis', e, s);
+    }
   }
 
   Future<void> _saveOfflineQueueToPrefs() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('offline_soap_queue_$noRawat', jsonEncode(offlineSoapQueue));
-    } catch (e, s) { AppLogger.error('RekamMedis', e, s); }
+      await prefs.setString(
+          'offline_soap_queue_$noRawat', jsonEncode(offlineSoapQueue));
+    } catch (e, s) {
+      AppLogger.error('RekamMedis', e, s);
+    }
   }
 
   Future<void> syncOfflineSoap() async {
     if (offlineSoapQueue.isEmpty) return;
-    
+
     final conn = await Connectivity().checkConnectivity();
     final isOffline = conn.isEmpty || conn.contains(ConnectivityResult.none);
     if (isOffline) return;
@@ -638,12 +769,13 @@ class RekamMedisController extends GetxController {
 
     for (var item in toSync) {
       try {
-        final path = item['_tipeRawat'] == 'RANAP' ? '/soap/ranap' : '/soap/ralan';
+        final path =
+            item['_tipeRawat'] == 'RANAP' ? '/soap/ranap' : '/soap/ralan';
         final payload = Map<String, dynamic>.from(item)
           ..remove('_tipeRawat')
           ..remove('isOfflineDraft')
           ..remove('isEdit');
-        
+
         dynamic res;
         if (item['isEdit'] == true) {
           res = await _api.dio.put(path, data: payload);
@@ -651,11 +783,16 @@ class RekamMedisController extends GetxController {
           res = await _api.dio.post(path, data: payload);
         }
 
-        if (res.statusCode == 200 || res.statusCode == 201 || (res.data != null && res.data['success'] == true)) {
-          offlineSoapQueue.removeWhere((x) => x['tanggal'] == item['tanggal'] && x['jam'] == item['jam']);
+        if (res.statusCode == 200 ||
+            res.statusCode == 201 ||
+            (res.data != null && res.data['success'] == true)) {
+          offlineSoapQueue.removeWhere((x) =>
+              x['tanggal'] == item['tanggal'] && x['jam'] == item['jam']);
           anySuccess = true;
         }
-      } catch (e, s) { AppLogger.error('RekamMedis', e, s); }
+      } catch (e, s) {
+        AppLogger.error('RekamMedis', e, s);
+      }
     }
 
     if (anySuccess) {
@@ -681,17 +818,22 @@ class RekamMedisController extends GetxController {
     try {
       isLoading.value = true;
       final authCtrl = Get.find<AuthController>();
-      final myNip = authCtrl.user.value?['nip'] ?? authCtrl.user.value?['username'] ?? '';
-      final myName = authCtrl.user.value?['nama'] ?? authCtrl.user.value?['name'] ?? 'Dokter';
-      
+      final myNip =
+          authCtrl.user.value?['nip'] ?? authCtrl.user.value?['username'] ?? '';
+      final myName = authCtrl.user.value?['nama'] ??
+          authCtrl.user.value?['name'] ??
+          'Dokter';
+
       final conn = await Connectivity().checkConnectivity();
       final isOffline = conn.isEmpty || conn.contains(ConnectivityResult.none);
-      
+
       if (isOffline) {
         final now = DateTime.now();
-        final tglStr = tglPerawatan ?? '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
-        final jamStr = jamRawat ?? '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}:${now.second.toString().padLeft(2, '0')}';
-        
+        final tglStr = tglPerawatan ??
+            '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+        final jamStr = jamRawat ??
+            '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}:${now.second.toString().padLeft(2, '0')}';
+
         final payload = {
           'no_rawat': noRawat,
           ...data,
@@ -713,7 +855,8 @@ class RekamMedisController extends GetxController {
         final mockSoap = _normalizeMedisData(payload);
         mockSoap['isOfflineDraft'] = true;
         if (isEdit) {
-          final idx = riwayatMedis.indexWhere((x) => x['tanggal'] == tglPerawatan && x['jam'] == jamRawat);
+          final idx = riwayatMedis.indexWhere(
+              (x) => x['tanggal'] == tglPerawatan && x['jam'] == jamRawat);
           if (idx != -1) {
             riwayatMedis[idx] = mockSoap;
           }
@@ -750,7 +893,9 @@ class RekamMedisController extends GetxController {
         res = await _api.dio.post(path, data: payload);
       }
 
-      if (res.statusCode == 200 || res.statusCode == 201 || (res.data != null && res.data['success'] == true)) {
+      if (res.statusCode == 200 ||
+          res.statusCode == 201 ||
+          (res.data != null && res.data['success'] == true)) {
         await _fetchRiwayatMedis();
         if (!isEdit) {
           await clearSoapDraft();
@@ -771,11 +916,21 @@ class RekamMedisController extends GetxController {
     final confirmed = await Get.dialog<bool>(
       AlertDialog(
         backgroundColor: AppTheme.bgCard,
-        title: Text('Hapus Catatan SOAP?', style: GoogleFonts.outfit(fontWeight: FontWeight.w700, color: AppTheme.textPrimary)),
-        content: Text('Data SOAP ini akan dihapus secara permanen.', style: GoogleFonts.outfit(color: AppTheme.textSecondary)),
+        title: Text('Hapus Catatan SOAP?',
+            style: GoogleFonts.outfit(
+                fontWeight: FontWeight.w700, color: AppTheme.textPrimary)),
+        content: Text('Data SOAP ini akan dihapus secara permanen.',
+            style: GoogleFonts.outfit(color: AppTheme.textSecondary)),
         actions: [
-          TextButton(onPressed: () => Get.back(result: false), child: Text('Batal', style: GoogleFonts.outfit(color: AppTheme.textMuted))),
-          TextButton(onPressed: () => Get.back(result: true), child: Text('Hapus', style: GoogleFonts.outfit(color: AppTheme.danger, fontWeight: FontWeight.w700))),
+          TextButton(
+              onPressed: () => Get.back(result: false),
+              child: Text('Batal',
+                  style: GoogleFonts.outfit(color: AppTheme.textMuted))),
+          TextButton(
+              onPressed: () => Get.back(result: true),
+              child: Text('Hapus',
+                  style: GoogleFonts.outfit(
+                      color: AppTheme.danger, fontWeight: FontWeight.w700))),
         ],
       ),
     );
@@ -791,7 +946,8 @@ class RekamMedisController extends GetxController {
         'tgl_perawatan': tgl,
         'jam_rawat': jam,
       });
-      if (res.statusCode == 200 || (res.data != null && res.data['success'] == true)) {
+      if (res.statusCode == 200 ||
+          (res.data != null && res.data['success'] == true)) {
         if (!isClosed) await _fetchRiwayatMedis();
         return true;
       }
@@ -816,26 +972,34 @@ class RekamMedisController extends GetxController {
         isLoadingConsult.value = true;
       }
       final results = await Future.wait([
-        _api.dio.get('/konsultasi/masuk', queryParameters: {'no_rawat': noRawat}),
-        _api.dio.get('/konsultasi/keluar', queryParameters: {'no_rawat': noRawat}),
+        _api.dio
+            .get('/konsultasi/masuk', queryParameters: {'no_rawat': noRawat}),
+        _api.dio
+            .get('/konsultasi/keluar', queryParameters: {'no_rawat': noRawat}),
       ]);
-      
-      if (results[0].statusCode == 200 && results[0].data != null && results[0].data['success'] == true) {
+
+      if (results[0].statusCode == 200 &&
+          results[0].data != null &&
+          results[0].data['success'] == true) {
         final list = results[0].data['data'] as List? ?? [];
         incomingConsults.value = list
             .map((e) => Map<String, dynamic>.from(e))
             .where((e) => e['no_rawat'] == noRawat)
             .toList();
       }
-      
-      if (results[1].statusCode == 200 && results[1].data != null && results[1].data['success'] == true) {
+
+      if (results[1].statusCode == 200 &&
+          results[1].data != null &&
+          results[1].data['success'] == true) {
         final list = results[1].data['data'] as List? ?? [];
         outgoingConsults.value = list
             .map((e) => Map<String, dynamic>.from(e))
             .where((e) => e['no_rawat'] == noRawat)
             .toList();
       }
-    } catch (e, s) { AppLogger.error('RekamMedis', e, s); } finally {
+    } catch (e, s) {
+      AppLogger.error('RekamMedis', e, s);
+    } finally {
       if (!isBackground) {
         isLoadingConsult.value = false;
       }
@@ -845,10 +1009,15 @@ class RekamMedisController extends GetxController {
   Future<void> fetchDokterList() async {
     try {
       final res = await _api.dio.get('/konsultasi/dokter-list');
-      if (res.statusCode == 200 && res.data != null && res.data['success'] == true) {
-        dokterList.value = List<Map<String, dynamic>>.from(res.data['data'] ?? []);
+      if (res.statusCode == 200 &&
+          res.data != null &&
+          res.data['success'] == true) {
+        dokterList.value =
+            List<Map<String, dynamic>>.from(res.data['data'] ?? []);
       }
-    } catch (e, s) { AppLogger.error('RekamMedis', e, s); }
+    } catch (e, s) {
+      AppLogger.error('RekamMedis', e, s);
+    }
   }
 
   Future<bool> sendConsultation({
@@ -868,7 +1037,8 @@ class RekamMedisController extends GetxController {
         'diagnosa_kerja': diagnosa,
         'uraian_konsultasi': uraian,
       });
-      if (res.statusCode == 201 || (res.data != null && res.data['success'] == true)) {
+      if (res.statusCode == 201 ||
+          (res.data != null && res.data['success'] == true)) {
         if (!isClosed) await fetchConsultations();
         return true;
       }
@@ -898,7 +1068,8 @@ class RekamMedisController extends GetxController {
         'diagnosa_kerja': diagnosa,
         'uraian_jawaban': uraian,
       });
-      if (res.statusCode == 200 || (res.data != null && res.data['success'] == true)) {
+      if (res.statusCode == 200 ||
+          (res.data != null && res.data['success'] == true)) {
         if (!isClosed) await fetchConsultations();
         return true;
       }
@@ -919,11 +1090,17 @@ class RekamMedisController extends GetxController {
 
   Future<void> fetchResepList() async {
     try {
-      final res = await _api.dio.get('/resep', queryParameters: {'no_rawat': noRawat});
-      if (res.statusCode == 200 && res.data != null && res.data['success'] == true) {
-        resepList.value = List<Map<String, dynamic>>.from(res.data['data'] ?? []);
+      final res =
+          await _api.dio.get('/resep', queryParameters: {'no_rawat': noRawat});
+      if (res.statusCode == 200 &&
+          res.data != null &&
+          res.data['success'] == true) {
+        resepList.value =
+            List<Map<String, dynamic>>.from(res.data['data'] ?? []);
       }
-    } catch (e, s) { AppLogger.error('RekamMedis', e, s); }
+    } catch (e, s) {
+      AppLogger.error('RekamMedis', e, s);
+    }
   }
 
   Future<void> searchObat(String keyword) async {
@@ -933,18 +1110,24 @@ class RekamMedisController extends GetxController {
     }
     try {
       isLoadingObat.value = true;
-      final res = await _api.dio.get('/resep/obat-list', queryParameters: {'keyword': keyword});
-      if (res.statusCode == 200 && res.data != null && res.data['success'] == true) {
+      final res = await _api.dio
+          .get('/resep/obat-list', queryParameters: {'keyword': keyword});
+      if (res.statusCode == 200 &&
+          res.data != null &&
+          res.data['success'] == true) {
         final list = res.data['data']['list'] as List? ?? [];
         searchObatResults.value = List<Map<String, dynamic>>.from(list);
       }
-    } catch (e, s) { AppLogger.error('RekamMedis', e, s); } finally {
+    } catch (e, s) {
+      AppLogger.error('RekamMedis', e, s);
+    } finally {
       isLoadingObat.value = false;
     }
   }
 
   void addToPrescription(Map<String, dynamic> item) {
-    final existing = prescriptionDraft.firstWhereOrNull((e) => e['kode_brng'] == item['kode_brng']);
+    final existing = prescriptionDraft
+        .firstWhereOrNull((e) => e['kode_brng'] == item['kode_brng']);
     if (existing != null) {
       existing['jml'] = (existing['jml'] as int) + 1;
       prescriptionDraft.refresh();
@@ -974,13 +1157,16 @@ class RekamMedisController extends GetxController {
       final res = await _api.dio.post('/resep', data: {
         'no_rawat': noRawat,
         'status': tipeRawat.toLowerCase(),
-        'items': prescriptionDraft.map((e) => {
-          'kode_brng': e['kode_brng'],
-          'jml': e['jml'],
-          'aturan_pakai': e['aturan_pakai'],
-        }).toList(),
+        'items': prescriptionDraft
+            .map((e) => {
+                  'kode_brng': e['kode_brng'],
+                  'jml': e['jml'],
+                  'aturan_pakai': e['aturan_pakai'],
+                })
+            .toList(),
       });
-      if (res.statusCode == 201 || (res.data != null && res.data['success'] == true)) {
+      if (res.statusCode == 201 ||
+          (res.data != null && res.data['success'] == true)) {
         await clearPrescriptionDraft();
         if (!isClosed) {
           await Future.wait([
@@ -1004,11 +1190,22 @@ class RekamMedisController extends GetxController {
     final confirmed = await Get.dialog<bool>(
       AlertDialog(
         backgroundColor: AppTheme.bgCard,
-        title: Text('Hapus Resep?', style: GoogleFonts.outfit(fontWeight: FontWeight.w700, color: AppTheme.textPrimary)),
-        content: Text('Resep ini akan dihapus. Resep yang sudah diproses farmasi tidak dapat dihapus.', style: GoogleFonts.outfit(color: AppTheme.textSecondary)),
+        title: Text('Hapus Resep?',
+            style: GoogleFonts.outfit(
+                fontWeight: FontWeight.w700, color: AppTheme.textPrimary)),
+        content: Text(
+            'Resep ini akan dihapus. Resep yang sudah diproses farmasi tidak dapat dihapus.',
+            style: GoogleFonts.outfit(color: AppTheme.textSecondary)),
         actions: [
-          TextButton(onPressed: () => Get.back(result: false), child: Text('Batal', style: GoogleFonts.outfit(color: AppTheme.textMuted))),
-          TextButton(onPressed: () => Get.back(result: true), child: Text('Hapus', style: GoogleFonts.outfit(color: AppTheme.danger, fontWeight: FontWeight.w700))),
+          TextButton(
+              onPressed: () => Get.back(result: false),
+              child: Text('Batal',
+                  style: GoogleFonts.outfit(color: AppTheme.textMuted))),
+          TextButton(
+              onPressed: () => Get.back(result: true),
+              child: Text('Hapus',
+                  style: GoogleFonts.outfit(
+                      color: AppTheme.danger, fontWeight: FontWeight.w700))),
         ],
       ),
     );
@@ -1019,7 +1216,8 @@ class RekamMedisController extends GetxController {
     try {
       isLoading.value = true;
       final res = await _api.dio.delete('/resep/$noResep');
-      if (res.statusCode == 200 || (res.data != null && res.data['success'] == true)) {
+      if (res.statusCode == 200 ||
+          (res.data != null && res.data['success'] == true)) {
         if (!isClosed) {
           await Future.wait([
             _fetchObat(),
@@ -1029,7 +1227,9 @@ class RekamMedisController extends GetxController {
         return true;
       }
     } catch (_) {
-      if (!isClosed) Get.snackbar('Error', 'Gagal menghapus resep (sudah diproses farmasi)');
+      if (!isClosed) {
+        Get.snackbar('Error', 'Gagal menghapus resep (sudah diproses farmasi)');
+      }
     } finally {
       _isSubmitting = false;
       if (!isClosed) isLoading.value = false;
@@ -1060,7 +1260,9 @@ class RekamMedisController extends GetxController {
           '/diagnosa-prosedur/penyakit',
           queryParameters: {'keyword': query, 'limit': '$_icdPageSize'},
         );
-        if (res.statusCode == 200 && res.data != null && res.data['success'] == true) {
+        if (res.statusCode == 200 &&
+            res.data != null &&
+            res.data['success'] == true) {
           // Backend returns `{list, pagination}` under `data`; the old
           // `raw['data'] as List?` cast threw and silently swallowed the
           // TypeError — results never rendered. api_parsers handles both.
@@ -1091,7 +1293,9 @@ class RekamMedisController extends GetxController {
           '/diagnosa-prosedur/icd9',
           queryParameters: {'keyword': query, 'limit': '$_icdPageSize'},
         );
-        if (res.statusCode == 200 && res.data != null && res.data['success'] == true) {
+        if (res.statusCode == 200 &&
+            res.data != null &&
+            res.data['success'] == true) {
           searchICD9Results.value = parseListPayload(res.data['data']);
         }
       } catch (e, s) {
@@ -1107,11 +1311,17 @@ class RekamMedisController extends GetxController {
 
   Future<void> fetchProsedur() async {
     try {
-      final res = await _api.dio.get('/riwayat/pasien/prosedur', queryParameters: {'no_rawat': noRawat});
-      if (res.statusCode == 200 && res.data != null && res.data['success'] == true) {
-        prosedurList.value = List<Map<String, dynamic>>.from(res.data['data'] ?? []);
+      final res = await _api.dio.get('/riwayat/pasien/prosedur',
+          queryParameters: {'no_rawat': noRawat});
+      if (res.statusCode == 200 &&
+          res.data != null &&
+          res.data['success'] == true) {
+        prosedurList.value =
+            List<Map<String, dynamic>>.from(res.data['data'] ?? []);
       }
-    } catch (e, s) { AppLogger.error('RekamMedis', e, s); }
+    } catch (e, s) {
+      AppLogger.error('RekamMedis', e, s);
+    }
   }
 
   Future<bool> addDiagnosa({
@@ -1128,7 +1338,8 @@ class RekamMedisController extends GetxController {
         'prioritas': prioritas,
         'status_penyakit': statusPenyakit,
       });
-      if (res.statusCode == 201 || (res.data != null && res.data['success'] == true)) {
+      if (res.statusCode == 201 ||
+          (res.data != null && res.data['success'] == true)) {
         await _fetchDiagnosa();
         return true;
       }
@@ -1148,7 +1359,8 @@ class RekamMedisController extends GetxController {
         'kd_penyakit': kdPenyakit,
         'status': tipeRawat.toLowerCase(),
       });
-      if (res.statusCode == 200 || (res.data != null && res.data['success'] == true)) {
+      if (res.statusCode == 200 ||
+          (res.data != null && res.data['success'] == true)) {
         await _fetchDiagnosa();
         return true;
       }
@@ -1173,7 +1385,8 @@ class RekamMedisController extends GetxController {
         'prioritas': prioritas,
         'jumlah': 1,
       });
-      if (res.statusCode == 201 || (res.data != null && res.data['success'] == true)) {
+      if (res.statusCode == 201 ||
+          (res.data != null && res.data['success'] == true)) {
         await fetchProsedur();
         return true;
       }
@@ -1193,7 +1406,8 @@ class RekamMedisController extends GetxController {
         'kode': kode,
         'status': tipeRawat.toLowerCase(),
       });
-      if (res.statusCode == 200 || (res.data != null && res.data['success'] == true)) {
+      if (res.statusCode == 200 ||
+          (res.data != null && res.data['success'] == true)) {
         await fetchProsedur();
         return true;
       }
@@ -1212,12 +1426,13 @@ class RekamMedisController extends GetxController {
     if (noRawat.isEmpty) return;
     try {
       final prefs = await SharedPreferences.getInstance();
-      
+
       // Load SOAP draft
       final soapRaw = prefs.getString('soap_draft_$noRawat');
       if (soapRaw != null) {
         final Map<String, dynamic> decoded = jsonDecode(soapRaw);
-        soapDraft.value = decoded.map((key, value) => MapEntry(key, value.toString()));
+        soapDraft.value =
+            decoded.map((key, value) => MapEntry(key, value.toString()));
       } else {
         soapDraft.clear();
       }
@@ -1230,7 +1445,9 @@ class RekamMedisController extends GetxController {
       } else {
         prescriptionDraft.clear();
       }
-    } catch (e, s) { AppLogger.error('RekamMedis', e, s); }
+    } catch (e, s) {
+      AppLogger.error('RekamMedis', e, s);
+    }
   }
 
   Future<void> saveSoapDraft(Map<String, String> values) async {
@@ -1239,7 +1456,9 @@ class RekamMedisController extends GetxController {
       final prefs = await SharedPreferences.getInstance();
       soapDraft.value = values;
       await prefs.setString('soap_draft_$noRawat', jsonEncode(values));
-    } catch (e, s) { AppLogger.error('RekamMedis', e, s); }
+    } catch (e, s) {
+      AppLogger.error('RekamMedis', e, s);
+    }
   }
 
   Future<void> clearSoapDraft() async {
@@ -1248,15 +1467,20 @@ class RekamMedisController extends GetxController {
       final prefs = await SharedPreferences.getInstance();
       soapDraft.value = {};
       await prefs.remove('soap_draft_$noRawat');
-    } catch (e, s) { AppLogger.error('RekamMedis', e, s); }
+    } catch (e, s) {
+      AppLogger.error('RekamMedis', e, s);
+    }
   }
 
   Future<void> savePrescriptionDraft() async {
     if (noRawat.isEmpty) return;
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('resep_draft_$noRawat', jsonEncode(prescriptionDraft.toList()));
-    } catch (e, s) { AppLogger.error('RekamMedis', e, s); }
+      await prefs.setString(
+          'resep_draft_$noRawat', jsonEncode(prescriptionDraft.toList()));
+    } catch (e, s) {
+      AppLogger.error('RekamMedis', e, s);
+    }
   }
 
   Future<void> clearPrescriptionDraft() async {
@@ -1265,7 +1489,9 @@ class RekamMedisController extends GetxController {
       final prefs = await SharedPreferences.getInstance();
       prescriptionDraft.clear();
       await prefs.remove('resep_draft_$noRawat');
-    } catch (e, s) { AppLogger.error('RekamMedis', e, s); }
+    } catch (e, s) {
+      AppLogger.error('RekamMedis', e, s);
+    }
   }
 
   // Notification handling moved to NotificationPollingService
@@ -1298,10 +1524,13 @@ class RekamMedisController extends GetxController {
             dt = DateTime.parse('$tgl ${parsedJam.split(' ')[0]}');
           } else {
             // dd-MM-yyyy
-            dt = DateTime.parse('${parts[2]}-${parts[1]}-${parts[0]} ${parsedJam.split(' ')[0]}');
+            dt = DateTime.parse(
+                '${parts[2]}-${parts[1]}-${parts[0]} ${parsedJam.split(' ')[0]}');
           }
         }
-      } catch (e, s) { AppLogger.error('RekamMedis', e, s); }
+      } catch (e, s) {
+        AppLogger.error('RekamMedis', e, s);
+      }
       if (dt == null) continue;
 
       double? systole;
@@ -1315,15 +1544,23 @@ class RekamMedisController extends GetxController {
         final parts = tensi.split('/');
         systole = double.tryParse(parts[0].replaceAll(RegExp(r'[^0-9.]'), ''));
         if (parts.length > 1) {
-          diastole = double.tryParse(parts[1].replaceAll(RegExp(r'[^0-9.]'), ''));
+          diastole =
+              double.tryParse(parts[1].replaceAll(RegExp(r'[^0-9.]'), ''));
         }
       }
 
-      suhu = double.tryParse(raw['suhu']?.toString().replaceAll(RegExp(r'[^0-9.]'), '') ?? '');
-      nadi = double.tryParse(raw['nadi']?.toString().replaceAll(RegExp(r'[^0-9.]'), '') ?? '');
-      rr = double.tryParse(raw['rr']?.toString().replaceAll(RegExp(r'[^0-9.]'), '') ?? '');
+      suhu = double.tryParse(
+          raw['suhu']?.toString().replaceAll(RegExp(r'[^0-9.]'), '') ?? '');
+      nadi = double.tryParse(
+          raw['nadi']?.toString().replaceAll(RegExp(r'[^0-9.]'), '') ?? '');
+      rr = double.tryParse(
+          raw['rr']?.toString().replaceAll(RegExp(r'[^0-9.]'), '') ?? '');
 
-      if (systole != null || diastole != null || suhu != null || nadi != null || rr != null) {
+      if (systole != null ||
+          diastole != null ||
+          suhu != null ||
+          nadi != null ||
+          rr != null) {
         points.add(VitalsTrendPoint(
           dateTime: dt,
           systole: systole,

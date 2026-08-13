@@ -50,6 +50,25 @@ void main() {
       expect(controller.riwayatMedis[0]['keluhan_utama'], 'Keluhan sesak');
     });
 
+    test('IGD riwayat includes obstetric triage (igd-kebidanan)', () async {
+      Get.routing.args = {
+        'no_rawat': '2026/06/20/0001',
+        'no_rkm_medis': 'P00001',
+        'nm_pasien': 'Siti Rahayu',
+        '_type': 'IGD',
+      };
+      final controller = Get.put(RekamMedisController());
+      await controller.fetchAllData();
+
+      final kebidanan = controller.riwayatMedis
+          .where((e) => e['pemeriksaan_fisik']?.contains('TFU: 32') ?? false)
+          .toList();
+      expect(kebidanan.length, equals(1));
+      expect(kebidanan[0]['diagnosis'], contains('Kontraksi teratur'));
+      expect(kebidanan[0]['tata'], contains('Observasi his'));
+      expect(kebidanan[0]['petugas'], 'Bidan Rina');
+    });
+
     test('validasiSbar posts response and returns true', () async {
       Get.routing.args = {
         'no_rawat': '2026/06/20/0001',
@@ -101,7 +120,8 @@ void main() {
       expect(result, isTrue);
     });
 
-    test('searchICD10 parses the paginated {list, pagination} envelope', () async {
+    test('searchICD10 parses the paginated {list, pagination} envelope',
+        () async {
       Get.routing.args = {
         'no_rawat': '2026/06/20/0001',
         'no_rkm_medis': 'P00001',
@@ -117,7 +137,8 @@ void main() {
       expect(controller.searchICD10Results.first['kd_penyakit'], 'J45');
     });
 
-    test('searchICD9 parses the paginated {list, pagination} envelope', () async {
+    test('searchICD9 parses the paginated {list, pagination} envelope',
+        () async {
       Get.routing.args = {
         'no_rawat': '2026/06/20/0001',
         'no_rkm_medis': 'P00001',
@@ -211,7 +232,8 @@ void main() {
   });
 
   group('RekamMedisView Widget Tests', () {
-    testWidgets('renders patient details and SOAP entries', (WidgetTester tester) async {
+    testWidgets('renders patient details and SOAP entries',
+        (WidgetTester tester) async {
       addTearDown(() {
         Get.closeAllSnackbars();
       });
@@ -240,7 +262,8 @@ void main() {
       Get.delete<RekamMedisController>();
     });
 
-    testWidgets('hides all write access UI controls in read-only mode', (WidgetTester tester) async {
+    testWidgets('hides all write access UI controls in read-only mode',
+        (WidgetTester tester) async {
       Get.routing.args = {
         'no_rawat': '2026/06/20/0001',
         'no_rkm_medis': 'P00001',
@@ -248,7 +271,7 @@ void main() {
         '_type': 'RANAP',
       };
       Get.put(RekamMedisController());
-      
+
       await tester.pumpWidget(
         GetMaterialApp(
           home: const RekamMedisView(),
@@ -265,7 +288,8 @@ void main() {
       Get.delete<RekamMedisController>();
     });
 
-    testWidgets('server write access reveals controls and konsultasi dialog offers jenis dropdown',
+    testWidgets(
+        'server write access reveals controls and konsultasi dialog offers jenis dropdown',
         (WidgetTester tester) async {
       TestHelper.mockWriteAccess = true;
       addTearDown(() => TestHelper.mockWriteAccess = false);
