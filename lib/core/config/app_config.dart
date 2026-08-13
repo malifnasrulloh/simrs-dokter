@@ -9,7 +9,7 @@ class AppConfig {
   );
   static const String appVersion = String.fromEnvironment(
     'APP_VERSION',
-    defaultValue: '1.0.0',
+    defaultValue: '1.3.0',
   );
   static const int connectTimeout = int.fromEnvironment(
     'CONNECT_TIMEOUT',

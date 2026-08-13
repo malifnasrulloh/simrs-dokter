@@ -88,7 +88,7 @@ flutter run --dart-define=BASE_URL=https://localhost:4002/api
 flutter run
 
 # Build APK dengan konfigurasi production
-flutter build apk --release --dart-define=APP_VERSION=1.2.0 --dart-define=BASE_URL=https://localhost:4002/api
+flutter build apk --release --dart-define=APP_VERSION=1.3.0 --dart-define=BASE_URL=https://localhost:4002/api
 
 # Build APK split per ABI (lebih kecil)
 flutter build apk --split-per-abi --release
@@ -156,10 +156,12 @@ flutter build apk --split-per-abi --release
 
 ## 🔐 Mekanisme Auth
 
-1. **Login** → token JWT disimpan di `FlutterSecureStorage`
+1. **Login** → token JWT disimpan di `FlutterSecureStorage` (password **tidak pernah** disimpan)
 2. Setiap request otomatis menyertakan `Authorization: Bearer <token>`
-3. Jika server mengembalikan **401** → app melakukan **silent re-login** dengan username/password tersimpan
-4. Jika silent re-login gagal → semua data dihapus dan redirect ke halaman login
+3. Jika server mengembalikan **401** → app meminta token baru via `POST /auth/refresh` (jendela 24 jam setelah kedaluwarsa) lalu mengulang request sekali
+4. Jika refresh ditolak → semua data dihapus dan redirect ke halaman login
+5. **Logout** → `POST /auth/logout` dikirim (audit trail) sebelum sesi lokal dibersihkan
+6. Error 403 (kebijakan write server) / 429 (rate limit) menampilkan pesan dari server
 
 ---
 
@@ -215,7 +217,7 @@ flutter build apk --release
 
 Edit `pubspec.yaml`:
 ```yaml
-version: 1.2.0   # versiApplikasi
+version: 1.3.0   # versiApplikasi
 ```
 
 ---
