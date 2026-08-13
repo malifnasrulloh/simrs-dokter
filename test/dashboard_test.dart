@@ -54,7 +54,16 @@ void main() {
 
       // Verify bed info and schedule loads
       expect(controller.listJadwalOperasi.length, equals(1));
-      expect(controller.listJadwalOperasi[0]['nm_operasi'], 'Operasi Usus Buntu');
+      expect(
+          controller.listJadwalOperasi[0]['nm_operasi'], 'Operasi Usus Buntu');
+
+      // Verify doctor-scoped SBAR inbox
+      expect(controller.sbarInbox.length, equals(1));
+      expect(controller.sbarInbox[0]['nm_pasien'], 'Siti Rahayu');
+      expect(
+        controller.sbarInbox[0]['validasi']?['status_validasi'],
+        isNull,
+      );
     });
 
     test('harian dokter fetching handles lists and pagination', () async {
@@ -74,7 +83,8 @@ void main() {
   });
 
   group('Dashboard UI & Navigation Integration Tests', () {
-    testWidgets('renders DashboardView, handles bottom tab switching', (WidgetTester tester) async {
+    testWidgets('renders DashboardView, handles bottom tab switching',
+        (WidgetTester tester) async {
       // Set test viewport to avoid overflow exceptions
       tester.view.physicalSize = const Size(1200, 1920);
       tester.view.devicePixelRatio = 1.0;
@@ -107,7 +117,8 @@ void main() {
       expect(find.byType(HarianDokterView), findsOneWidget);
     });
 
-    testWidgets('renders HarianDokterConfigView for admin user', (WidgetTester tester) async {
+    testWidgets('renders HarianDokterConfigView for admin user',
+        (WidgetTester tester) async {
       tester.view.physicalSize = const Size(1200, 1920);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() {
@@ -140,7 +151,8 @@ void main() {
       expect(find.byType(HarianDokterConfigView), findsOneWidget);
     });
 
-    testWidgets('hides Jasa Medis tab for doctor without access', (WidgetTester tester) async {
+    testWidgets('hides Jasa Medis tab for doctor without access',
+        (WidgetTester tester) async {
       tester.view.physicalSize = const Size(1200, 1920);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() {
@@ -169,7 +181,8 @@ void main() {
       expect(find.text('Jasa Medis'), findsNothing);
     });
 
-    testWidgets('navigates to PatientWorkspaceView and filters correctly', (WidgetTester tester) async {
+    testWidgets('navigates to PatientWorkspaceView and filters correctly',
+        (WidgetTester tester) async {
       tester.view.physicalSize = const Size(1200, 1920);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() {

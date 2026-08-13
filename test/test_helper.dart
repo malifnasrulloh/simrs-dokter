@@ -18,7 +18,8 @@ class TestHelper {
     const MethodChannel secureStorageChannel =
         MethodChannel('plugins.it_nomads.com/flutter_secure_storage');
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-        .setMockMethodCallHandler(secureStorageChannel, (MethodCall methodCall) async {
+        .setMockMethodCallHandler(secureStorageChannel,
+            (MethodCall methodCall) async {
       final args = methodCall.arguments as Map?;
       switch (methodCall.method) {
         case 'read':
@@ -52,7 +53,8 @@ class TestHelper {
     const MethodChannel connectivityChannel =
         MethodChannel('dev.fluttercommunity.plus/connectivity');
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-        .setMockMethodCallHandler(connectivityChannel, (MethodCall methodCall) async {
+        .setMockMethodCallHandler(connectivityChannel,
+            (MethodCall methodCall) async {
       if (methodCall.method == 'check') {
         return ['wifi'];
       }
@@ -62,7 +64,8 @@ class TestHelper {
     const EventChannel connectivityEventChannel =
         EventChannel('dev.fluttercommunity.plus/connectivity_status');
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-        .setMockStreamHandler(connectivityEventChannel, MockConnectivityStreamHandler());
+        .setMockStreamHandler(
+            connectivityEventChannel, MockConnectivityStreamHandler());
   }
 
   static void setupMockApi() {
@@ -74,7 +77,8 @@ class TestHelper {
 
         if (path.contains('/auth/login')) {
           final data = options.data as Map?;
-          if (data?['username'] == 'D0001' && data?['password'] == 'password123') {
+          if (data?['username'] == 'D0001' &&
+              data?['password'] == 'password123') {
             return handler.resolve(Response(
               requestOptions: options,
               statusCode: 200,
@@ -272,6 +276,28 @@ class TestHelper {
           ));
         }
 
+        if (path.contains('/pemeriksaan/dokter')) {
+          return handler.resolve(Response(
+            requestOptions: options,
+            statusCode: 200,
+            data: {
+              'success': true,
+              'data': [
+                {
+                  'no_permintaan': 'KM202606200002',
+                  'no_rawat': '2026/06/20/0002',
+                  'nm_pasien': 'Siti Rahayu',
+                  'tgl_perawatan': '2026-06-20',
+                  'jam_rawat': '08:30:00',
+                  'situation': 'Pasien mengeluh nyeri dada',
+                  'petugas': {'nik': 'N001', 'nama': 'Suster Ani'},
+                  'validasi': {'status_validasi': null},
+                }
+              ]
+            },
+          ));
+        }
+
         if (path.contains('/pemeriksaan/validasi')) {
           return handler.resolve(Response(
             requestOptions: options,
@@ -365,7 +391,12 @@ class TestHelper {
               'success': true,
               'data': {
                 'write_access': TestHelper.mockWriteAccess,
-                'write_endpoints': ['/soap', '/resep', '/konsultasi', '/diagnosa-prosedur'],
+                'write_endpoints': [
+                  '/soap',
+                  '/resep',
+                  '/konsultasi',
+                  '/diagnosa-prosedur'
+                ],
                 'notifications_enabled': true,
                 'read_only': !TestHelper.mockWriteAccess,
               }
@@ -384,9 +415,17 @@ class TestHelper {
               'data': {
                 'list': [
                   {'kd_penyakit': 'J45', 'nm_penyakit': 'Asma'},
-                  {'kd_penyakit': 'J45.9', 'nm_penyakit': 'Asma, tidak spesifik'},
+                  {
+                    'kd_penyakit': 'J45.9',
+                    'nm_penyakit': 'Asma, tidak spesifik'
+                  },
                 ],
-                'pagination': {'total': 2, 'page': 1, 'limit': 50, 'total_pages': 1},
+                'pagination': {
+                  'total': 2,
+                  'page': 1,
+                  'limit': 50,
+                  'total_pages': 1
+                },
               }
             },
           ));
@@ -402,7 +441,12 @@ class TestHelper {
                 'list': [
                   {'kode': '01.01', 'deskripsi_panjang': 'Insisi kulit'},
                 ],
-                'pagination': {'total': 1, 'page': 1, 'limit': 50, 'total_pages': 1},
+                'pagination': {
+                  'total': 1,
+                  'page': 1,
+                  'limit': 50,
+                  'total_pages': 1
+                },
               }
             },
           ));

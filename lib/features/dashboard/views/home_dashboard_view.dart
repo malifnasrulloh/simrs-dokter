@@ -38,6 +38,8 @@ class HomeDashboardView extends StatelessWidget {
                     const SizedBox(height: 8),
                     _buildSurgeryList(ctrl),
                     const SizedBox(height: 20),
+                    _buildSbarInboxSection(ctrl),
+                    const SizedBox(height: 20),
                     _buildSectionTitle('Ketersediaan Bed Rawat Inap'),
                     const SizedBox(height: 8),
                     _buildBedOccupancyList(ctrl),
@@ -77,9 +79,11 @@ class HomeDashboardView extends StatelessWidget {
               decoration: BoxDecoration(
                 color: AppTheme.primary.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppTheme.primary.withValues(alpha: 0.4), width: 1.5),
+                border: Border.all(
+                    color: AppTheme.primary.withValues(alpha: 0.4), width: 1.5),
               ),
-              child: const Icon(Icons.medical_services_rounded, color: Colors.white, size: 26),
+              child: const Icon(Icons.medical_services_rounded,
+                  color: Colors.white, size: 26),
             ),
             const SizedBox(width: 14),
             Expanded(
@@ -88,7 +92,8 @@ class HomeDashboardView extends StatelessWidget {
                 children: [
                   Obx(() {
                     final settingName = auth.setting.value?['nama_instansi'];
-                    final displayText = settingName ?? auth.user.value?['departemen'] ?? '';
+                    final displayText =
+                        settingName ?? auth.user.value?['departemen'] ?? '';
                     if (displayText.isEmpty) return const SizedBox.shrink();
                     return Text(
                       displayText,
@@ -158,7 +163,8 @@ class HomeDashboardView extends StatelessWidget {
       // Calculate checked Ralan count
       final ralanTotal = ctrl.listPasienRalan.length;
       final ralanChecked = ctrl.listPasienRalan
-          .where((p) => p['stts']?.toString().toLowerCase().startsWith('sudah') ?? false)
+          .where((p) =>
+              p['stts']?.toString().toLowerCase().startsWith('sudah') ?? false)
           .length;
 
       final ranapTotal = ctrl.listPasienRanap.length;
@@ -303,6 +309,205 @@ class HomeDashboardView extends StatelessWidget {
     );
   }
 
+  Widget _buildSbarInboxSection(DashboardController ctrl) {
+    return Obx(() {
+      final pending = ctrl.sbarInbox
+          .where((s) => s['validasi']?['status_validasi'] == null)
+          .length;
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              _buildSectionTitle('SBAR Masuk'),
+              if (pending > 0) ...[
+                const SizedBox(width: 8),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(20),
+                    border:
+                        Border.all(color: Colors.orange.withValues(alpha: 0.3)),
+                  ),
+                  child: Text(
+                    '$pending belum divalidasi',
+                    style: GoogleFonts.outfit(
+                      fontSize: 9.5,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.orange.shade800,
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+          const SizedBox(height: 8),
+          _buildSbarInboxList(ctrl),
+        ],
+      );
+    });
+  }
+
+  Widget _buildSbarInboxList(DashboardController ctrl) {
+    if (ctrl.isLoading.value) {
+      return _buildShimmerPlaceholder();
+    }
+    if (ctrl.sbarInbox.isEmpty) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+        decoration: BoxDecoration(
+          color: AppTheme.bgCard,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppTheme.divider),
+        ),
+        child: Column(
+          children: [
+            Icon(Icons.fact_check_outlined,
+                color: AppTheme.textMuted.withValues(alpha: 0.5), size: 36),
+            const SizedBox(height: 8),
+            Text(
+              'Tidak ada SBAR masuk untuk Anda',
+              style: GoogleFonts.outfit(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: AppTheme.textSecondary,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return ListView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: ctrl.sbarInbox.length,
+      itemBuilder: (context, index) {
+        final sbar = ctrl.sbarInbox[index];
+        final nmPasien = sbar['nm_pasien']?.toString() ?? 'Pasien';
+        final petugas = sbar['petugas']?['nama']?.toString() ??
+            sbar['petugas']?['nik']?.toString() ??
+            '-';
+        final tgl = sbar['tgl_perawatan']?.toString() ?? '';
+        final jam = sbar['jam_rawat']?.toString() ?? '';
+        final jamStr = jam.length >= 5 ? jam.substring(0, 5) : jam;
+        final isAnswered = sbar['validasi']?['status_validasi'] != null;
+        final situation = sbar['situation']?.toString().trim() ?? '';
+
+        return GestureDetector(
+          onTap: () => Get.toNamed('/rekam-medis', arguments: <String, dynamic>{
+            'no_rawat': sbar['no_rawat'],
+            'nm_pasien': nmPasien,
+            '_type': 'RANAP',
+            '_targetTab': 6, // SBAR tab (only present for RANAP)
+          }),
+          child: Container(
+            margin: const EdgeInsets.only(bottom: 8),
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: AppTheme.bgCard,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: isAnswered
+                    ? AppTheme.divider
+                    : Colors.orange.withValues(alpha: 0.35),
+                width: 1,
+              ),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(9),
+                  decoration: BoxDecoration(
+                    color: (isAnswered ? AppTheme.success : Colors.orange)
+                        .withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    Icons.assignment_outlined,
+                    color: isAnswered ? AppTheme.success : Colors.orange,
+                    size: 18,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              nmPasien,
+                              style: GoogleFonts.outfit(
+                                fontSize: 13.5,
+                                fontWeight: FontWeight.w800,
+                                color: AppTheme.textPrimary,
+                                letterSpacing: -0.2,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 7, vertical: 2.5),
+                            decoration: BoxDecoration(
+                              color: (isAnswered
+                                      ? AppTheme.success
+                                      : Colors.orange)
+                                  .withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              isAnswered ? 'Divalidasi' : 'Menunggu',
+                              style: GoogleFonts.outfit(
+                                fontSize: 9,
+                                fontWeight: FontWeight.w800,
+                                color: isAnswered
+                                    ? AppTheme.success
+                                    : Colors.orange.shade800,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        situation,
+                        style: GoogleFonts.outfit(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
+                          color: AppTheme.textSecondary,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Dari $petugas • $tgl $jamStr',
+                        style: GoogleFonts.outfit(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                          color: AppTheme.textMuted,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const Icon(Icons.chevron_right_rounded,
+                    color: AppTheme.textMuted, size: 20),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   Widget _buildSurgeryList(DashboardController ctrl) {
     return Obx(() {
       if (ctrl.isLoading.value) {
@@ -319,7 +524,8 @@ class HomeDashboardView extends StatelessWidget {
           ),
           child: Column(
             children: [
-              Icon(Icons.calendar_today_rounded, color: AppTheme.textMuted.withValues(alpha: 0.5), size: 36),
+              Icon(Icons.calendar_today_rounded,
+                  color: AppTheme.textMuted.withValues(alpha: 0.5), size: 36),
               const SizedBox(height: 8),
               Text(
                 'Tidak ada jadwal operasi hari ini',
@@ -341,12 +547,17 @@ class HomeDashboardView extends StatelessWidget {
         itemBuilder: (context, index) {
           final op = ctrl.listJadwalOperasi[index];
           final jamMulaiRaw = op['jam_mulai']?.toString() ?? '';
-          final jamMulai = jamMulaiRaw.length >= 5 ? jamMulaiRaw.substring(0, 5) : (jamMulaiRaw.isNotEmpty ? jamMulaiRaw : '00:00');
+          final jamMulai = jamMulaiRaw.length >= 5
+              ? jamMulaiRaw.substring(0, 5)
+              : (jamMulaiRaw.isNotEmpty ? jamMulaiRaw : '00:00');
           final jamSelesaiRaw = op['jam_selesai']?.toString() ?? '';
-          final jamSelesai = jamSelesaiRaw.length >= 5 ? jamSelesaiRaw.substring(0, 5) : (jamSelesaiRaw.isNotEmpty ? jamSelesaiRaw : 'Selesai');
+          final jamSelesai = jamSelesaiRaw.length >= 5
+              ? jamSelesaiRaw.substring(0, 5)
+              : (jamSelesaiRaw.isNotEmpty ? jamSelesaiRaw : 'Selesai');
           final timeStr = '$jamMulai - $jamSelesai';
           final room = op['nm_ruang_ok']?.toString() ?? 'Kamar OK';
-          final procedure = op['nm_perawatan']?.toString() ?? 'Tindakan Operasi';
+          final procedure =
+              op['nm_perawatan']?.toString() ?? 'Tindakan Operasi';
           final patient = op['nm_pasien']?.toString() ?? 'Pasien';
           final rm = op['no_rkm_medis']?.toString() ?? '';
           final doctor = op['nm_dokter']?.toString() ?? '-';
@@ -362,14 +573,16 @@ class HomeDashboardView extends StatelessWidget {
             child: Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                   decoration: BoxDecoration(
                     color: Colors.amber.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Column(
                     children: [
-                      const Icon(Icons.access_time_filled_rounded, color: Colors.amber, size: 16),
+                      const Icon(Icons.access_time_filled_rounded,
+                          color: Colors.amber, size: 16),
                       const SizedBox(height: 4),
                       Text(
                         jamMulai,
@@ -458,18 +671,19 @@ class HomeDashboardView extends StatelessWidget {
         child: Column(
           children: ctrl.bedClasses.map((item) {
             final cls = item['kelas']?.toString() ?? '-';
-            
+
             // Look up total bed counts for this class from bedDetails
             final details = ctrl.bedDetails.where((d) => d['kelas'] == cls);
             int totalKosong = 0;
             int totalBed = 0;
             for (var d in details) {
-              totalKosong += int.tryParse(d['total_kosong']?.toString() ?? '0') ?? 0;
+              totalKosong +=
+                  int.tryParse(d['total_kosong']?.toString() ?? '0') ?? 0;
               totalBed += int.tryParse(d['total_bed']?.toString() ?? '0') ?? 0;
             }
             final totalIsi = totalBed - totalKosong;
             final double percent = totalBed > 0 ? (totalIsi / totalBed) : 0.0;
-            
+
             return Padding(
               padding: const EdgeInsets.only(bottom: 12),
               child: Column(
@@ -491,7 +705,9 @@ class HomeDashboardView extends StatelessWidget {
                         style: GoogleFonts.outfit(
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
-                          color: totalKosong > 0 ? AppTheme.primary : AppTheme.danger,
+                          color: totalKosong > 0
+                              ? AppTheme.primary
+                              : AppTheme.danger,
                         ),
                       ),
                     ],
@@ -503,7 +719,9 @@ class HomeDashboardView extends StatelessWidget {
                       value: percent,
                       minHeight: 8,
                       backgroundColor: AppTheme.bgSurface,
-                      color: percent > 0.85 ? Colors.red : (percent > 0.60 ? Colors.orange : AppTheme.success),
+                      color: percent > 0.85
+                          ? Colors.red
+                          : (percent > 0.60 ? Colors.orange : AppTheme.success),
                     ),
                   ),
                 ],

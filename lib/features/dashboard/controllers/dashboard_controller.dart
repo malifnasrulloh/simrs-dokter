@@ -19,6 +19,10 @@ class DashboardController extends GetxController {
   final bedDetails = <Map<String, dynamic>>[].obs;
   final bedClasses = <Map<String, dynamic>>[].obs;
 
+  // SBAR inbox — pending perawat→dokter requests for this doctor's inpatients
+  final sbarInbox = <Map<String, dynamic>>[].obs;
+  final isLoadingSbarInbox = false.obs;
+
   // Jasa Medis / Harian Dokter States
   final isLoadingHarian = false.obs;
   final harianList = <Map<String, dynamic>>[].obs;
@@ -45,9 +49,12 @@ class DashboardController extends GetxController {
     try {
       final res = await _api.dio.get('/harian-dokter/cara-bayar');
       if (res.data['success'] == true) {
-        caraBayarOptions.value = List<Map<String, dynamic>>.from(res.data['data'] ?? []);
+        caraBayarOptions.value =
+            List<Map<String, dynamic>>.from(res.data['data'] ?? []);
       }
-    } catch (e, s) { AppLogger.error('Dashboard', e, s); }
+    } catch (e, s) {
+      AppLogger.error('Dashboard', e, s);
+    }
   }
 
   Future<void> fetchHarianDokter({bool isLoadMore = false}) async {
@@ -63,7 +70,8 @@ class DashboardController extends GetxController {
         currentHarianPage.value += 1;
       }
 
-      final startStr = selectedDateStart.value.toIso8601String().substring(0, 10);
+      final startStr =
+          selectedDateStart.value.toIso8601String().substring(0, 10);
       final endStr = selectedDateEnd.value.toIso8601String().substring(0, 10);
 
       final queryParams = {
@@ -76,16 +84,20 @@ class DashboardController extends GetxController {
 
       if (!isLoadMore) {
         // Fetch summary
-        final summaryRes = await _api.dio.get('/harian-dokter/summary', queryParameters: queryParams);
+        final summaryRes = await _api.dio
+            .get('/harian-dokter/summary', queryParameters: queryParams);
         if (summaryRes.data['success'] == true) {
-          harianSummary.value = Map<String, dynamic>.from(summaryRes.data['data'] ?? {});
+          harianSummary.value =
+              Map<String, dynamic>.from(summaryRes.data['data'] ?? {});
         }
       }
 
       // Fetch list
-      final listRes = await _api.dio.get('/harian-dokter', queryParameters: queryParams);
+      final listRes =
+          await _api.dio.get('/harian-dokter', queryParameters: queryParams);
       if (listRes.data['success'] == true) {
-        final listData = List<Map<String, dynamic>>.from(listRes.data['data']?['data'] ?? []);
+        final listData = List<Map<String, dynamic>>.from(
+            listRes.data['data']?['data'] ?? []);
         totalHarianCount.value = listRes.data['data']?['total'] ?? 0;
         if (isLoadMore) {
           harianList.addAll(listData);
@@ -114,6 +126,7 @@ class DashboardController extends GetxController {
         _fetchPasienIGD(),
         _fetchJadwalOperasi(),
         _fetchBedAvailability(),
+        _fetchSbarInbox(),
       ]);
     } finally {
       if (!isBackground) {
@@ -139,7 +152,9 @@ class DashboardController extends GetxController {
         listPasienRanap.value = data;
         totalRanap.value = data.length;
       }
-    } catch (e, s) { AppLogger.error('Dashboard', e, s); }
+    } catch (e, s) {
+      AppLogger.error('Dashboard', e, s);
+    }
   }
 
   Future<void> _fetchPasienRalan() async {
@@ -160,7 +175,9 @@ class DashboardController extends GetxController {
         listPasienRalan.value = data;
         totalRalan.value = data.length;
       }
-    } catch (e, s) { AppLogger.error('Dashboard', e, s); }
+    } catch (e, s) {
+      AppLogger.error('Dashboard', e, s);
+    }
   }
 
   Future<void> _fetchPasienIGD() async {
@@ -182,7 +199,9 @@ class DashboardController extends GetxController {
         listPasienIGD.value = data;
         totalIGD.value = data.length;
       }
-    } catch (e, s) { AppLogger.error('Dashboard', e, s); }
+    } catch (e, s) {
+      AppLogger.error('Dashboard', e, s);
+    }
   }
 
   Future<void> _fetchJadwalOperasi() async {
@@ -208,12 +227,36 @@ class DashboardController extends GetxController {
     }
   }
 
+  Future<void> _fetchSbarInbox() async {
+    final authCtrl = Get.find<AuthController>();
+    final loggedInDoctorId = authCtrl.user.value?['nip'];
+    if (loggedInDoctorId == null || loggedInDoctorId.toString().isEmpty) {
+      sbarInbox.clear();
+      return;
+    }
+    try {
+      final res = await _api.dio.get('/pemeriksaan/dokter', queryParameters: {
+        'kd_dokter': loggedInDoctorId,
+      });
+      if (res.data['success'] == true && res.data['data'] is List) {
+        sbarInbox.value = List<Map<String, dynamic>>.from(res.data['data']);
+      } else {
+        sbarInbox.clear();
+      }
+    } catch (e, s) {
+      AppLogger.error('Dashboard', e, s);
+      sbarInbox.clear();
+    }
+  }
+
   Future<void> _fetchBedAvailability() async {
     try {
       final res = await _api.dio.get('/jadwal/bed');
       if (res.statusCode == 200 && res.data['success'] == true) {
-        final details = List<Map<String, dynamic>>.from(res.data['data']?['bedDetails'] ?? []);
-        final classes = List<Map<String, dynamic>>.from(res.data['data']?['bedClasses'] ?? []);
+        final details = List<Map<String, dynamic>>.from(
+            res.data['data']?['bedDetails'] ?? []);
+        final classes = List<Map<String, dynamic>>.from(
+            res.data['data']?['bedClasses'] ?? []);
         bedDetails.value = details;
         bedClasses.value = classes;
       } else {
