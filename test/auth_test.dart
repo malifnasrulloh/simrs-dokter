@@ -35,10 +35,11 @@ void main() {
       expect(controller.user.value, isNotNull);
       expect(controller.user.value?['kd_dokter'], 'D0001');
 
-      // Verify data is persisted in secure storage
+      // Verify data is persisted in secure storage — and that the password
+      // is NOT (refresh-token auth, T3.1).
       expect(TestHelper.mockSecureStorage['auth_token'], 'mock_jwt_token');
-      expect(TestHelper.mockSecureStorage['username'], 'D0001');
-      expect(TestHelper.mockSecureStorage['password'], 'password123');
+      expect(TestHelper.mockSecureStorage.containsKey('username'), isFalse);
+      expect(TestHelper.mockSecureStorage.containsKey('password'), isFalse);
     });
 
     test('login with incorrect credentials sets error message', () async {

@@ -182,8 +182,6 @@ class AuthController extends GetxController with WidgetsBindingObserver {
 
         await _storage.write(key: 'auth_token', value: token);
         await _storage.write(key: 'user_data', value: jsonEncode(userMap));
-        await _storage.write(key: 'username', value: username);
-        await _storage.write(key: 'password', value: password);
 
         ApiClient.setCachedToken(token);
 
@@ -214,6 +212,12 @@ class AuthController extends GetxController with WidgetsBindingObserver {
 
   Future<void> logout() async {
     _notificationService?.stop();
+    // Best-effort server-side logout (audit trail + session invalidation).
+    try {
+      await _api.dio.post('/auth/logout');
+    } catch (_) {
+      // Offline logout is still valid locally.
+    }
     ApiClient.setCachedToken(null);
     await _storage.deleteAll();
     user.value = null;
