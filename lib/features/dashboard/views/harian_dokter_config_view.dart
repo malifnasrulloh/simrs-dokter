@@ -5,14 +5,32 @@ import '../../../core/utils/google_fonts.dart';
 import '../../../core/theme/app_theme.dart';
 import '../controllers/harian_dokter_config_controller.dart';
 
-class HarianDokterConfigView extends StatelessWidget {
+class HarianDokterConfigView extends StatefulWidget {
   const HarianDokterConfigView({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final ctrl = Get.put(HarianDokterConfigController());
-    final searchCtrl = TextEditingController();
+  State<HarianDokterConfigView> createState() => _HarianDokterConfigViewState();
+}
 
+class _HarianDokterConfigViewState extends State<HarianDokterConfigView> {
+  late final HarianDokterConfigController ctrl;
+  final searchCtrl = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    ctrl = Get.put(HarianDokterConfigController(), tag: 'harianConfig');
+  }
+
+  @override
+  void dispose() {
+    Get.delete<HarianDokterConfigController>(tag: 'harianConfig');
+    searchCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.bgDark,
       appBar: AppBar(
@@ -58,7 +76,8 @@ class HarianDokterConfigView extends StatelessWidget {
                 onRefresh: ctrl.fetchAccessList,
                 color: AppTheme.primary,
                 child: ListView.separated(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   itemCount: ctrl.filteredDoctors.length,
                   separatorBuilder: (_, __) => const SizedBox(height: 12),
                   itemBuilder: (context, index) {
@@ -73,10 +92,12 @@ class HarianDokterConfigView extends StatelessWidget {
                       elevation: 0,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
-                        side: const BorderSide(color: AppTheme.divider, width: 0.8),
+                        side: const BorderSide(
+                            color: AppTheme.divider, width: 0.8),
                       ),
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 12),
                         child: Row(
                           children: [
                             Container(

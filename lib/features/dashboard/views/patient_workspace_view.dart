@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../core/theme/app_theme.dart';
+import '../widgets/patient_tile.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../controllers/dashboard_controller.dart';
 import '../../../core/utils/google_fonts.dart';
@@ -26,7 +27,8 @@ class _PatientWorkspaceViewState extends State<PatientWorkspaceView> {
     super.initState();
     _pageController = PageController(initialPage: ctrl.selectedTab.value);
     _tabWorker = ever(ctrl.selectedTab, (int index) {
-      if (_pageController.hasClients && _pageController.page?.round() != index) {
+      if (_pageController.hasClients &&
+          _pageController.page?.round() != index) {
         _pageController.animateToPage(
           index,
           duration: const Duration(milliseconds: 300),
@@ -82,7 +84,6 @@ class _PatientWorkspaceViewState extends State<PatientWorkspaceView> {
         child: Column(
           children: [
             _buildHeader(auth),
-            // Obx(() => _buildStatStrip()),
             _buildSearchBox(),
             Obx(() => _buildWorkspaceTabs()),
             _buildPatientList(),
@@ -121,7 +122,8 @@ class _PatientWorkspaceViewState extends State<PatientWorkspaceView> {
               children: [
                 Obx(() {
                   final settingName = auth.setting.value?['nama_instansi'];
-                  final displayText = settingName ?? auth.user.value?['departemen'] ?? '';
+                  final displayText =
+                      settingName ?? auth.user.value?['departemen'] ?? '';
                   if (displayText.isEmpty) return const SizedBox.shrink();
                   return Text(
                     displayText,
@@ -172,75 +174,6 @@ class _PatientWorkspaceViewState extends State<PatientWorkspaceView> {
       ),
     );
   }
-
-  // Widget _buildStatStrip() {
-  //   return Container(
-  //     margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-  //     padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-  //     decoration: BoxDecoration(
-  //       color: AppTheme.bgCard,
-  //       borderRadius: BorderRadius.circular(16),
-  //       border: Border.all(color: AppTheme.divider),
-  //       boxShadow: [
-  //         BoxShadow(
-  //           color: AppTheme.textPrimary.withValues(alpha: 0.03),
-  //           blurRadius: 16,
-  //           offset: const Offset(0, 8),
-  //         ),
-  //       ],
-  //     ),
-  //     child: Row(
-  //       children: [
-  //         _statItem('Ranap', ctrl.totalRanap.value, AppTheme.info, 0),
-  //         _verticalDivider(),
-  //         _statItem('Ralan', ctrl.totalRalan.value, AppTheme.success, 1),
-  //         _verticalDivider(),
-  //         _statItem('IGD', ctrl.totalIGD.value, AppTheme.danger, 2),
-  //       ],
-  //     ),
-  //   );
-  // }
-
-  // Widget _statItem(String label, int count, Color color, int index) {
-  //   final active = ctrl.selectedTab.value == index;
-  //   return Expanded(
-  //     child: GestureDetector(
-  //       onTap: () => ctrl.selectedTab.value = index,
-  //       child: Container(
-  //         color: Colors.transparent,
-  //         child: Column(
-  //           children: [
-  //             Text(
-  //               '$count',
-  //               style: GoogleFonts.robotoMono(
-  //                 fontSize: 20,
-  //                 fontWeight: FontWeight.w800,
-  //                 color: active ? color : AppTheme.textPrimary,
-  //               ),
-  //             ),
-  //             const SizedBox(height: 2),
-  //             Text(
-  //               label,
-  //               style: GoogleFonts.outfit(
-  //                 fontSize: 11.5,
-  //                 color: active ? color : AppTheme.textSecondary,
-  //                 fontWeight: active ? FontWeight.w800 : FontWeight.w600,
-  //               ),
-  //             ),
-  //           ],
-  //         ),
-  //       ),
-  //     ),
-  //   );
-  // }
-
-  // Widget _verticalDivider() {
-  //   return Container(
-  //     width: 1.2,
-  //     height: 28,
-  //     color: AppTheme.divider,
-  //   );
-  // }
 
   Widget _buildSearchBox() {
     return Padding(
@@ -368,7 +301,11 @@ class _PatientWorkspaceViewState extends State<PatientWorkspaceView> {
   }
 
   Widget _buildPatientCategoryList(int tabIndex) {
-    final typeStr = tabIndex == 0 ? 'RANAP' : tabIndex == 1 ? 'RALAN' : 'IGD';
+    final typeStr = tabIndex == 0
+        ? 'RANAP'
+        : tabIndex == 1
+            ? 'RALAN'
+            : 'IGD';
     final typeColor = tabIndex == 0
         ? AppTheme.info
         : tabIndex == 2
@@ -433,217 +370,11 @@ class _PatientWorkspaceViewState extends State<PatientWorkspaceView> {
           separatorBuilder: (_, __) => const SizedBox(height: 12),
           itemBuilder: (context, index) {
             final pasien = list[index];
-            return _patientTile(pasien, typeStr, typeColor);
+            return PatientTile(
+                pasien: pasien, type: typeStr, typeColor: typeColor);
           },
         ),
       );
     });
-  }
-
-  Widget _patientTile(
-      Map<String, dynamic> pasien, String type, Color typeColor) {
-    final penjamin = pasien['png_jawab']?.toString() ?? 'Umum';
-    final isBpjs = penjamin.toUpperCase().contains('BPJS');
-    final room =
-        pasien['kamar'] ?? pasien['nm_ruang'] ?? pasien['nm_poli'] ?? '-';
-
-    String dokterName = '-';
-    if (type == 'RANAP') {
-      final dpjpList = pasien['dpjp'] as List?;
-      if (dpjpList != null && dpjpList.isNotEmpty) {
-        dokterName = dpjpList[0]['nm_dokter'] ?? '-';
-      }
-    } else {
-      dokterName = pasien['nm_dokter'] ?? '-';
-    }
-
-    final jk = pasien['jk']?.toString() ?? '-';
-    final isMale = jk.toUpperCase() == 'L' ||
-        jk.toUpperCase() == 'PRIA' ||
-        jk.toUpperCase() == 'LAKI-LAKI';
-    final genderText = isMale ? 'L' : 'P';
-    final age = pasien['umur'] ?? pasien['usia'] ?? '-';
-    final date = pasien['tgl_masuk'] ?? pasien['tgl_registrasi'] ?? '-';
-
-    return GestureDetector(
-      onTap: () =>
-          Get.toNamed('/rekam-medis', arguments: {...pasien, '_type': type}),
-      child: Container(
-        decoration: BoxDecoration(
-          color: AppTheme.bgCard,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: AppTheme.divider, width: 1.2),
-          boxShadow: [
-            BoxShadow(
-              color: AppTheme.textPrimary.withValues(alpha: 0.03),
-              blurRadius: 12,
-              offset: const Offset(0, 6),
-            )
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(18),
-          child: IntrinsicHeight(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Container(
-                  width: 5,
-                  color: typeColor,
-                ),
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                pasien['nm_pasien'] ?? '-',
-                                style: GoogleFonts.outfit(
-                                  fontSize: 14.5,
-                                  fontWeight: FontWeight.w800,
-                                  color: AppTheme.textPrimary,
-                                  letterSpacing: -0.2,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 7, vertical: 2.5),
-                              decoration: BoxDecoration(
-                                color: isBpjs
-                                    ? const Color(0xFFD1FAE5)
-                                    : AppTheme.bgSurface,
-                                borderRadius: BorderRadius.circular(6),
-                                border: Border.all(
-                                  color: isBpjs
-                                      ? const Color(0xFF10B981).withValues(alpha: 0.3)
-                                      : AppTheme.divider,
-                                  width: 1,
-                                ),
-                              ),
-                              child: Text(
-                                isBpjs ? 'BPJS' : 'UMUM',
-                                style: GoogleFonts.outfit(
-                                  fontSize: 9,
-                                  fontWeight: FontWeight.w800,
-                                  color: isBpjs
-                                      ? const Color(0xFF047857)
-                                      : AppTheme.textSecondary,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 4),
-                        Row(
-                          children: [
-                            Text(
-                              pasien['no_rm'] ?? pasien['no_rkm_medis'] ?? '-',
-                              style: GoogleFonts.robotoMono(
-                                fontSize: 11.5,
-                                fontWeight: FontWeight.w600,
-                                color: AppTheme.primary,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Text('•',
-                                style: GoogleFonts.outfit(
-                                    color: AppTheme.textMuted,
-                                    fontWeight: FontWeight.w800)),
-                            const SizedBox(width: 8),
-                            Text(
-                              '$genderText • $age',
-                              style: GoogleFonts.outfit(
-                                  fontSize: 11,
-                                  color: AppTheme.textSecondary,
-                                  fontWeight: FontWeight.w700),
-                            ),
-                            if (type == 'RANAP' && pasien['lama'] != null) ...[
-                              const Spacer(),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 6, vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: Colors.orange.withValues(alpha: 0.08),
-                                  borderRadius: BorderRadius.circular(5),
-                                  border: Border.all(
-                                      color: Colors.orange.withValues(alpha: 0.2)),
-                                ),
-                                child: Text(
-                                  '${pasien['lama']} Hari',
-                                  style: GoogleFonts.outfit(
-                                    fontSize: 9,
-                                    fontWeight: FontWeight.w800,
-                                    color: Colors.orange,
-                                  ),
-                                ),
-                              ),
-                            ]
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        const Divider(height: 1, thickness: 1),
-                        const SizedBox(height: 10),
-                        Row(
-                          children: [
-                            const Icon(Icons.bed_outlined,
-                                size: 13, color: AppTheme.textMuted),
-                            const SizedBox(width: 6),
-                            Expanded(
-                              child: Text(
-                                room,
-                                style: GoogleFonts.outfit(
-                                    fontSize: 11.5,
-                                    fontWeight: FontWeight.w800,
-                                    color: AppTheme.textSecondary),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                            Text(
-                              date,
-                              style: GoogleFonts.outfit(
-                                  fontSize: 9.5,
-                                  color: AppTheme.textMuted,
-                                  fontWeight: FontWeight.w700),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 4),
-                        Row(
-                          children: [
-                            const Icon(Icons.person_outline_rounded,
-                                size: 13, color: AppTheme.textMuted),
-                            const SizedBox(width: 6),
-                            Expanded(
-                              child: Text(
-                                'DPJP: $dokterName',
-                                style: GoogleFonts.outfit(
-                                    fontSize: 11.5,
-                                    color: AppTheme.textSecondary,
-                                    fontWeight: FontWeight.w600),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
   }
 }

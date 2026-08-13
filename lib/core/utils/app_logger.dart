@@ -10,7 +10,4 @@ class AppLogger {
     }
   }
 
-  static void info(String tag, String message) {
-    debugPrint('[$tag] $message');
-  }
 }

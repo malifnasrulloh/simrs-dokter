@@ -16,7 +16,6 @@ class DashboardController extends GetxController {
   final currentNavIndex = 0.obs;
   final selectedTab = 0.obs;
   final listJadwalOperasi = <Map<String, dynamic>>[].obs;
-  final totalOperasi = 0.obs;
   final bedDetails = <Map<String, dynamic>>[].obs;
   final bedClasses = <Map<String, dynamic>>[].obs;
 
@@ -201,14 +200,11 @@ class DashboardController extends GetxController {
       if (res.statusCode == 200 && res.data['success'] == true) {
         final data = List<Map<String, dynamic>>.from(res.data['data'] ?? []);
         listJadwalOperasi.value = data;
-        totalOperasi.value = data.length;
       } else {
         listJadwalOperasi.clear();
-        totalOperasi.value = 0;
       }
     } catch (_) {
       listJadwalOperasi.clear();
-      totalOperasi.value = 0;
     }
   }
 

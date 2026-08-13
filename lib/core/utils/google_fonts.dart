@@ -1,11 +1,6 @@
 import 'package:flutter/material.dart';
 
-class GoogleFontsConfig {
-  bool allowRuntimeFetching = false;
-}
-
 class GoogleFonts {
-  static final config = GoogleFontsConfig();
 
   static TextStyle outfit({
     TextStyle? textStyle,

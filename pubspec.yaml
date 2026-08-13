@@ -11,9 +11,6 @@ dependencies:
     sdk: flutter
 
   # UI & Icons
-  cupertino_icons: ^1.0.8
-  google_fonts: ^8.1.0
-  flutter_svg: ^2.0.10+1
   shimmer: ^3.0.0
   cached_network_image: ^3.4.1
   fl_chart: ^1.2.0
@@ -31,12 +28,7 @@ dependencies:
 
   # Utils
   intl: ^0.20.2
-  timeago: ^3.7.0
-  pull_to_refresh: ^2.0.0
-  badges: ^3.1.2
-  dotted_border: ^3.1.0
   url_launcher: ^6.3.1
-  webview_flutter: ^4.10.0
   awesome_notifications: ^0.12.1
   device_info_plus: ^13.2.0
 
@@ -46,16 +38,14 @@ dev_dependencies:
   flutter_lints: ^6.0.0
   flutter_launcher_icons: ^0.14.4
   change_app_package_name: ^1.5.0
-  rename_app: ^1.6.6
 
 flutter:
   uses-material-design: true
   assets:
-    - assets/images/
     - assets/icons/
 
 flutter_launcher_icons:
   android: "launcher_icon"
   ios: true
-  image_path: "assets/images/logo.png"
+  image_path: "assets/icons/logo.png"
   min_sdk_android: 21

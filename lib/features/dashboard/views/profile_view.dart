@@ -13,7 +13,6 @@ class ProfileView extends StatelessWidget {
   Widget build(BuildContext context) {
     final auth = Get.find<AuthController>();
     final ctrl = Get.find<DashboardController>();
-    auth.fetchProfile();
 
     return Scaffold(
       backgroundColor: AppTheme.bgDark,
@@ -23,14 +22,18 @@ class ProfileView extends StatelessWidget {
 
         final nama = profile['nama'] ?? user['nama'] ?? 'Dokter Spesialis';
         final nip = profile['nik'] ?? user['nip'] ?? '-';
-        
+
         final docInfo = profile['dokter_info'] as Map<String, dynamic>?;
         final spesialis = docInfo?['spesialis'] ?? '';
-        final jabatan = profile['jabatan'] ?? (spesialis.isNotEmpty ? 'Dokter Spesialis $spesialis' : 'Staf Medik Fungsional');
-        
+        final jabatan = profile['jabatan'] ??
+            (spesialis.isNotEmpty
+                ? 'Dokter Spesialis $spesialis'
+                : 'Staf Medik Fungsional');
+
         final settingName = auth.setting.value?['nama_instansi'];
-        final departemen = profile['departemen'] ?? settingName ?? user['departemen'] ?? '';
-        
+        final departemen =
+            profile['departemen'] ?? settingName ?? user['departemen'] ?? '';
+
         final noIjn = docInfo?['no_ijn_praktek'] ?? '-';
         final gender = profile['jenis_kelamin'] ?? '-';
         final birthPlace = profile['tempat_lahir'] ?? '';
@@ -47,7 +50,8 @@ class ProfileView extends StatelessWidget {
             children: [
               _buildProfileHeader(nama, jabatan),
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -105,7 +109,8 @@ class ProfileView extends StatelessWidget {
                 border: Border.all(color: Colors.white, width: 2),
               ),
               child: const Center(
-                child: Icon(Icons.person_rounded, color: Colors.white, size: 40),
+                child:
+                    Icon(Icons.person_rounded, color: Colors.white, size: 40),
               ),
             ),
             const SizedBox(height: 12),
@@ -164,11 +169,14 @@ class ProfileView extends StatelessWidget {
         children: [
           _buildDetailRow(Icons.badge_outlined, 'NIP / Kode Dokter', nip),
           const Divider(height: 24, thickness: 0.8),
-          _buildDetailRow(Icons.local_hospital_outlined, 'Unit / Departemen', dept),
+          _buildDetailRow(
+              Icons.local_hospital_outlined, 'Unit / Departemen', dept),
           const Divider(height: 24, thickness: 0.8),
-          _buildDetailRow(Icons.card_membership_rounded, 'No. Izin Praktek (SIP)', noIjn),
+          _buildDetailRow(
+              Icons.card_membership_rounded, 'No. Izin Praktek (SIP)', noIjn),
           const Divider(height: 24, thickness: 0.8),
-          _buildDetailRow(Icons.person_outline_rounded, 'Jenis Kelamin', gender),
+          _buildDetailRow(
+              Icons.person_outline_rounded, 'Jenis Kelamin', gender),
           const Divider(height: 24, thickness: 0.8),
           _buildDetailRow(Icons.cake_outlined, 'Tempat, Tanggal Lahir', ttl),
           const Divider(height: 24, thickness: 0.8),
@@ -227,11 +235,14 @@ class ProfileView extends StatelessWidget {
         ),
         child: Column(
           children: [
-            _buildStatRow('Total Pasien Dilayani', '$totalToday orang', AppTheme.success),
+            _buildStatRow(
+                'Total Pasien Dilayani', '$totalToday orang', AppTheme.success),
             const Divider(height: 20),
-            _buildStatRow('Pemeriksaan Ralan', '$ralanCount pasien', Colors.blue),
+            _buildStatRow(
+                'Pemeriksaan Ralan', '$ralanCount pasien', Colors.blue),
             const Divider(height: 20),
-            _buildStatRow('Pemeriksaan Ranap', '$ranapCount pasien', Colors.orange),
+            _buildStatRow(
+                'Pemeriksaan Ranap', '$ranapCount pasien', Colors.orange),
             const Divider(height: 20),
             _buildStatRow('Pemeriksaan IGD', '$igdCount pasien', Colors.red),
           ],
@@ -316,7 +327,8 @@ class ProfileView extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.logout_rounded, color: AppTheme.danger, size: 18),
+                const Icon(Icons.logout_rounded,
+                    color: AppTheme.danger, size: 18),
                 const SizedBox(width: 8),
                 Text(
                   'Keluar Aplikasi',

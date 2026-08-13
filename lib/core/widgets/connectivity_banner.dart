@@ -69,7 +69,7 @@ class _ConnectivityBannerState extends State<ConnectivityBanner>
   Widget build(BuildContext context) {
     return SizeTransition(
       sizeFactor: _slideAnim,
-      axisAlignment: -1.0,
+      alignment: Alignment.topCenter,
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),

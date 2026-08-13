@@ -13,7 +13,6 @@ class AppTheme {
   static const Color bgDark = Color(0xFFF2FAF7); // Soft mint white (eye-friendly background)
   static const Color bgCard = Color(0xFFFFFFFF); // Pure White Card
   static const Color bgSurface = Color(0xFFE6F3EE); // Minty-slate light surface
-  static const Color bgCardLight = Color(0xFFEDF4F1); // Very light cool slate
 
   // Text Colors (Dark slate for premium typography)
   static const Color textPrimary = Color(0xFF1E293B); // Slate 800
@@ -32,12 +31,6 @@ class AppTheme {
     colors: [primary, primaryLight],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-  );
-
-  static const LinearGradient bgGradient = LinearGradient(
-    colors: [bgDark, Color(0xFFEAF5F0)],
-    begin: Alignment.topCenter,
-    end: Alignment.bottomCenter,
   );
 
   // ─── Theme Data ───────────────────────────────────────

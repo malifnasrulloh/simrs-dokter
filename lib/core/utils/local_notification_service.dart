@@ -62,15 +62,4 @@ class LocalNotificationService {
     );
   }
 
-  static Future<void> cancelNotification(int id) async {
-    await AwesomeNotifications().cancel(id);
-  }
-
-  static Future<void> cancelAll() async {
-    await AwesomeNotifications().cancelAll();
-  }
-
-  static Future<void> resetBadge() async {
-    await AwesomeNotifications().resetGlobalBadge();
-  }
 }

@@ -48,28 +48,6 @@ class TestHelper {
       }
     });
 
-    // Mock flutter_local_notifications
-    const MethodChannel localNotificationsChannel =
-        MethodChannel('dexterous.com/flutter/local_notifications');
-    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-        .setMockMethodCallHandler(localNotificationsChannel, (MethodCall methodCall) async {
-      switch (methodCall.method) {
-        case 'initialize':
-        case 'createNotificationChannel':
-        case 'show':
-        case 'cancel':
-        case 'cancelAll':
-        case 'pendingNotificationRequests':
-        case 'getActiveNotifications':
-        case 'getNotificationAppLaunchDetails':
-          return true;
-        case 'requestPermission':
-          return true;
-        default:
-          return null;
-      }
-    });
-
     // Mock Connectivity
     const MethodChannel connectivityChannel =
         MethodChannel('dev.fluttercommunity.plus/connectivity');
@@ -277,7 +255,7 @@ class TestHelper {
           ));
         }
 
-        if (path.contains('/jadwal-operasi') || path.contains('/jadwal/operasi')) {
+        if (path.contains('/jadwal/operasi')) {
           return handler.resolve(Response(
             requestOptions: options,
             statusCode: 200,
@@ -294,10 +272,10 @@ class TestHelper {
           ));
         }
 
-        if (path.contains('/rekammedis/pemeriksaan/sbar/validasi')) {
+        if (path.contains('/pemeriksaan/validasi')) {
           return handler.resolve(Response(
             requestOptions: options,
-            statusCode: 200,
+            statusCode: 201,
             data: {
               'success': true,
               'message': 'Validasi SBAR berhasil disimpan',
@@ -305,7 +283,7 @@ class TestHelper {
           ));
         }
 
-        if (path.contains('/rekammedis/pemeriksaan/sbar')) {
+        if (path.contains('/pemeriksaan')) {
           return handler.resolve(Response(
             requestOptions: options,
             statusCode: 200,
@@ -327,35 +305,23 @@ class TestHelper {
           ));
         }
 
-        if (path.contains('/rekammedis/soap/simpan')) {
+        if (path.contains('/soap/ranap') || path.contains('/soap/ralan')) {
+          if (options.method == 'DELETE') {
+            return handler.resolve(Response(
+              requestOptions: options,
+              statusCode: 200,
+              data: {
+                'success': true,
+                'message': 'Pemeriksaan SOAP berhasil dihapus',
+              },
+            ));
+          }
           return handler.resolve(Response(
             requestOptions: options,
-            statusCode: 200,
+            statusCode: 201,
             data: {
               'success': true,
               'message': 'Pemeriksaan SOAP berhasil disimpan',
-            },
-          ));
-        }
-
-        if (path.contains('/rekammedis/soap/update')) {
-          return handler.resolve(Response(
-            requestOptions: options,
-            statusCode: 200,
-            data: {
-              'success': true,
-              'message': 'Pemeriksaan SOAP berhasil diubah',
-            },
-          ));
-        }
-
-        if (path.contains('/rekammedis/soap/hapus')) {
-          return handler.resolve(Response(
-            requestOptions: options,
-            statusCode: 200,
-            data: {
-              'success': true,
-              'message': 'Pemeriksaan SOAP berhasil dihapus',
             },
           ));
         }

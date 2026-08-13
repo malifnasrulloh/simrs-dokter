@@ -3,10 +3,8 @@ import 'dart:io';
 import 'dart:async';
 import 'package:get/get.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
-import '../../../core/config/app_config.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_parsers.dart';
 import '../../../core/utils/app_logger.dart';
@@ -40,9 +38,6 @@ class RekamMedisController extends GetxController {
   final obat = <Map<String, dynamic>>[].obs;
   final laboratorium = <Map<String, dynamic>>[].obs;
   final radiologi = <Map<String, dynamic>>[].obs;
-  final vitalSigns = <Map<String, dynamic>>[].obs;
-  final dicomStudies = <Map<String, dynamic>>[].obs;
-  final isLoadingDicom = false.obs;
   final expandedStates = <String, bool>{}.obs;
   
   // Vitals Chart and Offline Queue observables
@@ -128,12 +123,6 @@ class RekamMedisController extends GetxController {
     if (targetTab != null && targetTab >= 0) {
       activeTab.value = targetTab;
     }
-  }
-
-  void loadPasien(Map<String, dynamic> data) {
-    pasienData.value = data;
-    fetchAllData();
-    loadDrafts();
   }
 
   Future<void> fetchAllData({bool isBackground = false}) async {
@@ -445,23 +434,6 @@ class RekamMedisController extends GetxController {
     }
   }
 
-  // Future<void> _fetchDicomStudies() async {
-  //   try {
-  //     isLoadingDicom.value = true;
-  //     final res = await _api.dio.get('/orthanc/studies', queryParameters: {'no_rkm_medis': noRkmMedis});
-  //     if (res.statusCode == 200 && res.data != null && res.data['success'] == true) {
-  //       final data = res.data['data'] as List? ?? [];
-  //       dicomStudies.value = List<Map<String, dynamic>>.from(data);
-  //     } else {
-  //       dicomStudies.clear();
-  //     }
-  //   } catch (_) {
-  //     dicomStudies.clear();
-  //   } finally {
-  //     isLoadingDicom.value = false;
-  //   }
-  // }
-
   /// Quick refresh of billing info only (for billing threshold alerts)
   Future<void> fetchBillingOnly() async {
     if (noRawat.isEmpty) return;
@@ -508,16 +480,6 @@ class RekamMedisController extends GetxController {
     } finally {
       isLoadingBilling.value = false;
     }
-  }
-
-  Future<String> getDicomViewerUrl(String studyId) async {
-    final token = await const FlutterSecureStorage().read(key: 'auth_token');
-    final host = AppConfig.baseUrl.replaceAll('/api', '');
-    // /api/orthanc-viewer bypasses validateTokenJWT, proxyOhif verifies ?_t internally
-    // then strips /orthanc-viewer prefix → proxies to Orthanc /ohif/index.html
-    final studyUid = dicomStudies
-        .firstWhereOrNull((s) => s['studyId'] == studyId)?['studyInstanceUID'] ?? studyId;
-    return '$host/api/orthanc-viewer/ohif/index.html?StudyInstanceUIDs=$studyUid&_t=$token';
   }
 
   Future<void> _fetchSbarList() async {

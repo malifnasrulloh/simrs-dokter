@@ -46,7 +46,8 @@ class AuthController extends GetxController with WidgetsBindingObserver {
       final response = await _api.dio.get('/setting');
       if (response.data != null && response.data['success'] == true) {
         setting.value = Map<String, dynamic>.from(response.data['data']);
-        await _storage.write(key: 'setting_data', value: jsonEncode(setting.value));
+        await _storage.write(
+            key: 'setting_data', value: jsonEncode(setting.value));
       }
     } catch (_) {
       try {
@@ -54,11 +55,17 @@ class AuthController extends GetxController with WidgetsBindingObserver {
         if (cached != null) {
           setting.value = Map<String, dynamic>.from(jsonDecode(cached));
         }
-      } catch (e, s) { AppLogger.error('Auth', e, s); }
+      } catch (e, s) {
+        AppLogger.error('Auth', e, s);
+      }
     }
   }
 
+  bool _profileFetchInFlight = false;
+
   Future<void> fetchProfile() async {
+    if (_profileFetchInFlight) return;
+    _profileFetchInFlight = true;
     try {
       final response = await _api.dio.get('/profile');
       if (response.data != null && response.data['success'] == true) {
@@ -72,7 +79,8 @@ class AuthController extends GetxController with WidgetsBindingObserver {
           final updatedUser = Map<String, dynamic>.from(user.value!);
           updatedUser['userakses'] = newUserAkses;
           user.value = updatedUser;
-          await _storage.write(key: 'user_data', value: jsonEncode(updatedUser));
+          await _storage.write(
+              key: 'user_data', value: jsonEncode(updatedUser));
         }
       }
     } catch (_) {
@@ -81,7 +89,11 @@ class AuthController extends GetxController with WidgetsBindingObserver {
         if (cached != null) {
           profileData.value = Map<String, dynamic>.from(jsonDecode(cached));
         }
-      } catch (e, s) { AppLogger.error('Auth', e, s); }
+      } catch (e, s) {
+        AppLogger.error('Auth', e, s);
+      }
+    } finally {
+      _profileFetchInFlight = false;
     }
   }
 
@@ -94,13 +106,18 @@ class AuthController extends GetxController with WidgetsBindingObserver {
     if (cachedSetting != null) {
       try {
         setting.value = Map<String, dynamic>.from(jsonDecode(cachedSetting));
-      } catch (e, s) { AppLogger.error('Auth', e, s); }
+      } catch (e, s) {
+        AppLogger.error('Auth', e, s);
+      }
     }
 
     if (cachedProfile != null) {
       try {
-        profileData.value = Map<String, dynamic>.from(jsonDecode(cachedProfile));
-      } catch (e, s) { AppLogger.error('Auth', e, s); }
+        profileData.value =
+            Map<String, dynamic>.from(jsonDecode(cachedProfile));
+      } catch (e, s) {
+        AppLogger.error('Auth', e, s);
+      }
     }
 
     fetchSetting();
@@ -108,7 +125,9 @@ class AuthController extends GetxController with WidgetsBindingObserver {
     if (token != null && userData != null) {
       try {
         user.value = Map<String, dynamic>.from(jsonDecode(userData));
-      } catch (e, s) { AppLogger.error('Auth', e, s); }
+      } catch (e, s) {
+        AppLogger.error('Auth', e, s);
+      }
       fetchProfile();
       _notificationService?.start();
       Get.offAllNamed('/home');
@@ -122,8 +141,9 @@ class AuthController extends GetxController with WidgetsBindingObserver {
   final canWriteAccess = false.obs;
   final capabilitiesLoaded = false.obs;
 
-  bool get writeEnabled =>
-      capabilitiesLoaded.value ? canWriteAccess.value : AppConfig.enableWriteAccess;
+  bool get writeEnabled => capabilitiesLoaded.value
+      ? canWriteAccess.value
+      : AppConfig.enableWriteAccess;
 
   Future<void> fetchCapabilities() async {
     try {

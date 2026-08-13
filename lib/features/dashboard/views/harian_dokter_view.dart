@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:shimmer/shimmer.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/utils/formatters.dart';
+import '../../../core/utils/google_fonts.dart';
 import '../controllers/dashboard_controller.dart';
 
 class HarianDokterView extends StatefulWidget {
@@ -21,8 +22,10 @@ class _HarianDokterViewState extends State<HarianDokterView> {
     super.initState();
     ctrl = Get.find<DashboardController>();
     _scrollController.addListener(() {
-      if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200) {
-        if (!ctrl.isLoadingHarian.value && ctrl.harianList.length < ctrl.totalHarianCount.value) {
+      if (_scrollController.position.pixels >=
+          _scrollController.position.maxScrollExtent - 200) {
+        if (!ctrl.isLoadingHarian.value &&
+            ctrl.harianList.length < ctrl.totalHarianCount.value) {
           ctrl.fetchHarianDokter(isLoadMore: true);
         }
       }
@@ -35,28 +38,11 @@ class _HarianDokterViewState extends State<HarianDokterView> {
     super.dispose();
   }
 
-  String _formatRupiah(double val) {
-    if (val == 0) return 'Rp 0';
-    final isNegative = val < 0;
-    final absVal = val.abs().toInt();
-    final str = absVal.toString();
-    final buffer = StringBuffer();
-    int count = 0;
-    for (int i = str.length - 1; i >= 0; i--) {
-      buffer.write(str[i]);
-      count++;
-      if (count % 3 == 0 && i != 0) {
-        buffer.write('.');
-      }
-    }
-    final reversed = buffer.toString().split('').reversed.join('');
-    return '${isNegative ? '- ' : ''}Rp $reversed';
-  }
-
   Future<void> _selectDate(BuildContext context, bool isStart) async {
     final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: isStart ? ctrl.selectedDateStart.value : ctrl.selectedDateEnd.value,
+      initialDate:
+          isStart ? ctrl.selectedDateStart.value : ctrl.selectedDateEnd.value,
       firstDate: DateTime(2020),
       lastDate: DateTime(2030),
       builder: (context, child) {
@@ -153,7 +139,8 @@ class _HarianDokterViewState extends State<HarianDokterView> {
                   child: InkWell(
                     onTap: () => _selectDate(context, true),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 10),
                       decoration: BoxDecoration(
                         color: AppTheme.bgDark,
                         borderRadius: BorderRadius.circular(8),
@@ -163,23 +150,30 @@ class _HarianDokterViewState extends State<HarianDokterView> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            ctrl.selectedDateStart.value.toIso8601String().substring(0, 10),
-                            style: GoogleFonts.robotoMono(color: AppTheme.textPrimary, fontSize: 12),
+                            ctrl.selectedDateStart.value
+                                .toIso8601String()
+                                .substring(0, 10),
+                            style: GoogleFonts.robotoMono(
+                                color: AppTheme.textPrimary, fontSize: 12),
                           ),
-                          const Icon(Icons.calendar_month, color: AppTheme.primary, size: 16),
+                          const Icon(Icons.calendar_month,
+                              color: AppTheme.primary, size: 16),
                         ],
                       ),
                     ),
                   ),
                 ),
                 const SizedBox(width: 8),
-                Text('s/d', style: GoogleFonts.outfit(color: AppTheme.textSecondary, fontSize: 12)),
+                Text('s/d',
+                    style: GoogleFonts.outfit(
+                        color: AppTheme.textSecondary, fontSize: 12)),
                 const SizedBox(width: 8),
                 Expanded(
                   child: InkWell(
                     onTap: () => _selectDate(context, false),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 10),
                       decoration: BoxDecoration(
                         color: AppTheme.bgDark,
                         borderRadius: BorderRadius.circular(8),
@@ -189,10 +183,14 @@ class _HarianDokterViewState extends State<HarianDokterView> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            ctrl.selectedDateEnd.value.toIso8601String().substring(0, 10),
-                            style: GoogleFonts.robotoMono(color: AppTheme.textPrimary, fontSize: 12),
+                            ctrl.selectedDateEnd.value
+                                .toIso8601String()
+                                .substring(0, 10),
+                            style: GoogleFonts.robotoMono(
+                                color: AppTheme.textPrimary, fontSize: 12),
                           ),
-                          const Icon(Icons.calendar_month, color: AppTheme.primary, size: 16),
+                          const Icon(Icons.calendar_month,
+                              color: AppTheme.primary, size: 16),
                         ],
                       ),
                     ),
@@ -216,17 +214,21 @@ class _HarianDokterViewState extends State<HarianDokterView> {
                   value: ctrl.selectedCaraBayar.value,
                   dropdownColor: AppTheme.bgCard,
                   isExpanded: true,
-                  icon: const Icon(Icons.keyboard_arrow_down_rounded, color: AppTheme.primary),
-                  style: GoogleFonts.outfit(color: AppTheme.textPrimary, fontSize: 13),
+                  icon: const Icon(Icons.keyboard_arrow_down_rounded,
+                      color: AppTheme.primary),
+                  style: GoogleFonts.outfit(
+                      color: AppTheme.textPrimary, fontSize: 13),
                   items: [
                     DropdownMenuItem(
                       value: 'Semua',
-                      child: Text('Semua Cara Bayar', style: GoogleFonts.outfit()),
+                      child:
+                          Text('Semua Cara Bayar', style: GoogleFonts.outfit()),
                     ),
                     ...options.map((opt) {
                       return DropdownMenuItem<String>(
                         value: opt['kd_pj'] ?? '',
-                        child: Text(opt['png_jawab'] ?? '', style: GoogleFonts.outfit()),
+                        child: Text(opt['png_jawab'] ?? '',
+                            style: GoogleFonts.outfit()),
                       );
                     }),
                   ],
@@ -248,7 +250,8 @@ class _HarianDokterViewState extends State<HarianDokterView> {
   Widget _buildSummarySection() {
     return Obx(() {
       final summary = ctrl.harianSummary;
-      final grandTotal = double.tryParse(summary['grand_total']?.toString() ?? '0') ?? 0;
+      final grandTotal =
+          double.tryParse(summary['grand_total']?.toString() ?? '0') ?? 0;
       final rj = double.tryParse(summary['total_rj']?.toString() ?? '0') ?? 0;
       final ri = double.tryParse(summary['total_ri']?.toString() ?? '0') ?? 0;
       final op = double.tryParse(summary['total_op']?.toString() ?? '0') ?? 0;
@@ -275,7 +278,8 @@ class _HarianDokterViewState extends State<HarianDokterView> {
                 end: Alignment.bottomRight,
               ),
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppTheme.primary.withValues(alpha: 0.3)),
+              border:
+                  Border.all(color: AppTheme.primary.withValues(alpha: 0.3)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -291,7 +295,7 @@ class _HarianDokterViewState extends State<HarianDokterView> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  _formatRupiah(grandTotal),
+                  formatRupiah(grandTotal),
                   style: GoogleFonts.robotoMono(
                     color: AppTheme.primary,
                     fontWeight: FontWeight.w800,
@@ -339,7 +343,8 @@ class _HarianDokterViewState extends State<HarianDokterView> {
               Container(
                 width: 6,
                 height: 6,
-                decoration: BoxDecoration(color: dotColor, shape: BoxShape.circle),
+                decoration:
+                    BoxDecoration(color: dotColor, shape: BoxShape.circle),
               ),
               const SizedBox(width: 6),
               Expanded(
@@ -358,7 +363,7 @@ class _HarianDokterViewState extends State<HarianDokterView> {
           ),
           const SizedBox(height: 4),
           Text(
-            _formatRupiah(val),
+            formatRupiah(val),
             style: GoogleFonts.robotoMono(
               color: AppTheme.textPrimary,
               fontWeight: FontWeight.w700,
@@ -420,11 +425,14 @@ class _HarianDokterViewState extends State<HarianDokterView> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.receipt_long_rounded, size: 48, color: AppTheme.textSecondary.withValues(alpha: 0.4)),
+                Icon(Icons.receipt_long_rounded,
+                    size: 48,
+                    color: AppTheme.textSecondary.withValues(alpha: 0.4)),
                 const SizedBox(height: 12),
                 Text(
                   'Tidak ada data transaksi harian.',
-                  style: GoogleFonts.outfit(color: AppTheme.textSecondary, fontSize: 13),
+                  style: GoogleFonts.outfit(
+                      color: AppTheme.textSecondary, fontSize: 13),
                 ),
               ],
             ),
@@ -442,7 +450,8 @@ class _HarianDokterViewState extends State<HarianDokterView> {
                   child: SizedBox(
                     width: 20,
                     height: 20,
-                    child: CircularProgressIndicator(color: AppTheme.primary, strokeWidth: 2),
+                    child: CircularProgressIndicator(
+                        color: AppTheme.primary, strokeWidth: 2),
                   ),
                 ),
               );
@@ -489,7 +498,8 @@ class _HarianDokterViewState extends State<HarianDokterView> {
             }
 
             return Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 6.0),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 6.0),
               child: Container(
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
@@ -507,11 +517,13 @@ class _HarianDokterViewState extends State<HarianDokterView> {
                           Row(
                             children: [
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 6, vertical: 2),
                                 decoration: BoxDecoration(
                                   color: tagColor.withValues(alpha: 0.12),
                                   borderRadius: BorderRadius.circular(4),
-                                  border: Border.all(color: tagColor.withValues(alpha: 0.3)),
+                                  border: Border.all(
+                                      color: tagColor.withValues(alpha: 0.3)),
                                 ),
                                 child: Text(
                                   category,
@@ -561,7 +573,8 @@ class _HarianDokterViewState extends State<HarianDokterView> {
                           const SizedBox(height: 6),
                           Row(
                             children: [
-                              const Icon(Icons.payments_outlined, size: 12, color: AppTheme.textSecondary),
+                              const Icon(Icons.payments_outlined,
+                                  size: 12, color: AppTheme.textSecondary),
                               const SizedBox(width: 4),
                               Expanded(
                                 child: Text(
@@ -594,7 +607,7 @@ class _HarianDokterViewState extends State<HarianDokterView> {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          _formatRupiah(tarif),
+                          formatRupiah(tarif),
                           style: GoogleFonts.robotoMono(
                             color: AppTheme.primary,
                             fontWeight: FontWeight.w800,
@@ -608,7 +621,8 @@ class _HarianDokterViewState extends State<HarianDokterView> {
               ),
             );
           },
-          childCount: ctrl.harianList.length + (ctrl.harianList.length < ctrl.totalHarianCount.value ? 1 : 0),
+          childCount: ctrl.harianList.length +
+              (ctrl.harianList.length < ctrl.totalHarianCount.value ? 1 : 0),
         ),
       );
     });
