@@ -4,7 +4,9 @@ import 'dart:typed_data';
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
+import 'package:simrs_dokter/core/config/app_config.dart';
 import 'package:simrs_dokter/core/network/api_client.dart';
+import 'package:simrs_dokter/core/network/app_http_overrides.dart';
 import 'package:simrs_dokter/features/auth/controllers/auth_controller.dart';
 import 'test_helper.dart';
 
@@ -138,5 +140,45 @@ void main() {
     expect(TestHelper.mockSecureStorage['auth_token'], 'mock_jwt_token');
 
     Get.delete<AuthController>();
+  });
+
+  test('AppHttpOverrides overrides global HttpClient userAgent with effectiveUserAgent', () {
+    final overrides = AppHttpOverrides();
+    final client = overrides.createHttpClient(null);
+
+    expect(client.userAgent, equals(AppConfig.effectiveUserAgent));
+    expect(client.userAgent?.contains('SIMRS-Dokter'), isTrue);
+  });
+
+  test('ApiClient attaches effective User-Agent and WAF custom headers on outgoing requests',
+      () async {
+    final dio = ApiClient().dio;
+    dio.interceptors.clear();
+    dio.interceptors.add(ApiClient().buildAuthInterceptor());
+
+    String? capturedUserAgent;
+    String? capturedCustomHeader;
+    dio.httpClientAdapter = _ScriptedAdapter(onFetch: (options) async {
+      capturedUserAgent = options.headers['User-Agent'] as String?;
+      if (AppConfig.wafCustomHeader.isNotEmpty) {
+        capturedCustomHeader =
+            options.headers[AppConfig.wafCustomHeader] as String?;
+      }
+      return _ScriptedAdapter.json({'success': true}, 200);
+    });
+
+    await dio.get('/test');
+    expect(capturedUserAgent, equals(AppConfig.effectiveUserAgent));
+    if (AppConfig.wafCustomHeader.isNotEmpty) {
+      expect(capturedCustomHeader, equals(AppConfig.wafCustomValue));
+    }
+  });
+
+  test('AppConfig.effectiveUserAgent includes Token when wafCustomValue is present', () {
+    expect(AppConfig.effectiveUserAgent, contains(AppConfig.userAgent));
+    if (AppConfig.wafCustomValue.isNotEmpty) {
+      expect(AppConfig.effectiveUserAgent, contains('Token:'));
+      expect(AppConfig.effectiveUserAgent, contains(AppConfig.wafCustomValue));
+    }
   });
 }

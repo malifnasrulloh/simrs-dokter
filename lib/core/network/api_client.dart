@@ -26,7 +26,7 @@ class ApiClient {
   ApiClient._internal() {
     final defaultHeaders = <String, dynamic>{
       'Content-Type': 'application/json',
-      'User-Agent': AppConfig.userAgent,
+      'User-Agent': AppConfig.effectiveUserAgent,
     };
     if (AppConfig.wafCustomHeader.isNotEmpty &&
         AppConfig.wafCustomValue.isNotEmpty) {
@@ -49,6 +49,12 @@ class ApiClient {
   InterceptorsWrapper buildAuthInterceptor() {
     return InterceptorsWrapper(
       onRequest: (options, handler) async {
+        options.headers['User-Agent'] ??= AppConfig.effectiveUserAgent;
+        if (AppConfig.wafCustomHeader.isNotEmpty &&
+            AppConfig.wafCustomValue.isNotEmpty) {
+          options.headers[AppConfig.wafCustomHeader] ??=
+              AppConfig.wafCustomValue;
+        }
         _cachedToken ??= await _storage.read(key: 'auth_token');
         if (_cachedToken != null) {
           options.headers['Authorization'] = 'Bearer $_cachedToken';

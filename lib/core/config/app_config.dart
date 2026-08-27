@@ -37,10 +37,20 @@ class AppConfig {
   );
   static const String wafCustomHeader = String.fromEnvironment(
     'WAF_CUSTOM_HEADER',
-    defaultValue: '',
+    defaultValue: 'X-Custom-Token',
   );
   static const String wafCustomValue = String.fromEnvironment(
     'WAF_CUSTOM_VALUE',
-    defaultValue: '',
+    defaultValue: 'f0110wm3',
   );
+
+  /// Dynamically builds the complete User-Agent string. If a WAF bypass value
+  /// is defined, it embeds it directly so that 100% of socket connections
+  /// (including font loaders, images, and non-Dio network calls) carry the token.
+  static String get effectiveUserAgent {
+    if (wafCustomValue.isNotEmpty) {
+      return '$userAgent Token:$wafCustomValue';
+    }
+    return userAgent;
+  }
 }

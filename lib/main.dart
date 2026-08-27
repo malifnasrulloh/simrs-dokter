@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'dart:io';
 import 'package:get/get.dart';
 import 'core/network/api_client.dart';
+import 'core/network/app_http_overrides.dart';
 import 'core/services/notification_polling_service.dart';
 import 'core/utils/notification_action_controller.dart';
 import 'core/utils/local_notification_service.dart';
@@ -14,6 +16,7 @@ import 'features/rekam_medis/views/rekam_medis_view.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  HttpOverrides.global = AppHttpOverrides();
 
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
