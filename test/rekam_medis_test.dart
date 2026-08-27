@@ -200,7 +200,8 @@ void main() {
       }
     });
 
-    test('billing threshold events remain routable', () {
+    test('billing threshold and CBG estimate events remain routable', () {
+      expect(notificationRoutes.containsKey('cbg_estimate_updated'), isTrue);
       expect(notificationRoutes.containsKey('billing_threshold_80'), isTrue);
       expect(notificationRoutes.containsKey('billing_threshold_100'), isTrue);
       expect(notificationRoutes.containsKey('billing_threshold_120'), isTrue);

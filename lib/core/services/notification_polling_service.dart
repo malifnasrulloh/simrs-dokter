@@ -41,6 +41,7 @@ const notificationRoutes = <String, NotifRoute>{
   'new_admission': NotifRoute('/patient-list'),
   'bed_request': NotifRoute('/patient-list'),
   'surgery_booking': NotifRoute('/patient-list'),
+  'cbg_estimate_updated': NotifRoute('/rekam-medis'),
   'billing_threshold_80': NotifRoute('/rekam-medis'),
   'billing_threshold_100': NotifRoute('/rekam-medis'),
   'billing_threshold_120': NotifRoute('/rekam-medis'),
@@ -374,7 +375,8 @@ class NotificationPollingService extends GetxService {
             eventType == 'bed_request' ||
             eventType == 'surgery_booking') {
           rm.fetchAllData(isBackground: true);
-        } else if (eventType.startsWith('billing_threshold')) {
+        } else if (eventType.startsWith('billing_threshold') ||
+            eventType == 'cbg_estimate_updated') {
           rm.fetchBillingOnly();
         } else {
           // Unmapped support/facility events (kitchen, supplies, inventory,
