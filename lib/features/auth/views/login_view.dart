@@ -327,9 +327,10 @@ class _LoginViewState extends State<LoginView> with TickerProviderStateMixin {
   Widget _buildFooter() {
     return Obx(() {
       final settingName = _authCtrl.setting.value?['nama_instansi'];
+      final year = DateTime.now().year;
       final footerText = settingName != null && settingName.isNotEmpty
-          ? 'v${AppConfig.appVersion} • $settingName © 2026'
-          : 'v${AppConfig.appVersion} • ${AppConfig.appName} © 2026';
+          ? 'v${AppConfig.appVersion} • $settingName © $year'
+          : 'v${AppConfig.appVersion} • ${AppConfig.appName} © $year';
       return Text(
         footerText,
         style: GoogleFonts.outfit(fontSize: 11, color: AppTheme.textMuted, fontWeight: FontWeight.w600),

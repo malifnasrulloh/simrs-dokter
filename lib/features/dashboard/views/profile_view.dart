@@ -314,31 +314,35 @@ class ProfileView extends StatelessWidget {
         SizedBox(
           width: double.infinity,
           height: 46,
-          child: ElevatedButton(
-            onPressed: auth.logout,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.danger.withValues(alpha: 0.08),
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(14),
-                side: const BorderSide(color: AppTheme.danger, width: 1),
-              ),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.logout_rounded,
-                    color: AppTheme.danger, size: 18),
-                const SizedBox(width: 8),
-                Text(
-                  'Keluar Aplikasi',
-                  style: GoogleFonts.outfit(
-                    color: AppTheme.danger,
-                    fontSize: 13.5,
-                    fontWeight: FontWeight.w800,
-                  ),
+          child: Semantics(
+            label: 'Keluar dari akun aplikasi',
+            button: true,
+            child: ElevatedButton(
+              onPressed: auth.logout,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.danger.withValues(alpha: 0.08),
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  side: const BorderSide(color: AppTheme.danger, width: 1),
                 ),
-              ],
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.logout_rounded,
+                      color: AppTheme.danger, size: 18),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Keluar Aplikasi',
+                    style: GoogleFonts.outfit(
+                      color: AppTheme.danger,
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),

@@ -19,8 +19,10 @@ class RekamMedisController extends GetxController {
   bool get writeEnabled => Get.find<AuthController>().writeEnabled;
   StreamSubscription? _connectivitySubscription;
   late final PageController pageController;
+  late final ScrollController tabScrollController;
   late final Worker _tabWorker;
   final isLoading = false.obs;
+  final hasError = false.obs;
   bool _isSubmitting = false;
 
   Timer? _staggerTimer1;
@@ -83,6 +85,7 @@ class RekamMedisController extends GetxController {
     }
 
     pageController = PageController(initialPage: activeTab.value);
+    tabScrollController = ScrollController();
     _tabWorker = ever(activeTab, (int index) {
       if (pageController.hasClients && pageController.page?.round() != index) {
         pageController.animateToPage(
@@ -91,6 +94,7 @@ class RekamMedisController extends GetxController {
           curve: Curves.easeInOut,
         );
       }
+      _scrollTabToCenter(index);
     });
 
     // Listen to network transitions to automatically sync offline notes (debounced)
@@ -131,6 +135,7 @@ class RekamMedisController extends GetxController {
   Future<void> fetchAllData({bool isBackground = false}) async {
     if (!isBackground) {
       isLoading.value = true;
+      hasError.value = false;
       expandedStates.clear();
     }
     try {
@@ -141,6 +146,10 @@ class RekamMedisController extends GetxController {
         _fetchObat(),
         fetchProsedur(),
       ]);
+    } catch (_) {
+      if (!isBackground) {
+        hasError.value = true;
+      }
     } finally {
       if (!isBackground) {
         isLoading.value = false;
@@ -1496,6 +1505,23 @@ class RekamMedisController extends GetxController {
 
   // Notification handling moved to NotificationPollingService
 
+  void _scrollTabToCenter(int index) {
+    if (!tabScrollController.hasClients) return;
+    const itemWidth = 92.0;
+    final screenWidth = Get.width;
+    final targetOffset =
+        (index * itemWidth) - (screenWidth / 2) + (itemWidth / 2) + 16.0;
+    final clampedOffset = targetOffset.clamp(
+      0.0,
+      tabScrollController.position.maxScrollExtent,
+    );
+    tabScrollController.animateTo(
+      clampedOffset,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOutCubic,
+    );
+  }
+
   @override
   void onClose() {
     _tabWorker.dispose();
@@ -1504,6 +1530,7 @@ class RekamMedisController extends GetxController {
     _staggerTimer1?.cancel();
     _staggerTimer2?.cancel();
     pageController.dispose();
+    tabScrollController.dispose();
     super.onClose();
   }
 

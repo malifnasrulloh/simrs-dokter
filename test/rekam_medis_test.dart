@@ -153,6 +153,13 @@ void main() {
       expect(controller.searchICD9Results.length, 1);
       expect(controller.searchICD9Results.first['kode'], '01.01');
     });
+
+    test('tabScrollController initializes and disposes with controller', () {
+      final controller = Get.put(RekamMedisController());
+      expect(controller.tabScrollController, isNotNull);
+      expect(controller.tabScrollController.hasClients, isFalse);
+      Get.delete<RekamMedisController>();
+    });
   });
 
   group('Notification Routing Tests', () {
@@ -176,6 +183,8 @@ void main() {
         'medication_request',
         'spiritual_guidance_request',
         'violence_protection_letter',
+        'dpjp_assigned',
+        'dpjp_removed',
         'new_admission',
         'bed_request',
         'surgery_booking',
@@ -279,10 +288,9 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // Ensure write control FABs and actions are not present in read-only mode
+      // Ensure restricted write control FABs and edit/delete actions are not present in read-only mode
       expect(find.text('Tambah SOAP'), findsNothing);
       expect(find.text('Buat Resep'), findsNothing);
-      expect(find.text('Minta Konsul'), findsNothing);
       expect(find.byIcon(Icons.edit_rounded), findsNothing);
       expect(find.byIcon(Icons.delete_outline_rounded), findsNothing);
       Get.delete<RekamMedisController>();

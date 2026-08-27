@@ -1,10 +1,10 @@
 {
-  "BASE_URL": "http://localhost:4002/api",
+  "BASE_URL": "https://api.edokter.example.com/api",
   "CONNECT_TIMEOUT": 15000,
   "RECEIVE_TIMEOUT": 20000,
-  "APP_NAME": "CareDoc EMR",
-  "APP_VERSION": "1.0.0",
+  "APP_NAME": "E-Dokter",
+  "APP_VERSION": "1.3.0",
   "ENABLE_WRITE_ACCESS": false,
   "ENABLE_IN_APP_NOTIFICATIONS": true,
-  "ENABLE_SYSTEM_NOTIFICATIONS": false
+  "ENABLE_SYSTEM_NOTIFICATIONS": true
 }

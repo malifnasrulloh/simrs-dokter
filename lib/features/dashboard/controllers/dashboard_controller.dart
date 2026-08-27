@@ -6,6 +6,7 @@ import '../../auth/controllers/auth_controller.dart';
 class DashboardController extends GetxController {
   final _api = ApiClient();
   final isLoading = false.obs;
+  final hasDashboardError = false.obs;
   final listPasienRanap = <Map<String, dynamic>>[].obs;
   final listPasienRalan = <Map<String, dynamic>>[].obs;
   final listPasienIGD = <Map<String, dynamic>>[].obs;
@@ -22,6 +23,10 @@ class DashboardController extends GetxController {
   // SBAR inbox — pending perawat→dokter requests for this doctor's inpatients
   final sbarInbox = <Map<String, dynamic>>[].obs;
   final isLoadingSbarInbox = false.obs;
+
+  // Konsultasi Masuk — pending incoming doctor consultation requests
+  final incomingConsultations = <Map<String, dynamic>>[].obs;
+  final isLoadingConsultations = false.obs;
 
   // Jasa Medis / Harian Dokter States
   final isLoadingHarian = false.obs;
@@ -119,6 +124,7 @@ class DashboardController extends GetxController {
     try {
       if (!isBackground) {
         isLoading.value = true;
+        hasDashboardError.value = false;
       }
       await Future.wait([
         _fetchPasienRanap(),
@@ -127,7 +133,12 @@ class DashboardController extends GetxController {
         _fetchJadwalOperasi(),
         _fetchBedAvailability(),
         _fetchSbarInbox(),
+        _fetchIncomingConsultations(),
       ]);
+    } catch (_) {
+      if (!isBackground) {
+        hasDashboardError.value = true;
+      }
     } finally {
       if (!isBackground) {
         isLoading.value = false;
@@ -234,6 +245,7 @@ class DashboardController extends GetxController {
       sbarInbox.clear();
       return;
     }
+    isLoadingSbarInbox.value = true;
     try {
       final res = await _api.dio.get('/pemeriksaan/dokter', queryParameters: {
         'kd_dokter': loggedInDoctorId,
@@ -246,6 +258,37 @@ class DashboardController extends GetxController {
     } catch (e, s) {
       AppLogger.error('Dashboard', e, s);
       sbarInbox.clear();
+    } finally {
+      isLoadingSbarInbox.value = false;
+    }
+  }
+
+  Future<void> _fetchIncomingConsultations() async {
+    final authCtrl = Get.find<AuthController>();
+    final loggedInDoctorId = authCtrl.user.value?['nip'];
+    if (loggedInDoctorId == null || loggedInDoctorId.toString().isEmpty) {
+      incomingConsultations.clear();
+      return;
+    }
+    isLoadingConsultations.value = true;
+    try {
+      final now = DateTime.now().toIso8601String().substring(0, 10);
+      final res = await _api.dio.get('/konsultasi/masuk', queryParameters: {
+        'kd_dokter': loggedInDoctorId,
+        'tglawal': now,
+        'tglakhir': now,
+      });
+      if (res.data['success'] == true && res.data['data'] is List) {
+        incomingConsultations.value =
+            List<Map<String, dynamic>>.from(res.data['data']);
+      } else {
+        incomingConsultations.clear();
+      }
+    } catch (e, s) {
+      AppLogger.error('Dashboard', e, s);
+      incomingConsultations.clear();
+    } finally {
+      isLoadingConsultations.value = false;
     }
   }
 

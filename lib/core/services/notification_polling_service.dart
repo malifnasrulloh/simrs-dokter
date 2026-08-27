@@ -36,6 +36,8 @@ const notificationRoutes = <String, NotifRoute>{
   'medication_request': NotifRoute('/rekam-medis', tabIndex: 2),
   'spiritual_guidance_request': NotifRoute('/rekam-medis', tabIndex: 0),
   'violence_protection_letter': NotifRoute('/rekam-medis', tabIndex: 0),
+  'dpjp_assigned': NotifRoute('/rekam-medis'),
+  'dpjp_removed': NotifRoute('/patient-list'),
   'new_admission': NotifRoute('/patient-list'),
   'bed_request': NotifRoute('/patient-list'),
   'surgery_booking': NotifRoute('/patient-list'),

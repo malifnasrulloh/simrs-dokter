@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../../core/utils/google_fonts.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/utils/google_fonts.dart';
 import '../controllers/dashboard_controller.dart';
+import '../widgets/patient_search_bar.dart';
 import '../widgets/patient_tile.dart';
 
 class PatientListView extends StatefulWidget {
@@ -46,18 +47,7 @@ class _PatientListViewState extends State<PatientListView> {
   }
 
   List<Map<String, dynamic>> get _filteredList {
-    if (searchQuery.isEmpty) return _rawList;
-    return _rawList.where((p) {
-      final name = p['nm_pasien']?.toString().toLowerCase() ?? '';
-      final rm =
-          (p['no_rm'] ?? p['no_rkm_medis'])?.toString().toLowerCase() ?? '';
-      final room = (p['kamar'] ?? p['nm_ruang'] ?? p['nm_poli'])
-              ?.toString()
-              .toLowerCase() ??
-          '';
-      final query = searchQuery.toLowerCase();
-      return name.contains(query) || rm.contains(query) || room.contains(query);
-    }).toList();
+    return filterPatientList(_rawList, searchQuery);
   }
 
   String get _title {
@@ -108,56 +98,11 @@ class _PatientListViewState extends State<PatientListView> {
       body: Column(
         children: [
           // Search Box
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-            child: TextField(
-              controller: searchController,
-              focusNode: searchFocusNode,
-              onChanged: (val) {
-                setState(() {
-                  searchQuery = val;
-                });
-              },
-              style: GoogleFonts.outfit(
-                  color: AppTheme.textPrimary,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600),
-              decoration: InputDecoration(
-                hintText: 'Cari nama, No. RM, atau ruangan...',
-                hintStyle: GoogleFonts.outfit(
-                    color: AppTheme.textMuted,
-                    fontSize: 13.5,
-                    fontWeight: FontWeight.w500),
-                prefixIcon: const Icon(Icons.search_rounded,
-                    color: AppTheme.textMuted, size: 18),
-                suffixIcon: searchQuery.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(Icons.clear_rounded,
-                            color: AppTheme.textSecondary, size: 18),
-                        onPressed: () {
-                          searchController.clear();
-                          setState(() {
-                            searchQuery = '';
-                          });
-                        },
-                      )
-                    : null,
-                filled: true,
-                fillColor: AppTheme.bgCard,
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(14),
-                  borderSide:
-                      const BorderSide(color: AppTheme.divider, width: 1.2),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(14),
-                  borderSide:
-                      const BorderSide(color: AppTheme.primary, width: 1.2),
-                ),
-              ),
-            ),
+          PatientSearchBar(
+            controller: searchController,
+            focusNode: searchFocusNode,
+            onChanged: (val) => setState(() => searchQuery = val),
+            onClear: () => setState(() => searchQuery = ''),
           ),
 
           const SizedBox(height: 4),

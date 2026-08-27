@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../core/theme/app_theme.dart';
 import '../widgets/patient_tile.dart';
+import '../widgets/patient_search_bar.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../controllers/dashboard_controller.dart';
 import '../../../core/utils/google_fonts.dart';
@@ -62,18 +63,7 @@ class _PatientWorkspaceViewState extends State<PatientWorkspaceView> {
         list = [];
     }
 
-    if (searchQuery.isEmpty) return list;
-    final query = searchQuery.toLowerCase();
-    return list.where((p) {
-      final name = p['nm_pasien']?.toString().toLowerCase() ?? '';
-      final rm =
-          (p['no_rm'] ?? p['no_rkm_medis'])?.toString().toLowerCase() ?? '';
-      final room = (p['kamar'] ?? p['nm_ruang'] ?? p['nm_poli'])
-              ?.toString()
-              .toLowerCase() ??
-          '';
-      return name.contains(query) || rm.contains(query) || room.contains(query);
-    }).toList();
+    return filterPatientList(list, searchQuery);
   }
 
   @override
@@ -176,47 +166,10 @@ class _PatientWorkspaceViewState extends State<PatientWorkspaceView> {
   }
 
   Widget _buildSearchBox() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-      child: TextField(
-        controller: searchController,
-        onChanged: (val) => setState(() => searchQuery = val),
-        style: GoogleFonts.outfit(
-            color: AppTheme.textPrimary,
-            fontSize: 14,
-            fontWeight: FontWeight.w600),
-        decoration: InputDecoration(
-          hintText: 'Cari nama, No. RM, atau ruangan...',
-          hintStyle: GoogleFonts.outfit(
-              color: AppTheme.textMuted,
-              fontSize: 13.5,
-              fontWeight: FontWeight.w500),
-          prefixIcon: const Icon(Icons.search_rounded,
-              color: AppTheme.textMuted, size: 18),
-          suffixIcon: searchQuery.isNotEmpty
-              ? IconButton(
-                  icon: const Icon(Icons.clear_rounded,
-                      color: AppTheme.textSecondary, size: 18),
-                  onPressed: () {
-                    searchController.clear();
-                    setState(() => searchQuery = '');
-                  },
-                )
-              : null,
-          filled: true,
-          fillColor: AppTheme.bgCard,
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
-            borderSide: const BorderSide(color: AppTheme.divider, width: 1.2),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
-            borderSide: const BorderSide(color: AppTheme.primary, width: 1.2),
-          ),
-        ),
-      ),
+    return PatientSearchBar(
+      controller: searchController,
+      onChanged: (val) => setState(() => searchQuery = val),
+      onClear: () => setState(() => searchQuery = ''),
     );
   }
 

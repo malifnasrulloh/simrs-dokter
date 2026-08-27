@@ -64,6 +64,10 @@ void main() {
         controller.sbarInbox[0]['validasi']?['status_validasi'],
         isNull,
       );
+
+      // Verify incoming consultations inbox on dashboard
+      expect(controller.incomingConsultations.length, equals(1));
+      expect(controller.incomingConsultations[0]['no_permintaan'], 'KM001');
     });
 
     test('harian dokter fetching handles lists and pagination', () async {

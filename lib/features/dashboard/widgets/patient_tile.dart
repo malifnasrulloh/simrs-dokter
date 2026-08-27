@@ -43,10 +43,16 @@ class PatientTile extends StatelessWidget {
     final age = pasien['umur'] ?? pasien['usia'] ?? '-';
     final date = pasien['tgl_masuk'] ?? pasien['tgl_registrasi'] ?? '-';
 
-    return GestureDetector(
-      onTap: () =>
-          Get.toNamed('/rekam-medis', arguments: {...pasien, '_type': type}),
-      child: Container(
+    final patientName = pasien['nm_pasien'] ?? 'Pasien';
+    final roomOrPoli = pasien['kamar'] ?? pasien['nm_poli'] ?? '-';
+
+    return Semantics(
+      label: 'Pasien $patientName, No RM ${pasien['no_rkm_medis'] ?? '-'}, $roomOrPoli, penjamin ${isBpjs ? 'BPJS' : 'Umum'}',
+      button: true,
+      child: GestureDetector(
+        onTap: () =>
+            Get.toNamed('/rekam-medis', arguments: {...pasien, '_type': type}),
+        child: Container(
         decoration: BoxDecoration(
           color: AppTheme.bgCard,
           borderRadius: BorderRadius.circular(18),
@@ -206,24 +212,25 @@ class PatientTile extends StatelessWidget {
                               child: Text(
                                 'DPJP: $dokterName',
                                 style: GoogleFonts.outfit(
-                                    fontSize: 11.5,
-                                    color: AppTheme.textSecondary,
-                                    fontWeight: FontWeight.w600),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ],
+                                fontSize: 11.5,
+                                color: AppTheme.textSecondary,
+                                fontWeight: FontWeight.w600),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
                       ],
                     ),
-                  ),
+                  ],
                 ),
-              ],
+              ),
             ),
-          ),
+          ],
         ),
       ),
+    ),
+    ),
+    ),
     );
   }
 }

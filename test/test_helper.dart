@@ -587,6 +587,99 @@ class TestHelper {
           ));
         }
 
+        if (path.contains('/resep/obat-list')) {
+          return handler.resolve(Response(
+            requestOptions: options,
+            statusCode: 200,
+            data: {
+              'success': true,
+              'data': {
+                'list': [
+                  {
+                    'kode_brng': 'OBT001',
+                    'nama_brng': 'Paracetamol 500mg',
+                    'total_stok': '100',
+                    'satuan': 'tablet',
+                  },
+                ],
+              },
+            },
+          ));
+        }
+
+        if (path.contains('/konsultasi/dokter-list')) {
+          return handler.resolve(Response(
+            requestOptions: options,
+            statusCode: 200,
+            data: {
+              'success': true,
+              'data': [
+                {'kd_dokter': '2021101713', 'nm_dokter': 'dr. Aisyah'},
+              ],
+            },
+          ));
+        }
+
+        if (path.contains('/konsultasi/masuk') ||
+            path.contains('/konsultasi/keluar')) {
+          return handler.resolve(Response(
+            requestOptions: options,
+            statusCode: 200,
+            data: {
+              'success': true,
+              'data': [
+                {
+                  'no_permintaan': 'KM001',
+                  'no_rawat': '2026/08/24/000002',
+                  'kd_dokter_pemberi': 'D001',
+                  'nm_dokter_pemberi': 'dr. Setiawan',
+                  'kd_dokter_peminta': 'D002',
+                  'nm_dokter_peminta': 'dr. Aisyah',
+                  'status': 'Sudah Dijawab',
+                  'jawaban': 'Lanjutkan terapi',
+                },
+              ],
+            },
+          ));
+        }
+
+        if (path.contains('/resep')) {
+          if (options.method == 'POST') {
+            return handler.resolve(Response(
+              requestOptions: options,
+              statusCode: 201,
+              data: {
+                'success': true,
+                'data': {'no_resep': '202608260001'},
+              },
+            ));
+          }
+        }
+
+        if (path.contains('/konsultasi/jawab')) {
+          return handler.resolve(Response(
+            requestOptions: options,
+            statusCode: 200,
+            data: {
+              'success': true,
+              'message': 'Konsultasi berhasil dijawab',
+            },
+          ));
+        }
+
+        if (path.contains('/konsultasi')) {
+          if (options.method == 'POST') {
+            return handler.resolve(Response(
+              requestOptions: options,
+              statusCode: 201,
+              data: {
+                'success': true,
+                'data': {'no_permintaan': 'KM202608260001'},
+              },
+            ));
+          }
+        }
+
         // Catch-all mock response for other routes
         return handler.resolve(Response(
           requestOptions: options,
