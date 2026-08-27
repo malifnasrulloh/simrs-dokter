@@ -118,7 +118,20 @@ class _NotificationNavigationHandlerState
 
       // Events without a patient context just land on the dashboard shell.
       if (route.route != '/rekam-medis' || nav.noRawat.isEmpty) {
-        Get.offAllNamed(route.route);
+        if (Get.currentRoute != '/home') {
+          Get.offAllNamed('/home');
+        }
+        if (route.route == '/home' && route.tabIndex != null) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (Get.isRegistered<DashboardController>()) {
+              final dash = Get.find<DashboardController>();
+              dash.currentNavIndex.value = route.tabIndex!;
+              if (route.tabIndex == 1) {
+                dash.selectedTab.value = 0; // Rawat Inap
+              }
+            }
+          });
+        }
         return;
       }
 

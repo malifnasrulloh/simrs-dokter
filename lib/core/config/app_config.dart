@@ -31,4 +31,16 @@ class AppConfig {
     'ENABLE_SYSTEM_NOTIFICATIONS',
     defaultValue: true,
   );
+  static const String userAgent = String.fromEnvironment(
+    'USER_AGENT',
+    defaultValue: 'SIMRS-Dokter/1.3.0 (Flutter; Mobile)',
+  );
+  static const String wafCustomHeader = String.fromEnvironment(
+    'WAF_CUSTOM_HEADER',
+    defaultValue: '',
+  );
+  static const String wafCustomValue = String.fromEnvironment(
+    'WAF_CUSTOM_VALUE',
+    defaultValue: '',
+  );
 }

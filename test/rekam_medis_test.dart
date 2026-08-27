@@ -202,9 +202,24 @@ void main() {
 
     test('billing threshold and CBG estimate events remain routable', () {
       expect(notificationRoutes.containsKey('cbg_estimate_updated'), isTrue);
+      expect(notificationRoutes['cbg_estimate_updated']?.tabIndex, equals(0));
       expect(notificationRoutes.containsKey('billing_threshold_80'), isTrue);
+      expect(notificationRoutes['billing_threshold_80']?.tabIndex, equals(0));
       expect(notificationRoutes.containsKey('billing_threshold_100'), isTrue);
+      expect(notificationRoutes['billing_threshold_100']?.tabIndex, equals(0));
       expect(notificationRoutes.containsKey('billing_threshold_120'), isTrue);
+      expect(notificationRoutes['billing_threshold_120']?.tabIndex, equals(0));
+    });
+
+    test('inpatient admission events route to home Pasien tab', () {
+      expect(notificationRoutes['new_admission']?.route, equals('/home'));
+      expect(notificationRoutes['new_admission']?.tabIndex, equals(1));
+      expect(notificationRoutes['dpjp_removed']?.route, equals('/home'));
+      expect(notificationRoutes['dpjp_removed']?.tabIndex, equals(1));
+      expect(notificationRoutes['bed_request']?.route, equals('/home'));
+      expect(notificationRoutes['bed_request']?.tabIndex, equals(1));
+      expect(notificationRoutes['surgery_booking']?.route, equals('/home'));
+      expect(notificationRoutes['surgery_booking']?.tabIndex, equals(1));
     });
 
     test('support/facility events fall back to the dashboard home', () {

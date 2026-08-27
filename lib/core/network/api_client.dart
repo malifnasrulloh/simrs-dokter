@@ -24,11 +24,20 @@ class ApiClient {
   }
 
   ApiClient._internal() {
+    final defaultHeaders = <String, dynamic>{
+      'Content-Type': 'application/json',
+      'User-Agent': AppConfig.userAgent,
+    };
+    if (AppConfig.wafCustomHeader.isNotEmpty &&
+        AppConfig.wafCustomValue.isNotEmpty) {
+      defaultHeaders[AppConfig.wafCustomHeader] = AppConfig.wafCustomValue;
+    }
+
     _dio = Dio(BaseOptions(
       baseUrl: AppConfig.baseUrl,
       connectTimeout: const Duration(milliseconds: AppConfig.connectTimeout),
       receiveTimeout: const Duration(milliseconds: AppConfig.receiveTimeout),
-      headers: {'Content-Type': 'application/json'},
+      headers: defaultHeaders,
     ));
     _dio.interceptors.add(buildAuthInterceptor());
   }

@@ -36,15 +36,15 @@ const notificationRoutes = <String, NotifRoute>{
   'medication_request': NotifRoute('/rekam-medis', tabIndex: 2),
   'spiritual_guidance_request': NotifRoute('/rekam-medis', tabIndex: 0),
   'violence_protection_letter': NotifRoute('/rekam-medis', tabIndex: 0),
-  'dpjp_assigned': NotifRoute('/rekam-medis'),
-  'dpjp_removed': NotifRoute('/patient-list'),
-  'new_admission': NotifRoute('/patient-list'),
-  'bed_request': NotifRoute('/patient-list'),
-  'surgery_booking': NotifRoute('/patient-list'),
-  'cbg_estimate_updated': NotifRoute('/rekam-medis'),
-  'billing_threshold_80': NotifRoute('/rekam-medis'),
-  'billing_threshold_100': NotifRoute('/rekam-medis'),
-  'billing_threshold_120': NotifRoute('/rekam-medis'),
+  'dpjp_assigned': NotifRoute('/rekam-medis', tabIndex: 0),
+  'dpjp_removed': NotifRoute('/home', tabIndex: 1),
+  'new_admission': NotifRoute('/home', tabIndex: 1),
+  'bed_request': NotifRoute('/home', tabIndex: 1),
+  'surgery_booking': NotifRoute('/home', tabIndex: 1),
+  'cbg_estimate_updated': NotifRoute('/rekam-medis', tabIndex: 0),
+  'billing_threshold_80': NotifRoute('/rekam-medis', tabIndex: 0),
+  'billing_threshold_100': NotifRoute('/rekam-medis', tabIndex: 0),
+  'billing_threshold_120': NotifRoute('/rekam-medis', tabIndex: 0),
 };
 
 /// Fallback target for any event type the triggers emit but the app does
@@ -328,8 +328,17 @@ class NotificationPollingService extends GetxService {
         '_type': payload['_type'] ?? 'RANAP',
         '_targetTab': route.tabIndex,
       });
-    } else if (route.route == '/patient-list') {
-      Get.toNamed('/patient-list');
+    } else if (route.route == '/home') {
+      if (Get.currentRoute != '/home') {
+        Get.offAllNamed('/home');
+      }
+      if (route.tabIndex != null && Get.isRegistered<DashboardController>()) {
+        final dash = Get.find<DashboardController>();
+        dash.currentNavIndex.value = route.tabIndex!;
+        if (route.tabIndex == 1) {
+          dash.selectedTab.value = 0; // Default to Rawat Inap tab in Pasien view
+        }
+      }
     } else {
       // Default fallback: return to the dashboard shell.
       if (Get.currentRoute != '/home') {
