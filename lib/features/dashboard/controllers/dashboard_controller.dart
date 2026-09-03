@@ -1,4 +1,5 @@
 import 'package:get/get.dart';
+import 'package:dio/dio.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/utils/app_logger.dart';
 import '../../auth/controllers/auth_controller.dart';
@@ -30,6 +31,7 @@ class DashboardController extends GetxController {
 
   // Jasa Medis / Harian Dokter States
   final isLoadingHarian = false.obs;
+  final harianForbiddenError = false.obs;
   final harianList = <Map<String, dynamic>>[].obs;
   final harianSummary = <String, dynamic>{}.obs;
   final selectedDateStart = Rx<DateTime>(DateTime.now());
@@ -48,6 +50,28 @@ class DashboardController extends GetxController {
       fetchCaraBayarOptions();
       fetchHarianDokter();
     }
+
+    // Reactive listener: when permissions update mid-session without logout,
+    // pre-fetch fee data smoothly if access was newly granted, or clear list if revoked.
+    ever(auth.user, (userMap) {
+      if (auth.isAdmin) return;
+      final hasHarian = auth.hasAccess('harian_dokter');
+      if (hasHarian) {
+        if (caraBayarOptions.isEmpty) {
+          fetchCaraBayarOptions();
+        }
+        if (harianList.isEmpty && !isLoadingHarian.value) {
+          fetchHarianDokter();
+        }
+      } else {
+        harianList.clear();
+        harianSummary.clear();
+        // If doctor was on Jasa Medis tab (index 2), safely fall back to Dashboard Home (index 0)
+        if (currentNavIndex.value == 2) {
+          currentNavIndex.value = 0;
+        }
+      }
+    });
   }
 
   Future<void> fetchCaraBayarOptions() async {
@@ -68,6 +92,7 @@ class DashboardController extends GetxController {
     try {
       if (!isLoadMore) {
         isLoadingHarian.value = true;
+        harianForbiddenError.value = false;
         currentHarianPage.value = 1;
         harianList.clear();
         harianSummary.clear();
@@ -110,7 +135,10 @@ class DashboardController extends GetxController {
           harianList.value = listData;
         }
       }
-    } catch (_) {
+    } catch (e) {
+      if (e is DioException && e.response?.statusCode == 403) {
+        harianForbiddenError.value = true;
+      }
       if (!isLoadMore) {
         harianList.clear();
         harianSummary.clear();

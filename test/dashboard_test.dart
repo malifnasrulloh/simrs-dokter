@@ -185,6 +185,67 @@ void main() {
       expect(find.text('Jasa Medis'), findsNothing);
     });
 
+    testWidgets(
+        'dynamically syncs Jasa Medis tab when access is granted or revoked mid-session',
+        (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(1200, 1920);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      final authCtrl = Get.find<AuthController>();
+      // Initially without harian_dokter access
+      authCtrl.user.value = {
+        'kd_dokter': 'D0001',
+        'nm_dokter': 'Dr. Dynamic Test',
+        'isadmin': false,
+        'userakses': <String>[],
+      };
+
+      Get.put(DashboardController());
+
+      await tester.pumpWidget(
+        GetMaterialApp(
+          home: const DashboardView(),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Jasa Medis'), findsNothing);
+
+      // 1. Admin grants access mid-session (simulate real-time notification sync)
+      authCtrl.user.value = {
+        'kd_dokter': 'D0001',
+        'nm_dokter': 'Dr. Dynamic Test',
+        'isadmin': false,
+        'userakses': <String>['harian_dokter'],
+      };
+      await tester.pumpAndSettle();
+
+      // Tab should appear immediately without logout
+      expect(find.text('Jasa Medis'), findsOneWidget);
+
+      // Doctor switches to Jasa Medis tab (index 2)
+      await tester.tap(find.text('Jasa Medis'));
+      await tester.pumpAndSettle();
+      expect(find.byType(HarianDokterView), findsOneWidget);
+
+      // 2. Admin revokes access mid-session
+      authCtrl.user.value = {
+        'kd_dokter': 'D0001',
+        'nm_dokter': 'Dr. Dynamic Test',
+        'isadmin': false,
+        'userakses': <String>[],
+      };
+      await tester.pumpAndSettle();
+
+      // Tab should disappear immediately and screen safely falls back to Dashboard Home
+      expect(find.text('Jasa Medis'), findsNothing);
+      expect(find.byType(HomeDashboardView), findsOneWidget);
+    });
+
     testWidgets('navigates to PatientWorkspaceView and filters correctly',
         (WidgetTester tester) async {
       tester.view.physicalSize = const Size(1200, 1920);

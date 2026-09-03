@@ -12,6 +12,7 @@ import '../utils/local_notification_service.dart';
 import '../utils/google_fonts.dart';
 import '../../features/dashboard/controllers/dashboard_controller.dart';
 import '../../features/rekam_medis/controllers/rekam_medis_controller.dart';
+import '../../features/auth/controllers/auth_controller.dart';
 
 class NotifRoute {
   final String route;
@@ -45,6 +46,7 @@ const notificationRoutes = <String, NotifRoute>{
   'billing_threshold_80': NotifRoute('/rekam-medis', tabIndex: 0),
   'billing_threshold_100': NotifRoute('/rekam-medis', tabIndex: 0),
   'billing_threshold_120': NotifRoute('/rekam-medis', tabIndex: 0),
+  'harian_access_updated': NotifRoute('/home', tabIndex: 2),
 };
 
 /// Fallback target for any event type the triggers emit but the app does
@@ -348,6 +350,17 @@ class NotificationPollingService extends GetxService {
   }
 
   void _refreshDashboards(String eventType) {
+    if (eventType == 'harian_access_updated') {
+      try {
+        if (Get.isRegistered<AuthController>()) {
+          Get.find<AuthController>().fetchProfile();
+        }
+      } catch (e, s) {
+        AppLogger.error('NotifPolling', e, s);
+      }
+      return;
+    }
+
     try {
       if (Get.isRegistered<DashboardController>()) {
         Get.find<DashboardController>().fetchDashboard(isBackground: true);

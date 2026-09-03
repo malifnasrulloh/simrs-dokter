@@ -236,6 +236,8 @@ class AuthController extends GetxController with WidgetsBindingObserver {
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
     if (state == AppLifecycleState.resumed) {
+      // Re-validate profile and permissions immediately when resuming
+      fetchProfile();
       // Fetch any notifications that arrived while app was in background
       _notificationService?.fetchBacklog();
     }

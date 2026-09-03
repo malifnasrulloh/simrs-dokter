@@ -419,6 +419,51 @@ class _HarianDokterViewState extends State<HarianDokterView> {
         );
       }
 
+      if (ctrl.harianForbiddenError.value) {
+        return SliverFillRemaining(
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: AppTheme.danger.withValues(alpha: 0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.lock_person_rounded,
+                      size: 48,
+                      color: AppTheme.danger,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Akses Dinonaktifkan',
+                    style: GoogleFonts.outfit(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Akses menu Jasa Medis / Laporan Harian Anda dinonaktifkan oleh Administrator.',
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.outfit(
+                      color: AppTheme.textSecondary,
+                      fontSize: 13,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      }
+
       if (ctrl.harianList.isEmpty) {
         return SliverFillRemaining(
           child: Center(
