@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import '../../../core/config/app_config.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/services/notification_polling_service.dart';
+import '../../../core/services/app_update_service.dart';
 import '../../../core/utils/app_logger.dart';
 
 class AuthController extends GetxController with WidgetsBindingObserver {
@@ -130,6 +131,9 @@ class AuthController extends GetxController with WidgetsBindingObserver {
       }
       fetchProfile();
       _notificationService?.start();
+      if (Get.isRegistered<AppUpdateService>()) {
+        Get.find<AppUpdateService>().checkForUpdates();
+      }
       Get.offAllNamed('/home');
     }
   }
@@ -190,6 +194,9 @@ class AuthController extends GetxController with WidgetsBindingObserver {
         await fetchProfile();
         await fetchCapabilities();
         _notificationService?.start();
+        if (Get.isRegistered<AppUpdateService>()) {
+          Get.find<AppUpdateService>().checkForUpdates();
+        }
         Get.offAllNamed('/home');
       } else {
         errorMsg.value = response.data['message'] ?? 'Login gagal';

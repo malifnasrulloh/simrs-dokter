@@ -680,6 +680,24 @@ class TestHelper {
           }
         }
 
+        if (path.contains('/setting/app-version')) {
+          return handler.resolve(Response(
+            requestOptions: options,
+            statusCode: 200,
+            data: {
+              'success': true,
+              'data': {
+                'version_name': '1.3.0',
+                'version_code': 1,
+                'min_supported_version': '1.0.0',
+                'release_notes': 'Mock release notes',
+                'download_url': '/api/setting/app-download',
+                'sha256_checksum': 'mock_hash',
+              },
+            },
+          ));
+        }
+
         // Catch-all mock response for other routes
         return handler.resolve(Response(
           requestOptions: options,

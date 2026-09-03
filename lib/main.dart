@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'core/network/api_client.dart';
 import 'core/network/app_http_overrides.dart';
 import 'core/services/notification_polling_service.dart';
+import 'core/services/app_update_service.dart';
 import 'core/utils/notification_action_controller.dart';
 import 'core/utils/local_notification_service.dart';
 import 'features/auth/controllers/auth_controller.dart';
@@ -33,6 +34,7 @@ void main() async {
   NotificationActionController.startListening();
 
   Get.put(NotificationPollingService());
+  Get.put(AppUpdateService());
 
   runApp(const MyApp());
 }

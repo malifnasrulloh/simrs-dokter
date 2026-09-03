@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../core/config/app_config.dart';
+import '../../../core/services/app_update_service.dart';
 import '../../../core/utils/google_fonts.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../auth/controllers/auth_controller.dart';
@@ -289,6 +290,10 @@ class ProfileView extends StatelessWidget {
   }
 
   Widget _buildBrandingAndLogout(AuthController auth, String? settingName) {
+    final updateService = Get.isRegistered<AppUpdateService>()
+        ? Get.find<AppUpdateService>()
+        : null;
+
     return Column(
       children: [
         Text(
@@ -310,7 +315,40 @@ class ProfileView extends StatelessWidget {
             ),
           ),
         ],
-        const SizedBox(height: 20),
+        if (updateService != null) ...[
+          const SizedBox(height: 12),
+          Obx(() {
+            final isChecking = updateService.isChecking.value;
+            return TextButton.icon(
+              onPressed: isChecking
+                  ? null
+                  : () => updateService.checkForUpdates(isManual: true),
+              icon: isChecking
+                  ? const SizedBox(
+                      width: 14,
+                      height: 14,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: AppTheme.primary,
+                      ),
+                    )
+                  : const Icon(
+                      Icons.system_update_rounded,
+                      size: 14,
+                      color: AppTheme.primary,
+                    ),
+              label: Text(
+                isChecking ? 'Memeriksa...' : 'Periksa Pembaruan',
+                style: GoogleFonts.outfit(
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w700,
+                  color: AppTheme.primary,
+                ),
+              ),
+            );
+          }),
+        ],
+        const SizedBox(height: 16),
         SizedBox(
           width: double.infinity,
           height: 46,
