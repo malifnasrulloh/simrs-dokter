@@ -11,6 +11,29 @@ if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
 }
 
+def dartEnvironmentVariables = [:]
+if (project.hasProperty('dart-defines')) {
+    def dartDefines = project.property('dart-defines')
+    try {
+        String[] defines = dartDefines.split(',')
+        for (String define : defines) {
+            try {
+                String decoded = new String(define.decodeBase64(), 'UTF-8')
+                String[] keyValue = decoded.split('=', 2)
+                if (keyValue.length == 2) {
+                    dartEnvironmentVariables[keyValue[0]] = keyValue[1]
+                }
+            } catch (Exception ignored) {
+                String[] keyValue = define.split('=', 2)
+                if (keyValue.length == 2) {
+                    dartEnvironmentVariables[keyValue[0]] = keyValue[1]
+                }
+            }
+        }
+    } catch (Exception ignored) {}
+}
+def configuredAppName = dartEnvironmentVariables['APP_NAME'] ?: 'E-Dokter'
+
 android {
     namespace = "id.khanza.edokter"
     compileSdk = flutter.compileSdkVersion
@@ -46,6 +69,9 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        manifestPlaceholders += [
+            appName: configuredAppName
+        ]
     }
 
     buildTypes {
