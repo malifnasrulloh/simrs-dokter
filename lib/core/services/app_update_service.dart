@@ -12,7 +12,7 @@ import '../utils/google_fonts.dart';
 
 class AppUpdateService extends GetxService {
   static const MethodChannel _installerChannel =
-      MethodChannel('com.rsnu.edokter/app_installer');
+      MethodChannel('id.khanza.edokter/app_installer');
 
   final _api = ApiClient();
   final isChecking = false.obs;

@@ -1,8 +1,9 @@
-package com.rsnu.edokter
+package id.khanza.edokter
 
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
+import android.provider.Settings
 import androidx.core.content.FileProvider
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
@@ -10,7 +11,7 @@ import io.flutter.plugin.common.MethodChannel
 import java.io.File
 
 class MainActivity: FlutterActivity() {
-    private val CHANNEL = "com.rsnu.edokter/app_installer"
+    private val CHANNEL = "id.khanza.edokter/app_installer"
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -35,7 +36,7 @@ class MainActivity: FlutterActivity() {
                 }
                 "openInstallPermissionSettings" -> {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                        val intent = Intent(android.provider.Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES_SETTINGS).apply {
+                        val intent = Intent("android.settings.MANAGE_UNKNOWN_APP_SOURCES").apply {
                             data = Uri.parse("package:$packageName")
                         }
                         startActivity(intent)
