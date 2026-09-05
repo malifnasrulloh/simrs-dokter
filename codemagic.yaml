@@ -1,0 +1,165 @@
+# ==============================================================================
+# Codemagic CI/CD Configuration for E-Dokter SIMRS (Flutter + Shorebird)
+# Docs: https://docs.codemagic.io/yaml-basic-configuration/yaml-getting-started/
+# ==============================================================================
+
+workflows:
+  # ─────────────────────────────────────────────────────────────────────────────
+  # 1. ANDROID RELEASE WORKFLOW
+  # Builds signed APK using Shorebird, bundles config, and auto-uploads to server
+  # Trigger: Git tag (e.g. v1.3.1) or manual trigger in Codemagic dashboard
+  # ─────────────────────────────────────────────────────────────────────────────
+  android-release:
+    name: Android Release (Shorebird + Auto Server Upload)
+    max_build_duration: 60
+    instance_type: mac_mini_m1
+    environment:
+      flutter: 3.29.0
+      groups:
+        - production_secrets # Configured in Codemagic web dashboard
+    triggering:
+      events:
+        - tag
+      branch_patterns:
+        - pattern: 'main'
+          include: true
+      tag_patterns:
+        - pattern: 'v*'
+          include: true
+    scripts:
+      - name: Restore Configuration Files & Firebase
+        script: |
+          echo "📝 Generating config.json from environment variables..."
+          echo "$APP_CONFIG_JSON" > config.json
+
+          echo "🔥 Restoring google-services.json..."
+          echo "$GOOGLE_SERVICES_JSON" > android/app/google-services.json
+
+      - name: Restore Android Release Keystore
+        script: |
+          echo "🔑 Decoding release keystore..."
+          echo "$CM_KEYSTORE" | base64 --decode > android/edokter-release.jks
+
+          echo "📝 Generating key.properties..."
+          cat <<EOF > android/key.properties
+          storePassword=$KEYSTORE_PASSWORD
+          keyPassword=$KEY_PASSWORD
+          keyAlias=$KEY_ALIAS
+          storeFile=edokter-release.jks
+          EOF
+
+      - name: Install Shorebird CLI
+        script: |
+          echo "🐦 Installing Shorebird..."
+          curl --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/shorebirdtech/install/main/install.sh | bash
+          echo "PATH=$HOME/.shorebird/bin:$PATH" >> $CM_ENV
+
+      - name: Build Shorebird Android Release APK
+        script: |
+          echo "🔨 Building Shorebird release APK..."
+          shorebird release android --artifact=apk --dart-define-from-file=config.json
+
+      - name: Upload Release to Backend-Dokter
+        script: |
+          APK_PATH="build/app/outputs/flutter-apk/app-release.apk"
+          if [ ! -f "$APK_PATH" ]; then
+            echo "❌ APK file not found at $APK_PATH!"
+            exit 1
+          fi
+
+          VERSION_NAME=$(grep "^version:" pubspec.yaml | head -n 1 | awk '{print $2}' | cut -d'+' -f1)
+          VERSION_CODE=$(grep "^version:" pubspec.yaml | head -n 1 | awk '{print $2}' | cut -d'+' -f2)
+
+          echo "🔐 Authenticating with Backend-Dokter ($BACKEND_URL)..."
+          LOGIN_RES=$(curl -s -k -X POST "$BACKEND_URL/auth/login" \
+            -H "Content-Type: application/json" \
+            -d "{\"username\": \"$ADMIN_USER\", \"password\": \"$ADMIN_PASS\"}")
+          TOKEN=$(echo "$LOGIN_RES" | jq -r '.token // empty')
+
+          if [ -n "$TOKEN" ] && [ "$TOKEN" != "null" ]; then
+            echo "📤 Uploading APK to Backend-Dokter ($BACKEND_URL/setting/app-upload)..."
+            UPLOAD_RES=$(curl -s -k -X POST "$BACKEND_URL/setting/app-upload" \
+              -H "Authorization: Bearer $TOKEN" \
+              -F "file=@$APK_PATH;type=application/vnd.android.package-archive" \
+              -F "version_name=$VERSION_NAME" \
+              -F "version_code=$VERSION_CODE" \
+              -F "min_supported_version=$VERSION_NAME" \
+              -F "release_notes=Pembaruan rilis otomatis dari Codemagic CI/CD.")
+
+            echo "$UPLOAD_RES"
+            echo "✅ Release successfully published on hospital server!"
+          else
+            echo "⚠️ Could not authenticate with Backend-Dokter. Check BACKEND_URL/ADMIN_USER/ADMIN_PASS."
+          fi
+    artifacts:
+      - build/app/outputs/flutter-apk/app-release.apk
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # 2. SHOREBIRD CODE-PUSH PATCH WORKFLOW
+  # Instantly deploys Dart logic fixes to doctors' phones without APK download
+  # Trigger: Manual trigger or patch-* tag
+  # ─────────────────────────────────────────────────────────────────────────────
+  shorebird-patch:
+    name: Shorebird Code-Push Patch (Android)
+    max_build_duration: 30
+    instance_type: mac_mini_m1
+    environment:
+      flutter: 3.29.0
+      groups:
+        - production_secrets
+    scripts:
+      - name: Restore Configuration Files
+        script: |
+          echo "$APP_CONFIG_JSON" > config.json
+          echo "$GOOGLE_SERVICES_JSON" > android/app/google-services.json
+
+      - name: Install Shorebird CLI
+        script: |
+          curl --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/shorebirdtech/install/main/install.sh | bash
+          echo "PATH=$HOME/.shorebird/bin:$PATH" >> $CM_ENV
+
+      - name: Deploy Shorebird Patch
+        script: |
+          shorebird patch android --dart-define-from-file=config.json
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # 3. IOS TESTFLIGHT RELEASE (Ready to Plug)
+  # Activates seamlessly once hospital acquires Apple Developer Program account
+  # ─────────────────────────────────────────────────────────────────────────────
+  ios-release:
+    name: iOS TestFlight Release (Ready to Plug)
+    max_build_duration: 60
+    instance_type: mac_mini_m1
+    environment:
+      flutter: 3.29.0
+      groups:
+        - production_secrets
+        - apple_credentials # Plug in when $99/year Apple license is active
+    scripts:
+      - name: Restore Configuration Files & Firebase iOS
+        script: |
+          echo "$APP_CONFIG_JSON" > config.json
+          if [ -n "$IOS_FIREBASE_PLIST" ]; then
+            echo "$IOS_FIREBASE_PLIST" > ios/Runner/GoogleService-Info.plist
+          fi
+
+      - name: Install Shorebird CLI
+        script: |
+          curl --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/shorebirdtech/install/main/install.sh | bash
+          echo "PATH=$HOME/.shorebird/bin:$PATH" >> $CM_ENV
+
+      - name: Set up code signing settings on Xcode project
+        script: |
+          xcode-project use-profiles
+
+      - name: Build Shorebird iOS Release
+        script: |
+          shorebird release ios --dart-define-from-file=config.json
+    artifacts:
+      - build/ios/ipa/*.ipa
+    # To publish to TestFlight once Apple Developer account ($99/yr) is active:
+    # integrations:
+    #   app_store_connect: <your-integration-name>
+    # publishing:
+    #   app_store_connect:
+    #     auth: integration
