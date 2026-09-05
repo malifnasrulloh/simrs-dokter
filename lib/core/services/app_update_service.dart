@@ -328,14 +328,18 @@ class AppUpdateService extends GetxService {
         file.deleteSync();
       }
 
-      final fullUrl = downloadUrl.startsWith('http')
-          ? downloadUrl
-          : '${AppConfig.baseUrl}$downloadUrl';
+      // Safely resolve download path to prevent duplicate '/api/api/...' paths
+      String resolvedPath = downloadUrl.trim();
+      if (!resolvedPath.startsWith('http')) {
+        if (AppConfig.baseUrl.endsWith('/api') && resolvedPath.startsWith('/api/')) {
+          resolvedPath = resolvedPath.substring(4); // '/api/setting/...' -> '/setting/...'
+        }
+      }
 
       updateStatusMessage.value = 'Mengunduh pembaruan dari server...';
 
       await _api.dio.download(
-        fullUrl,
+        resolvedPath,
         savePath,
         onReceiveProgress: (received, total) {
           if (total != -1) {
