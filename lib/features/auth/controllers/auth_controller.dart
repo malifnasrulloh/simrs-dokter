@@ -133,6 +133,7 @@ class AuthController extends GetxController with WidgetsBindingObserver {
       }
       fetchProfile();
       _notificationService?.start();
+      FcmPushService.syncTokenWithBackend();
       if (Get.isRegistered<AppUpdateService>()) {
         Get.find<AppUpdateService>().checkForUpdates();
       }

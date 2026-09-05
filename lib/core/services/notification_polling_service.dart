@@ -10,6 +10,7 @@ import '../network/api_client.dart';
 import '../utils/app_logger.dart';
 import '../utils/local_notification_service.dart';
 import '../utils/google_fonts.dart';
+import '../utils/notification_dedup_helper.dart';
 import 'fcm_push_service.dart';
 import '../../features/dashboard/controllers/dashboard_controller.dart';
 import '../../features/rekam_medis/controllers/rekam_medis_controller.dart';
@@ -153,7 +154,6 @@ class NotificationPollingService extends GetxService {
 
       final int lastId = data['data']?['last_id'] ?? 0;
       final isTesting = Platform.environment.containsKey('FLUTTER_TEST');
-      final batchSize = notifList.length;
 
       // 1. Parse notifications
       final parsedItems = <Map<String, dynamic>>[];
@@ -191,11 +191,24 @@ class NotificationPollingService extends GetxService {
         });
       }
 
-      // 2. Anti-Flood System Tray Notifications
-      if (AppConfig.enableSystemNotifications && !isTesting) {
-        if (batchSize <= 3) {
+      // Filter out items already displayed by FCM background isolate (Defense-in-Depth)
+      final itemsToAlert = <Map<String, dynamic>>[];
+      for (final item in parsedItems) {
+        final notifId = item['id'] as int;
+        final alreadyDisplayed = await NotificationDedupHelper.isDisplayed(notifId);
+        if (!alreadyDisplayed) {
+          itemsToAlert.add(item);
+          await NotificationDedupHelper.markDisplayed(notifId);
+        }
+      }
+
+      final alertBatchSize = itemsToAlert.length;
+
+      // 2. Anti-Flood System Tray Notifications (Only for previously unseen items)
+      if (AppConfig.enableSystemNotifications && !isTesting && alertBatchSize > 0) {
+        if (alertBatchSize <= 3) {
           // Standard small batch: show individually with sound/vibration
-          for (final n in parsedItems) {
+          for (final n in itemsToAlert) {
             final isItemUrgent = n['event_type'] == 'emergency_igd_consultation';
             await LocalNotificationService.showNotification(
               id: (n['id'] as int) % 100000,
@@ -212,7 +225,7 @@ class NotificationPollingService extends GetxService {
         } else {
           // Backlog flood (> 3 alerts):
           // Ring/vibrate ONCE for the top 2 urgent items, collapse rest into Group Summary
-          final urgentItems = parsedItems
+          final urgentItems = itemsToAlert
               .where((i) => i['event_type'] == 'emergency_igd_consultation')
               .take(2)
               .toList();
@@ -234,18 +247,18 @@ class NotificationPollingService extends GetxService {
           }
 
           // Show consolidated InboxStyle summary card
-          final lines = parsedItems.take(5).map((i) => '• ${i['title']}').toList();
+          final lines = itemsToAlert.take(5).map((i) => '• ${i['title']}').toList();
           await LocalNotificationService.showGroupSummary(
-            count: batchSize,
+            count: alertBatchSize,
             previewLines: lines,
           );
         }
       }
 
-      // 3. Anti-Flood In-App UI Banner
-      if (AppConfig.enableInAppNotifications && !isTesting) {
-        if (batchSize == 1) {
-          final first = parsedItems.first;
+      // 3. Anti-Flood In-App UI Banner (Only for previously unseen items)
+      if (AppConfig.enableInAppNotifications && !isTesting && alertBatchSize > 0) {
+        if (alertBatchSize == 1) {
+          final first = itemsToAlert.first;
           _showInAppNotification(
             eventType: first['event_type'] as String,
             title: first['title'] as String,
@@ -256,7 +269,7 @@ class NotificationPollingService extends GetxService {
         } else {
           // Single consolidated banner for entire batch
           _showBatchInAppNotification(
-            count: batchSize,
+            count: alertBatchSize,
             hasUrgent: hasUrgent,
           );
         }

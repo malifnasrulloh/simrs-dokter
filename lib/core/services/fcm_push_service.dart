@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -10,6 +11,7 @@ import '../network/api_client.dart';
 import '../utils/app_logger.dart';
 import '../utils/local_notification_service.dart';
 import '../utils/notification_action_controller.dart';
+import '../utils/notification_dedup_helper.dart';
 import '../../features/dashboard/controllers/dashboard_controller.dart';
 import 'package:get/get.dart';
 
@@ -45,11 +47,18 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
     if (token != null && token.isNotEmpty) {
       try {
         final prefs = await SharedPreferences.getInstance();
-        final deviceId = prefs.getString('notification_device_id') ?? 'bg_device';
+        String? deviceId = prefs.getString('notification_device_id');
+        if (deviceId == null || deviceId.isEmpty) {
+          final deviceInfo = DeviceInfoPlugin();
+          if (Platform.isAndroid) {
+            final info = await deviceInfo.androidInfo;
+            deviceId = 'android_${info.id}';
+          }
+        }
 
         final res = await api.dio.get(
           '/notifications/poll',
-          queryParameters: {'device_id': deviceId},
+          queryParameters: {'device_id': deviceId ?? 'unknown_device'},
         );
 
         if (res.data?['success'] == true) {
@@ -93,6 +102,25 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
       isUrgent: isUrgent,
       playSound: true,
     );
+
+    // Track displayed notification locally (Defense-in-Depth against duplicate popups)
+    await NotificationDedupHelper.markDisplayed(notificationId);
+
+    // Immediate background ACK: advance device cursor in Backend-Dokter
+    if (token != null && token.isNotEmpty && notificationId > 0) {
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        final deviceId = prefs.getString('notification_device_id');
+        if (deviceId != null && deviceId.isNotEmpty) {
+          await api.dio.post('/notifications/ack', data: {
+            'device_id': deviceId,
+            'last_id': notificationId,
+          });
+        }
+      } catch (_) {
+        // Silently handled — foreground dedup will prevent re-alerting even if ACK timed out
+      }
+    }
   } catch (e, s) {
     AppLogger.error('FCM-Background', 'Fatal background isolate error: $e', s);
   }
@@ -137,6 +165,14 @@ class FcmPushService {
 
       _initialized = true;
       AppLogger.info('FCM', 'Firebase Messaging initialized successfully');
+
+      // Listen for token refresh events automatically
+      FirebaseMessaging.instance.onTokenRefresh.listen((newToken) {
+        syncTokenWithBackend();
+      });
+
+      // Synchronize token immediately on initialization
+      syncTokenWithBackend();
     } catch (e) {
       _hasGms = false;
       AppLogger.warn('FCM', 'Firebase Messaging not available on this device: $e');
