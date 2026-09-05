@@ -296,13 +296,19 @@ class ProfileView extends StatelessWidget {
 
     return Column(
       children: [
-        Text(
-          '${AppConfig.appName} v${AppConfig.appVersion}',
-          style: GoogleFonts.outfit(
-            fontSize: 10.5,
-            color: AppTheme.textMuted,
-            fontWeight: FontWeight.w600,
-          ),
+        FutureBuilder<String>(
+          future: AppUpdateService.getCurrentAppVersion(),
+          builder: (context, snapshot) {
+            final ver = snapshot.data ?? AppConfig.appVersion;
+            return Text(
+              '${AppConfig.appName} v$ver',
+              style: GoogleFonts.outfit(
+                fontSize: 10.5,
+                color: AppTheme.textMuted,
+                fontWeight: FontWeight.w600,
+              ),
+            );
+          },
         ),
         if (settingName != null && settingName.isNotEmpty) ...[
           const SizedBox(height: 4),

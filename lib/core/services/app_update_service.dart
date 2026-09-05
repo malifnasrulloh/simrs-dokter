@@ -3,6 +3,7 @@ import 'package:crypto/crypto.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import '../config/app_config.dart';
 import '../network/api_client.dart';
@@ -21,6 +22,18 @@ class AppUpdateService extends GetxService {
   final downloadedBytes = 0.obs;
   final totalBytes = 0.obs;
   final updateStatusMessage = ''.obs;
+
+  /// Dynamic runtime lookup of current application version.
+  /// Reads directly from Android/iOS package manager to avoid compile-time define desync.
+  static Future<String> getCurrentAppVersion() async {
+    try {
+      final info = await PackageInfo.fromPlatform();
+      if (info.version.isNotEmpty) {
+        return info.version;
+      }
+    } catch (_) {}
+    return AppConfig.appVersion;
+  }
 
   /// Compare two semantic version strings (e.g. "1.3.1" vs "1.3.0")
   /// Returns:
@@ -65,7 +78,7 @@ class AppUpdateService extends GetxService {
         final downloadUrl = (data['download_url'] ?? '').toString();
         final expectedSha256 = (data['sha256_checksum'] ?? '').toString();
 
-        final currentVersion = AppConfig.appVersion;
+        final currentVersion = await getCurrentAppVersion();
 
         // Check if update is needed
         final hasUpdate = compareVersions(currentVersion, serverVersion) < 0;
@@ -322,6 +335,21 @@ class AppUpdateService extends GetxService {
 
       final dir = await getExternalCacheDirectories().then((dirs) => dirs?.firstOrNull) ??
           await getTemporaryDirectory();
+
+      // Clean up any stale APKs in cache directory to prevent partial/corrupted installation
+      try {
+        if (dir.existsSync()) {
+          final entities = dir.listSync();
+          for (final entity in entities) {
+            if (entity is File && entity.path.endsWith('.apk')) {
+              try {
+                entity.deleteSync();
+              } catch (_) {}
+            }
+          }
+        }
+      } catch (_) {}
+
       final savePath = '${dir.path}/edokter-update-$newVersion.apk';
       final file = File(savePath);
       if (file.existsSync()) {

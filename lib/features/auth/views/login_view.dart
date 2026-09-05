@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../core/config/app_config.dart';
+import '../../../core/services/app_update_service.dart';
 import '../../../core/theme/app_theme.dart';
 import '../controllers/auth_controller.dart';
 import '../../../core/utils/google_fonts.dart';
@@ -328,12 +329,23 @@ class _LoginViewState extends State<LoginView> with TickerProviderStateMixin {
     return Obx(() {
       final settingName = _authCtrl.setting.value?['nama_instansi'];
       final year = DateTime.now().year;
-      final footerText = settingName != null && settingName.isNotEmpty
-          ? 'v${AppConfig.appVersion} • $settingName © $year'
-          : 'v${AppConfig.appVersion} • ${AppConfig.appName} © $year';
-      return Text(
-        footerText,
-        style: GoogleFonts.outfit(fontSize: 11, color: AppTheme.textMuted, fontWeight: FontWeight.w600),
+      final instansi = (settingName != null && settingName.isNotEmpty)
+          ? settingName
+          : AppConfig.appName;
+
+      return FutureBuilder<String>(
+        future: AppUpdateService.getCurrentAppVersion(),
+        builder: (context, snapshot) {
+          final ver = snapshot.data ?? AppConfig.appVersion;
+          return Text(
+            'v$ver • $instansi © $year',
+            style: GoogleFonts.outfit(
+              fontSize: 11,
+              color: AppTheme.textMuted,
+              fontWeight: FontWeight.w600,
+            ),
+          );
+        },
       );
     });
   }
