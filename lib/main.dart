@@ -32,7 +32,6 @@ void main() async {
 
   await LocalNotificationService.initialize();
   await LocalNotificationService.requestPermissions();
-  NotificationActionController.startListening();
 
   Get.put(NotificationPollingService());
   Get.put(AppUpdateService());

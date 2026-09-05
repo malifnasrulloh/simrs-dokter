@@ -10,6 +10,7 @@ import '../network/api_client.dart';
 import '../utils/app_logger.dart';
 import '../utils/local_notification_service.dart';
 import '../utils/google_fonts.dart';
+import 'fcm_push_service.dart';
 import '../../features/dashboard/controllers/dashboard_controller.dart';
 import '../../features/rekam_medis/controllers/rekam_medis_controller.dart';
 import '../../features/auth/controllers/auth_controller.dart';
@@ -49,15 +50,14 @@ const notificationRoutes = <String, NotifRoute>{
   'harian_access_updated': NotifRoute('/home', tabIndex: 2),
 };
 
-/// Fallback target for any event type the triggers emit but the app does
-/// not map explicitly (kitchen, medical/non-medical supplies, inventory,
-/// leave applications, ...): land on the dashboard home tab instead of
-/// silently ignoring the tap.
 const NotifRoute defaultNotifRoute = NotifRoute('/home');
 
 class NotificationPollingService extends GetxService {
   static const String _deviceIdKey = 'notification_device_id';
-  static const Duration _pollInterval = Duration(seconds: 5);
+
+  // Adaptive Polling: 30s when FCM/GMS active; 5s fallback for non-GMS / offline
+  static const Duration _fcmPollInterval = Duration(seconds: 30);
+  static const Duration _legacyPollInterval = Duration(seconds: 5);
 
   Timer? _timer;
   String _deviceId = '';
@@ -65,9 +65,13 @@ class NotificationPollingService extends GetxService {
   bool _initialized = false;
   final _api = ApiClient();
 
+  Duration get currentPollInterval =>
+      FcmPushService.hasGms ? _fcmPollInterval : _legacyPollInterval;
+
   Future<void> init() async {
     _deviceId = await _getOrCreateDeviceId();
     _initialized = true;
+    await FcmPushService.initialize();
   }
 
   void start() {
@@ -80,7 +84,7 @@ class NotificationPollingService extends GetxService {
 
   void _startPolling() {
     _timer?.cancel();
-    _timer = Timer.periodic(_pollInterval, (_) => _poll());
+    _timer = Timer.periodic(currentPollInterval, (_) => _poll());
     _poll();
   }
 
@@ -130,6 +134,8 @@ class NotificationPollingService extends GetxService {
     return deviceId;
   }
 
+  /// Processes incoming notification batch with intelligent anti-flood protection
+  /// and trailing single dashboard refresh to prevent server overload.
   Future<void> _poll() async {
     if (_deviceId.isEmpty) return;
 
@@ -146,6 +152,13 @@ class NotificationPollingService extends GetxService {
       if (notifList == null || notifList.isEmpty) return;
 
       final int lastId = data['data']?['last_id'] ?? 0;
+      final isTesting = Platform.environment.containsKey('FLUTTER_TEST');
+      final batchSize = notifList.length;
+
+      // 1. Parse notifications
+      final parsedItems = <Map<String, dynamic>>[];
+      bool hasUrgent = false;
+      bool hasHarianAccessUpdate = false;
 
       for (final item in notifList) {
         if (item is! Map) continue;
@@ -166,21 +179,102 @@ class NotificationPollingService extends GetxService {
           payload = {};
         }
 
-        _dispatchNotification(
-          eventType: eventType,
-          title: title,
-          body: body,
-          payload: payload,
-          notificationId: item['id'] as int? ?? 0,
-        );
+        if (eventType == 'emergency_igd_consultation') hasUrgent = true;
+        if (eventType == 'harian_access_updated') hasHarianAccessUpdate = true;
+
+        parsedItems.add({
+          'id': item['id'] as int? ?? 0,
+          'event_type': eventType,
+          'title': title,
+          'body': body,
+          'payload': payload,
+        });
       }
 
+      // 2. Anti-Flood System Tray Notifications
+      if (AppConfig.enableSystemNotifications && !isTesting) {
+        if (batchSize <= 3) {
+          // Standard small batch: show individually with sound/vibration
+          for (final n in parsedItems) {
+            final isItemUrgent = n['event_type'] == 'emergency_igd_consultation';
+            await LocalNotificationService.showNotification(
+              id: (n['id'] as int) % 100000,
+              title: n['title'] as String,
+              body: n['body'] as String,
+              payload: jsonEncode({
+                'event_type': n['event_type'],
+                'no_rawat': n['payload']['no_rawat'] ?? '',
+              }),
+              isUrgent: isItemUrgent,
+              playSound: true,
+            );
+          }
+        } else {
+          // Backlog flood (> 3 alerts):
+          // Ring/vibrate ONCE for the top 2 urgent items, collapse rest into Group Summary
+          final urgentItems = parsedItems
+              .where((i) => i['event_type'] == 'emergency_igd_consultation')
+              .take(2)
+              .toList();
+
+          bool firstAlertPlayed = false;
+          for (final n in urgentItems) {
+            await LocalNotificationService.showNotification(
+              id: (n['id'] as int) % 100000,
+              title: n['title'] as String,
+              body: n['body'] as String,
+              payload: jsonEncode({
+                'event_type': n['event_type'],
+                'no_rawat': n['payload']['no_rawat'] ?? '',
+              }),
+              isUrgent: true,
+              playSound: !firstAlertPlayed, // Only ring once
+            );
+            firstAlertPlayed = true;
+          }
+
+          // Show consolidated InboxStyle summary card
+          final lines = parsedItems.take(5).map((i) => '• ${i['title']}').toList();
+          await LocalNotificationService.showGroupSummary(
+            count: batchSize,
+            previewLines: lines,
+          );
+        }
+      }
+
+      // 3. Anti-Flood In-App UI Banner
+      if (AppConfig.enableInAppNotifications && !isTesting) {
+        if (batchSize == 1) {
+          final first = parsedItems.first;
+          _showInAppNotification(
+            eventType: first['event_type'] as String,
+            title: first['title'] as String,
+            body: first['body'] as String,
+            payload: first['payload'] as Map<String, dynamic>,
+            isUrgent: first['event_type'] == 'emergency_igd_consultation',
+          );
+        } else {
+          // Single consolidated banner for entire batch
+          _showBatchInAppNotification(
+            count: batchSize,
+            hasUrgent: hasUrgent,
+          );
+        }
+      }
+
+      // 4. Send ACK to server
       if (lastId > _lastReadId) {
         final acked = await _sendAck(lastId);
         if (acked) {
           _lastReadId = lastId;
         }
       }
+
+      // 5. Anti-DDoS Trailing Batch Refresh (Fires exactly ONCE per batch)
+      _executeTrailingBatchRefresh(
+        hasHarianAccessUpdate: hasHarianAccessUpdate,
+        hasClinicalUpdate: parsedItems.isNotEmpty,
+      );
     } catch (e, s) {
       AppLogger.error('NotifPolling', e, s);
     }
@@ -196,44 +290,6 @@ class NotificationPollingService extends GetxService {
     } catch (_) {
       return false;
     }
-  }
-
-  void _dispatchNotification({
-    required String eventType,
-    required String title,
-    required String body,
-    required Map<String, dynamic> payload,
-    required int notificationId,
-  }) {
-    final isTesting = Platform.environment.containsKey('FLUTTER_TEST');
-    final isUrgent = eventType == 'emergency_igd_consultation';
-    final notifId = notificationId % 100000;
-
-    if (AppConfig.enableInAppNotifications && !isTesting) {
-      _showInAppNotification(
-        eventType: eventType,
-        title: title,
-        body: body,
-        payload: payload,
-        isUrgent: isUrgent,
-      );
-    }
-
-    if (AppConfig.enableSystemNotifications && !isTesting) {
-      // Include enough payload for the system notification handler
-      final String sysPayload = jsonEncode({
-        'event_type': eventType,
-        'no_rawat': payload['no_rawat'] ?? '',
-      });
-      LocalNotificationService.showNotification(
-        id: notifId,
-        title: title,
-        body: body,
-        payload: sysPayload,
-      );
-    }
-
-    _refreshDashboards(eventType);
   }
 
   void _showInAppNotification({
@@ -297,6 +353,59 @@ class NotificationPollingService extends GetxService {
     );
   }
 
+  /// Displays one consolidated banner when backlog contains multiple notifications.
+  void _showBatchInAppNotification({
+    required int count,
+    required bool hasUrgent,
+  }) {
+    Get.rawSnackbar(
+      titleText: Text(
+        hasUrgent ? 'PANGGILAN KLINIS & PEMBARUAN' : 'Pembaruan Klinis Masuk',
+        style: GoogleFonts.outfit(
+          fontSize: 13,
+          fontWeight: FontWeight.bold,
+          color: Colors.white,
+        ),
+      ),
+      messageText: Text(
+        '$count notifikasi klinis baru diterima saat Anda tidak aktif.',
+        style: GoogleFonts.outfit(
+          fontSize: 11.5,
+          fontWeight: FontWeight.w500,
+          color: Colors.white.withValues(alpha: 0.9),
+        ),
+      ),
+      backgroundColor: hasUrgent
+          ? const Color(0xFFE11D48).withValues(alpha: 0.95)
+          : const Color(0xFF1E293B).withValues(alpha: 0.95),
+      margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      borderRadius: 14,
+      snackPosition: SnackPosition.TOP,
+      duration: const Duration(seconds: 5),
+      shouldIconPulse: false,
+      onTap: (_) {
+        if (Get.currentRoute != '/home') {
+          Get.offAllNamed('/home');
+        }
+      },
+      icon: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.1),
+          shape: BoxShape.circle,
+        ),
+        child: Icon(
+          hasUrgent
+              ? Icons.warning_amber_rounded
+              : Icons.mark_chat_unread_rounded,
+          color: hasUrgent ? Colors.white : const Color(0xFF2DD4BF),
+          size: 18,
+        ),
+      ),
+    );
+  }
+
   Future<void> _navigateFromNotification(
     String eventType,
     Map<String, dynamic> payload,
@@ -308,15 +417,12 @@ class NotificationPollingService extends GetxService {
     await _sendAck(_lastReadId);
 
     if (route.route == '/rekam-medis') {
-      // Some events (e.g. kitchen/supply) carry no patient context; the
-      // payload might lack no_rawat even on mapped clinical events.
       if (noRawat.isEmpty) {
         if (Get.currentRoute != '/home') {
           Get.offAllNamed('/home');
         }
         return;
       }
-      // If already viewing the same patient, just switch tab
       if (Get.isRegistered<RekamMedisController>() &&
           Get.find<RekamMedisController>().noRawat == noRawat) {
         if (route.tabIndex != null) {
@@ -338,19 +444,23 @@ class NotificationPollingService extends GetxService {
         final dash = Get.find<DashboardController>();
         dash.currentNavIndex.value = route.tabIndex!;
         if (route.tabIndex == 1) {
-          dash.selectedTab.value = 0; // Default to Rawat Inap tab in Pasien view
+          dash.selectedTab.value = 0;
         }
       }
     } else {
-      // Default fallback: return to the dashboard shell.
       if (Get.currentRoute != '/home') {
         Get.offAllNamed('/home');
       }
     }
   }
 
-  void _refreshDashboards(String eventType) {
-    if (eventType == 'harian_access_updated') {
+  /// Trailing batch refresh: executes exactly ONCE at the end of the batch
+  /// to eliminate UI jank and avoid DDoS'ing Backend-Dokter with 50 simultaneous queries.
+  void _executeTrailingBatchRefresh({
+    required bool hasHarianAccessUpdate,
+    required bool hasClinicalUpdate,
+  }) {
+    if (hasHarianAccessUpdate) {
       try {
         if (Get.isRegistered<AuthController>()) {
           Get.find<AuthController>().fetchProfile();
@@ -358,56 +468,24 @@ class NotificationPollingService extends GetxService {
       } catch (e, s) {
         AppLogger.error('NotifPolling', e, s);
       }
-      return;
     }
 
-    try {
-      if (Get.isRegistered<DashboardController>()) {
-        Get.find<DashboardController>().fetchDashboard(isBackground: true);
-      }
-    } catch (e, s) {
-      AppLogger.error('NotifPolling', e, s);
-    }
-
-    try {
-      if (Get.isRegistered<RekamMedisController>()) {
-        final rm = Get.find<RekamMedisController>();
-
-        if (eventType == 'consultation_request' ||
-            eventType == 'consultation_response' ||
-            eventType == 'emergency_igd_consultation' ||
-            eventType == 'sbar_request' ||
-            eventType == 'second_opinion_request') {
-          rm.fetchConsultations(isBackground: true);
-          rm.fetchAllData(isBackground: true);
-        } else if (eventType == 'lab_request' ||
-            eventType == 'labpa_request' ||
-            eventType == 'labmb_request' ||
-            eventType == 'radiology_request') {
-          rm.fetchAllData(isBackground: true);
-        } else if (eventType == 'discharge_prescription' ||
-            eventType == 'prescription_dispensed' ||
-            eventType == 'medication_stock_request' ||
-            eventType == 'medication_dispensed' ||
-            eventType == 'medication_request' ||
-            eventType == 'spiritual_guidance_request' ||
-            eventType == 'violence_protection_letter') {
-          rm.fetchAllData(isBackground: true);
-        } else if (eventType == 'new_admission' ||
-            eventType == 'bed_request' ||
-            eventType == 'surgery_booking') {
-          rm.fetchAllData(isBackground: true);
-        } else if (eventType.startsWith('billing_threshold') ||
-            eventType == 'cbg_estimate_updated') {
-          rm.fetchBillingOnly();
-        } else {
-          // Unmapped support/facility events (kitchen, supplies, inventory,
-          // leave, ...): refresh the open record in the background.
-          rm.fetchAllData(isBackground: true);
+    if (hasClinicalUpdate) {
+      try {
+        if (Get.isRegistered<DashboardController>()) {
+          Get.find<DashboardController>().fetchDashboard(isBackground: true);
         }
+      } catch (e, s) {
+        AppLogger.error('NotifPolling', e, s);
       }
-    } catch (e, s) {
-      AppLogger.error('NotifPolling', e, s);
+
+      try {
+        if (Get.isRegistered<RekamMedisController>()) {
+          Get.find<RekamMedisController>().fetchAllData();
+        }
+      } catch (e, s) {
+        AppLogger.error('NotifPolling', e, s);
+      }
     }
   }
 }

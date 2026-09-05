@@ -3,9 +3,11 @@ import 'package:get/get.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/config/app_config.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/services/notification_polling_service.dart';
+import '../../../core/services/fcm_push_service.dart';
 import '../../../core/services/app_update_service.dart';
 import '../../../core/utils/app_logger.dart';
 
@@ -194,6 +196,7 @@ class AuthController extends GetxController with WidgetsBindingObserver {
         await fetchProfile();
         await fetchCapabilities();
         _notificationService?.start();
+        FcmPushService.syncTokenWithBackend();
         if (Get.isRegistered<AppUpdateService>()) {
           Get.find<AppUpdateService>().checkForUpdates();
         }
@@ -219,9 +222,16 @@ class AuthController extends GetxController with WidgetsBindingObserver {
 
   Future<void> logout() async {
     _notificationService?.stop();
-    // Best-effort server-side logout (audit trail + session invalidation).
+
     try {
-      await _api.dio.post('/auth/logout');
+      final prefs = await SharedPreferences.getInstance();
+      final deviceId = prefs.getString('notification_device_id') ?? '';
+      if (deviceId.isNotEmpty) {
+        await FcmPushService.revokeToken(deviceId);
+      }
+      await _api.dio.post('/auth/logout', data: {
+        'device_id': deviceId,
+      });
     } catch (_) {
       // Offline logout is still valid locally.
     }
