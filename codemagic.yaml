@@ -86,10 +86,23 @@ workflows:
               -F "min_supported_version=$VERSION_NAME" \
               -F "release_notes=Pembaruan rilis otomatis dari Codemagic CI/CD.")
 
-            echo "$UPLOAD_RES"
-            echo "✅ Release successfully published on hospital server!"
+            SUCCESS=$(echo "$UPLOAD_RES" | jq -r '.success // empty' 2>/dev/null)
+            if [ "$SUCCESS" = "true" ]; then
+              SHA256=$(echo "$UPLOAD_RES" | jq -r '.data.sha256_checksum // empty')
+              DOWNLOAD_URL=$(echo "$UPLOAD_RES" | jq -r '.data.download_url // empty')
+              echo "✅ Release successfully published on hospital server!"
+              echo "🔒 SHA-256 : $SHA256"
+              echo "📥 URL     : $DOWNLOAD_URL"
+            else
+              echo "❌ Failed to upload release to server! Server returned:"
+              echo "$UPLOAD_RES"
+              echo "💡 TIP: If '413 Request Entity Too Large', increase 'client_max_body_size 150M;' in your OpenResty/Nginx config."
+              exit 1
+            fi
           else
-            echo "⚠️ Could not authenticate with Backend-Dokter. Check BACKEND_URL/ADMIN_USER/ADMIN_PASS."
+            echo "❌ Authentication with Backend-Dokter failed! Response:"
+            echo "$LOGIN_RES"
+            exit 1
           fi
     artifacts:
       - build/app/outputs/flutter-apk/app-release.apk
