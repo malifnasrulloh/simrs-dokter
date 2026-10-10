@@ -8,6 +8,7 @@ import '../../../../core/utils/google_fonts.dart';
 import '../../../auth/controllers/auth_controller.dart';
 import '../../controllers/rekam_medis_controller.dart';
 import '../dialogs/soap_form_sheet.dart';
+import '../dialogs/verifikasi_soapie_sheet.dart';
 
 /// Expandable card representing a single clinical SOAP entry with vitals visualization.
 class SoapTile extends StatefulWidget {
@@ -66,14 +67,28 @@ class _SoapTileState extends State<SoapTile> {
     final petugas = data['petugas']?.toString() ?? 'Petugas Medis';
     final jabatan = data['jabatan']?.toString() ?? '';
     final uniqueId = '${data['tanggal']}_${data['jam']}_${data['petugas']}';
+    final isVerified = data['is_verified'] == true;
+    final statusVerif = data['status_verifikasi']?.toString() ?? 'BELUM';
+    final isExpired = statusVerif == 'KADALUARSA';
+    final canVerify = data['can_verify'] == true;
+
+    Color tileBg = AppTheme.bgCard;
+    Color tileBorder = AppTheme.divider;
+    if (isVerified) {
+      tileBg = const Color(0xFFF0FDF4); // soft green 50
+      tileBorder = const Color(0xFFBBF7D0); // green 200
+    } else if (isExpired) {
+      tileBg = const Color(0xFFFFF1F2); // soft rose 50
+      tileBorder = const Color(0xFFFECDD3); // rose 200
+    }
 
     return Theme(
       data: ThemeData().copyWith(dividerColor: Colors.transparent),
       child: Container(
         decoration: BoxDecoration(
-          color: AppTheme.bgCard,
+          color: tileBg,
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: AppTheme.divider),
+          border: Border.all(color: tileBorder),
           boxShadow: [
             BoxShadow(
               color: AppTheme.textPrimary.withValues(alpha: 0.02),
@@ -97,11 +112,26 @@ class _SoapTileState extends State<SoapTile> {
             leading: Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: AppTheme.primary.withValues(alpha: 0.08),
+                color: isVerified
+                    ? const Color(0xFFDCFCE7)
+                    : isExpired
+                        ? const Color(0xFFFFE4E6)
+                        : AppTheme.primary.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const Icon(Icons.sticky_note_2_rounded,
-                  color: AppTheme.primary, size: 20),
+              child: Icon(
+                isVerified
+                    ? Icons.verified_user_rounded
+                    : isExpired
+                        ? Icons.timer_off_rounded
+                        : Icons.sticky_note_2_rounded,
+                color: isVerified
+                    ? const Color(0xFF15803D)
+                    : isExpired
+                        ? const Color(0xFFBE123C)
+                        : AppTheme.primary,
+                size: 20,
+              ),
             ),
             title: Text(
               'Catatan SOAP $formattedDate$timeStr',
@@ -111,14 +141,95 @@ class _SoapTileState extends State<SoapTile> {
                 color: AppTheme.textPrimary,
               ),
             ),
-            subtitle: Text(
-              jabatan.isNotEmpty && jabatan != '-'
-                  ? '$petugas • $jabatan'
-                  : 'Petugas: $petugas',
-              style: GoogleFonts.outfit(
-                fontSize: 11.5,
-                color: AppTheme.textSecondary,
-              ),
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  jabatan.isNotEmpty && jabatan != '-'
+                      ? '$petugas • $jabatan'
+                      : 'Petugas: $petugas',
+                  style: GoogleFonts.outfit(
+                    fontSize: 11.5,
+                    color: AppTheme.textSecondary,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                if (isVerified)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFDCFCE7),
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(color: const Color(0xFF86EFAC), width: 0.8),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.check_circle_rounded,
+                            size: 11, color: Color(0xFF15803D)),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Terverifikasi DPJP: ${data['v_nm_dokter'] ?? '-'}',
+                          style: GoogleFonts.outfit(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            color: const Color(0xFF14532D),
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                else if (isExpired)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFE4E6),
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(color: const Color(0xFFFDA4AF), width: 0.8),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.timer_off_rounded,
+                            size: 11, color: Color(0xFFBE123C)),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Kadaluarsa (>24 Jam)',
+                          style: GoogleFonts.outfit(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            color: const Color(0xFF881337),
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                else
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(color: Colors.grey.shade300, width: 0.8),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.schedule_rounded,
+                            size: 11, color: Colors.grey.shade700),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Belum Diverifikasi',
+                          style: GoogleFonts.outfit(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.grey.shade800,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
             ),
             trailing: Obx(() {
               final authCtrl = Get.find<AuthController>();
@@ -158,6 +269,111 @@ class _SoapTileState extends State<SoapTile> {
             }),
             children: [
               const Divider(height: 24, thickness: 1, color: AppTheme.divider),
+
+              // ── STATUS VERIFIKASI DPJP ────────────────────────────
+              if (isVerified) ...[
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFDCFCE7),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFF86EFAC)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(Icons.verified_user_rounded,
+                              color: Color(0xFF15803D), size: 18),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              'Diverifikasi DPJP: ${data['v_nm_dokter'] ?? '-'}',
+                              style: GoogleFonts.outfit(
+                                fontSize: 12.5,
+                                fontWeight: FontWeight.w800,
+                                color: const Color(0xFF14532D),
+                              ),
+                            ),
+                          ),
+                          Text(
+                            '${data['v_tgl'] ?? ''} ${data['v_jam'] ?? ''}',
+                            style: GoogleFonts.outfit(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: const Color(0xFF166534),
+                            ),
+                          ),
+                        ],
+                      ),
+                      if (data['v_catatan'] != null &&
+                          data['v_catatan'].toString().trim().isNotEmpty &&
+                          data['v_catatan'].toString().trim() != '-') ...[
+                        const SizedBox(height: 6),
+                        Text(
+                          'Arahan DPJP: "${data['v_catatan']}"',
+                          style: GoogleFonts.outfit(
+                            fontSize: 11.5,
+                            fontStyle: FontStyle.italic,
+                            color: const Color(0xFF14532D),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ] else if (canVerify) ...[
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    icon: const Icon(Icons.verified_user_rounded, size: 18),
+                    label: Text(
+                      'Verifikasi Catatan Ini Sebagai DPJP',
+                      style: GoogleFonts.outfit(fontWeight: FontWeight.w800),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.success,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                    onPressed: () {
+                      final jenis =
+                          _ctrl.tipeRawat == 'RANAP' ? 'ranap' : 'ralan';
+                      VerifikasiSoapieSheet.show(context, data, jenis);
+                    },
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ] else if (isExpired) ...[
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFE4E6),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: const Color(0xFFFDA4AF)),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.lock_clock_rounded,
+                          color: Color(0xFFBE123C), size: 18),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Batas waktu verifikasi DPJP telah berakhir (Kadaluarsa >24 jam). Hanya SuperAdmin yang berwenang memberikan dispensasi.',
+                          style: GoogleFonts.outfit(
+                              fontSize: 11, color: const Color(0xFF881337)),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
 
               // ── S: SUBJEKTIF ──────────────────────────────────────
               _soapLabel('S', 'Subjektif', AppTheme.primary),

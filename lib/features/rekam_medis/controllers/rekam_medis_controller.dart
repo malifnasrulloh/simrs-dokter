@@ -414,7 +414,59 @@ class RekamMedisController extends GetxController {
       'evaluasi': raw['evaluasi'] ?? '-',
       // EDUKASI (medis ranap — terpisah dari instruksi)
       'edukasi': raw['edukasi'] ?? '-',
+      // VERIFIKASI DPJP
+      'is_verified': raw['is_verified'] == true,
+      'status_verifikasi': raw['status_verifikasi']?.toString() ?? 'BELUM',
+      'v_kd_dokter': raw['v_kd_dokter']?.toString(),
+      'v_nm_dokter': raw['v_nm_dokter']?.toString(),
+      'v_tgl': raw['v_tgl']?.toString(),
+      'v_jam': raw['v_jam']?.toString(),
+      'v_catatan': raw['v_catatan']?.toString(),
+      'can_verify': raw['can_verify'] == true,
+      'is_own_entry': raw['is_own_entry'] == true,
     };
+  }
+
+  Future<bool> verifikasiSoapie({
+    required String jenis,
+    required String tglPerawatan,
+    required String jamRawat,
+    String? catatan,
+  }) async {
+    try {
+      final payload = {
+        'no_rawat': noRawat,
+        'tgl_perawatan': tglPerawatan,
+        'jam_rawat': jamRawat,
+        'jenis': jenis.toLowerCase(),
+        if (catatan != null && catatan.trim().isNotEmpty)
+          'catatan': catatan.trim(),
+      };
+
+      final res = await _api.dio.post('/soap/verifikasi', data: payload);
+      if (res.data != null && res.data['success'] == true) {
+        Get.snackbar(
+          'Berhasil',
+          'Catatan SOAPIE berhasil diverifikasi oleh DPJP',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: AppTheme.success,
+          colorText: Colors.white,
+        );
+        await _fetchRiwayatMedis();
+        return true;
+      }
+      return false;
+    } catch (e, s) {
+      AppLogger.error('Verifikasi SOAPIE', e, s);
+      Get.snackbar(
+        'Gagal Verifikasi',
+        e.toString(),
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: AppTheme.danger,
+        colorText: Colors.white,
+      );
+      return false;
+    }
   }
 
   Future<void> _fetchDiagnosa() async {
