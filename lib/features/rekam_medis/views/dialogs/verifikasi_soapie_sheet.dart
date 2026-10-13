@@ -217,6 +217,7 @@ class _VerifikasiSoapieSheetState extends State<VerifikasiSoapieSheet> {
                   onPressed: _isLoading
                       ? null
                       : () async {
+                          final nav = Navigator.of(context);
                           setState(() => _isLoading = true);
                           final ok = await controller.verifikasiSoapie(
                             jenis: widget.jenis,
@@ -224,9 +225,11 @@ class _VerifikasiSoapieSheetState extends State<VerifikasiSoapieSheet> {
                             jamRawat: jam,
                             catatan: _catatanController.text,
                           );
-                          setState(() => _isLoading = false);
-                          if (ok && mounted) {
-                            Get.back();
+                          if (mounted) {
+                            setState(() => _isLoading = false);
+                          }
+                          if (ok) {
+                            nav.pop(true);
                           }
                         },
                   style: ElevatedButton.styleFrom(

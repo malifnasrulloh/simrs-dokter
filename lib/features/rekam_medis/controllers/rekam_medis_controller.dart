@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'dart:async';
+import 'package:dio/dio.dart';
 import 'package:get/get.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -373,48 +374,48 @@ class RekamMedisController extends GetxController {
   }
 
   Map<String, dynamic> _normalizeMedisData(Map<String, dynamic> raw) {
+    final keluhan = raw['keluhan'] ?? raw['keluhan_utama'] ?? '-';
+    final pemeriksaan = raw['pemeriksaan'] ?? raw['pemeriksaan_fisik'] ?? '-';
+    final penilaian = raw['penilaian'] ?? raw['diagnosis'] ?? '-';
+    final rtl = raw['rtl'] ?? raw['tata'] ?? '-';
+    final instruksi = raw['instruksi'] ?? '-';
+    final evaluasi = raw['evaluasi'] ?? '-';
+
     return {
       'tanggal': raw['tanggal'] ?? raw['tgl_perawatan'] ?? '-',
       'jam': raw['jam_rawat'] ?? '-',
       'petugas': raw['nm_dokter'] ?? raw['nama'] ?? raw['nip'] ?? '-',
       'nip': raw['nip'] ?? raw['kd_dokter'] ?? raw['nik'] ?? '-',
       'jabatan': raw['jbtn'] ?? '-',
-      // SUBJEKTIF
-      'keluhan_utama': raw['keluhan_utama'] ?? raw['keluhan'] ?? '-',
-      'rps': raw['rps'] ?? raw['anamnesis'] ?? '-',
-      'rpd': raw['rpd'] ?? '-',
-      'rpk': raw['rpk'] ?? '-',
-      'rpo': raw['rpo'] ?? '-',
+      // ── S (SUBJEKTIF) ──
+      'keluhan': keluhan,
+      'keluhan_utama': keluhan,
       'alergi': raw['alergi'] ?? '-',
-      'hubungan': raw['hubungan'] ?? '-',
-      // OBJEKTIF — pemeriksaan fisik (bukan RPS)
-      'pemeriksaan_fisik': raw['pemeriksaan'] ?? '-',
+      // ── O (OBJEKTIF) — Pemeriksaan Fisik & Tanda Vital ──
+      'pemeriksaan': pemeriksaan,
+      'pemeriksaan_fisik': pemeriksaan,
       'kesadaran': raw['kesadaran'] ?? '-',
       'gcs': raw['gcs'] ?? '-',
-      'keadaan': raw['keadaan'] ?? '-',
-      'bb': raw['bb'] ?? raw['berat'] ?? '-',
-      'tb': raw['tb'] ?? raw['tinggi'] ?? '-',
+      'bb': raw['berat'] ?? raw['bb'] ?? '-',
+      'tb': raw['tinggi'] ?? raw['tb'] ?? '-',
       'lingkar_perut': raw['lingkar_perut'] ?? '-',
-      // Tanda Vital
-      'td': raw['td'] ?? raw['tensi'] ?? '-',
+      // Tanda Vital (TTV)
+      'td': raw['tensi'] ?? raw['td'] ?? '-',
       'nadi': raw['nadi'] ?? '-',
-      'rr': raw['rr'] ?? raw['respirasi'] ?? '-',
-      'suhu': raw['suhu'] ?? raw['suhu_tubuh'] ?? '-',
-      'spo': raw['spo'] ?? raw['spo2'] ?? '-',
-      // Penunjang
-      'lab': raw['lab'] ?? '-',
-      'rad': raw['rad'] ?? '-',
-      'penunjang': raw['penunjang'] ?? '-',
-      // ASSESSMENT
-      'diagnosis': raw['diagnosis'] ?? raw['penilaian'] ?? '-',
-      // PLAN
-      'tata': raw['tata'] ?? raw['rtl'] ?? '-',
-      // INSTRUKSI & EVALUASI (SOAP RANAP/RALAN — terpisah)
-      'instruksi': raw['instruksi'] ?? '-',
-      'evaluasi': raw['evaluasi'] ?? '-',
-      // EDUKASI (medis ranap — terpisah dari instruksi)
-      'edukasi': raw['edukasi'] ?? '-',
-      // VERIFIKASI DPJP
+      'rr': raw['respirasi'] ?? raw['rr'] ?? '-',
+      'suhu': raw['suhu_tubuh'] ?? raw['suhu'] ?? '-',
+      'spo': raw['spo2'] ?? raw['spo'] ?? '-',
+      // ── A (ASESMEN) ──
+      'penilaian': penilaian,
+      'diagnosis': penilaian,
+      // ── P (PLAN) — Rencana Tindak Lanjut ──
+      'rtl': rtl,
+      'tata': rtl,
+      // ── I (INSTRUKSI) ──
+      'instruksi': instruksi,
+      // ── E (EVALUASI) ──
+      'evaluasi': evaluasi,
+      // ── VERIFIKASI DPJP ──
       'is_verified': raw['is_verified'] == true,
       'status_verifikasi': raw['status_verifikasi']?.toString() ?? 'BELUM',
       'v_kd_dokter': raw['v_kd_dokter']?.toString(),
@@ -456,10 +457,75 @@ class RekamMedisController extends GetxController {
         return true;
       }
       return false;
+    } on DioException catch (dioErr) {
+      final msg = dioErr.response?.data?['message']?.toString() ??
+          dioErr.response?.data?['error']?.toString() ??
+          'Gagal memverifikasi catatan SOAPIE';
+      AppLogger.error('Verifikasi SOAPIE', dioErr);
+      Get.snackbar(
+        'Gagal Verifikasi',
+        msg,
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: AppTheme.danger,
+        colorText: Colors.white,
+      );
+      return false;
     } catch (e, s) {
       AppLogger.error('Verifikasi SOAPIE', e, s);
       Get.snackbar(
         'Gagal Verifikasi',
+        e.toString(),
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: AppTheme.danger,
+        colorText: Colors.white,
+      );
+      return false;
+    }
+  }
+
+  Future<bool> batalVerifikasiSoapie({
+    required String jenis,
+    required String tglPerawatan,
+    required String jamRawat,
+  }) async {
+    try {
+      final payload = {
+        'no_rawat': noRawat,
+        'tgl_perawatan': tglPerawatan,
+        'jam_rawat': jamRawat,
+        'jenis': jenis.toLowerCase(),
+      };
+
+      final res = await _api.dio.delete('/soap/verifikasi', data: payload);
+      if (res.data != null && res.data['success'] == true) {
+        Get.snackbar(
+          'Berhasil',
+          'Verifikasi SOAPIE berhasil dibatalkan',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: AppTheme.success,
+          colorText: Colors.white,
+        );
+        await _fetchRiwayatMedis();
+        return true;
+      }
+      return false;
+    } on DioException catch (dioErr) {
+      final msg = dioErr.response?.data?['message']?.toString() ??
+          dioErr.response?.data?['error']?.toString() ??
+          'Gagal membatalkan verifikasi SOAPIE';
+      AppLogger.error('Batal Verifikasi SOAPIE', dioErr);
+      Get.snackbar(
+        'Gagal',
+        msg,
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: AppTheme.danger,
+        colorText: Colors.white,
+      );
+      return false;
+    } catch (e, s) {
+      AppLogger.error('Batal Verifikasi SOAPIE', e, s);
+      Get.snackbar(
+        'Gagal',
         e.toString(),
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: AppTheme.danger,

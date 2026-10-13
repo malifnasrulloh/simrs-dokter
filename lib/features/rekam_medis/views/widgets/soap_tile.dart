@@ -320,6 +320,46 @@ class _SoapTileState extends State<SoapTile> {
                           ),
                         ),
                       ],
+                      // Tombol Batal Verifikasi (KHUSUS ADMIN)
+                      Obx(() {
+                        final authCtrl = Get.find<AuthController>();
+                        final isAdmin = authCtrl.user.value?['isadmin'] ==
+                                true ||
+                            (authCtrl.user.value?['username']
+                                    ?.toString()
+                                    .toLowerCase() ==
+                                'admin');
+                        if (!isAdmin) return const SizedBox.shrink();
+
+                        return Padding(
+                          padding: const EdgeInsets.only(top: 10.0),
+                          child: Align(
+                            alignment: Alignment.centerRight,
+                            child: OutlinedButton.icon(
+                              icon: const Icon(Icons.undo_rounded,
+                                  size: 14, color: AppTheme.danger),
+                              label: Text(
+                                'Batal Verifikasi (Admin)',
+                                style: GoogleFonts.outfit(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppTheme.danger,
+                                ),
+                              ),
+                              style: OutlinedButton.styleFrom(
+                                side: const BorderSide(
+                                    color: AppTheme.danger, width: 1),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 10, vertical: 6),
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8)),
+                              ),
+                              onPressed: () =>
+                                  _confirmBatalVerifikasi(context, data),
+                            ),
+                          ),
+                        );
+                      }),
                     ],
                   ),
                 ),
@@ -351,24 +391,82 @@ class _SoapTileState extends State<SoapTile> {
                 const SizedBox(height: 16),
               ] else if (isExpired) ...[
                 Container(
-                  padding: const EdgeInsets.all(10),
+                  padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
                     color: const Color(0xFFFFE4E6),
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: const Color(0xFFFDA4AF)),
                   ),
-                  child: Row(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Icon(Icons.lock_clock_rounded,
-                          color: Color(0xFFBE123C), size: 18),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          'Batas waktu verifikasi DPJP telah berakhir (Kadaluarsa >24 jam). Hanya SuperAdmin yang berwenang memberikan dispensasi.',
-                          style: GoogleFonts.outfit(
-                              fontSize: 11, color: const Color(0xFF881337)),
+                      Row(
+                        children: [
+                          const Icon(Icons.lock_clock_rounded,
+                              color: Color(0xFFBE123C), size: 18),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'Batas waktu verifikasi DPJP telah berakhir (Kadaluarsa >24 jam).',
+                              style: GoogleFonts.outfit(
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w700,
+                                color: const Color(0xFF881337),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Hanya SuperAdmin yang berwenang memberikan dispensasi verifikasi catatan ini.',
+                        style: GoogleFonts.outfit(
+                          fontSize: 11,
+                          color: const Color(0xFF9F1239),
                         ),
                       ),
+                      // Tombol Dispensasi Verifikasi (KHUSUS ADMIN)
+                      Obx(() {
+                        final authCtrl = Get.find<AuthController>();
+                        final isAdmin = authCtrl.user.value?['isadmin'] ==
+                                true ||
+                            (authCtrl.user.value?['username']
+                                    ?.toString()
+                                    .toLowerCase() ==
+                                'admin');
+                        if (!isAdmin) return const SizedBox.shrink();
+
+                        return Padding(
+                          padding: const EdgeInsets.only(top: 10.0),
+                          child: Align(
+                            alignment: Alignment.centerRight,
+                            child: ElevatedButton.icon(
+                              icon: const Icon(Icons.verified_user_rounded,
+                                  size: 14, color: Colors.white),
+                              label: Text(
+                                'Verifikasi Dispensasi (Admin)',
+                                style: GoogleFonts.outfit(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppTheme.danger,
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 10, vertical: 6),
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8)),
+                              ),
+                              onPressed: () {
+                                final jenis =
+                                    _ctrl.tipeRawat == 'RANAP' ? 'ranap' : 'ralan';
+                                VerifikasiSoapieSheet.show(context, data, jenis);
+                              },
+                            ),
+                          ),
+                        );
+                      }),
                     ],
                   ),
                 ),
@@ -378,19 +476,9 @@ class _SoapTileState extends State<SoapTile> {
               // ── S: SUBJEKTIF ──────────────────────────────────────
               _soapLabel('S', 'Subjektif', AppTheme.primary),
               const SizedBox(height: 10),
-              _clinicalSection('Anamnesis', [
-                _row('Keluhan Utama', data['keluhan_utama']),
-                if (_hasVal('rps'))
-                  _row('Riwayat Penyakit Sekarang (RPS)', data['rps']),
-                if (_hasVal('rpd'))
-                  _row('Riwayat Penyakit Dahulu (RPD)', data['rpd']),
-                if (_hasVal('rpk'))
-                  _row('Riwayat Penyakit Keluarga (RPK)', data['rpk']),
-                if (_hasVal('rpo'))
-                  _row('Riwayat Pengobatan (RPO)', data['rpo']),
-                if (_hasVal('hubungan'))
-                  _row('Diceritakan Oleh', data['hubungan']),
-                _row('Alergi', data['alergi']),
+              _clinicalSection('Keluhan / Anamnesis', [
+                _row('Keluhan Pasien', data['keluhan'] ?? data['keluhan_utama']),
+                if (_hasVal('alergi')) _row('Riwayat Alergi', data['alergi']),
               ]),
 
               const SizedBox(height: 16),
@@ -398,19 +486,17 @@ class _SoapTileState extends State<SoapTile> {
               // ── O: OBJEKTIF ───────────────────────────────────────
               _soapLabel('O', 'Objektif', AppTheme.accent),
               const SizedBox(height: 10),
-              _clinicalSection('Tanda Vital', [
+              _clinicalSection('Tanda Vital & Grafik Tren', [
                 _vitalGrid(data),
                 _buildVitalsChart(data),
               ]),
-              if (_hasVal('keadaan') ||
-                  _hasVal('kesadaran') ||
+              if (_hasVal('kesadaran') ||
                   _hasVal('gcs') ||
                   _hasVal('bb') ||
                   _hasVal('tb') ||
                   _hasVal('lingkar_perut')) ...[
                 const SizedBox(height: 12),
-                _clinicalSection('Keadaan Umum', [
-                  if (_hasVal('keadaan')) _row('Keadaan Umum', data['keadaan']),
+                _clinicalSection('Status Fisik & Antropometri', [
                   if (_hasVal('kesadaran'))
                     _row('Kesadaran', data['kesadaran']),
                   if (_hasVal('gcs')) _row('GCS', data['gcs']),
@@ -420,41 +506,53 @@ class _SoapTileState extends State<SoapTile> {
                     _row('Lingkar Perut', '${data['lingkar_perut']} cm'),
                 ]),
               ],
-              if (_hasVal('pemeriksaan_fisik')) ...[
+              if (_hasVal('pemeriksaan') || _hasVal('pemeriksaan_fisik')) ...[
                 const SizedBox(height: 12),
                 _clinicalSection('Pemeriksaan Fisik', [
-                  _row('Hasil Pemeriksaan', data['pemeriksaan_fisik']),
-                ]),
-              ],
-              if (_hasVal('lab') || _hasVal('rad') || _hasVal('penunjang')) ...[
-                const SizedBox(height: 12),
-                _clinicalSection('Penunjang', [
-                  if (_hasVal('lab')) _row('Laboratorium', data['lab']),
-                  if (_hasVal('rad')) _row('Radiologi', data['rad']),
-                  if (_hasVal('penunjang')) _row('Lainnya', data['penunjang']),
+                  _row('Hasil Pemeriksaan Fisik',
+                      data['pemeriksaan'] ?? data['pemeriksaan_fisik']),
                 ]),
               ],
 
               const SizedBox(height: 16),
 
-              // ── A: ASSESSMENT ─────────────────────────────────────
-              _soapLabel('A', 'Assessment', AppTheme.warning),
+              // ── A: ASESMEN ────────────────────────────────────────
+              _soapLabel('A', 'Asesmen (Assessment)', AppTheme.warning),
               const SizedBox(height: 10),
-              _clinicalSection('Penilaian / Diagnosis', [
-                _row('Diagnosis / Penilaian', data['diagnosis']),
+              _clinicalSection('Penilaian / Diagnosis Kerja', [
+                _row('Penilaian Klinis',
+                    data['penilaian'] ?? data['diagnosis']),
               ]),
 
               const SizedBox(height: 16),
 
               // ── P: PLAN ───────────────────────────────────────────
-              _soapLabel('P', 'Plan', AppTheme.success),
+              _soapLabel('P', 'Plan (Rencana Tindak Lanjut)', AppTheme.info),
               const SizedBox(height: 10),
-              _clinicalSection('Rencana & Tindak Lanjut', [
-                if (_hasVal('tata')) _row('Tata Laksana / RTL', data['tata']),
-                if (_hasVal('instruksi')) _row('Instruksi', data['instruksi']),
-                if (_hasVal('evaluasi')) _row('Evaluasi', data['evaluasi']),
-                if (_hasVal('edukasi')) _row('Edukasi', data['edukasi']),
+              _clinicalSection('Rencana Penatalaksanaan', [
+                _row('Rencana Tindak Lanjut (RTL)',
+                    data['rtl'] ?? data['tata']),
               ]),
+
+              // ── I: INSTRUKSI ──────────────────────────────────────
+              if (_hasVal('instruksi')) ...[
+                const SizedBox(height: 16),
+                _soapLabel('I', 'Instruksi PPA / DPJP', AppTheme.accentAlt),
+                const SizedBox(height: 10),
+                _clinicalSection('Instruksi Tenaga Kesehatan', [
+                  _row('Instruksi', data['instruksi']),
+                ]),
+              ],
+
+              // ── E: EVALUASI ───────────────────────────────────────
+              if (_hasVal('evaluasi')) ...[
+                const SizedBox(height: 16),
+                _soapLabel('E', 'Evaluasi Hasil Asuhan', AppTheme.success),
+                const SizedBox(height: 10),
+                _clinicalSection('Evaluasi Perkembangan', [
+                  _row('Evaluasi', data['evaluasi']),
+                ]),
+              ],
             ],
           ),
         ),
@@ -989,6 +1087,62 @@ class _SoapTileState extends State<SoapTile> {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  void _confirmBatalVerifikasi(
+      BuildContext context, Map<String, dynamic> data) {
+    Get.dialog(
+      AlertDialog(
+        shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            const Icon(Icons.warning_amber_rounded,
+                color: AppTheme.danger, size: 24),
+            const SizedBox(width: 8),
+            Text(
+              'Batal Verifikasi SOAPIE',
+              style: GoogleFonts.outfit(
+                  fontWeight: FontWeight.w800, fontSize: 16),
+            ),
+          ],
+        ),
+        content: Text(
+          'Apakah Anda yakin ingin membatalkan verifikasi catatan SOAPIE ini?\n\n'
+          'Tindakan ini hanya diizinkan untuk Admin dan akan dicatat dalam audit trail sistem.',
+          style: GoogleFonts.outfit(
+              fontSize: 13, color: AppTheme.textSecondary, height: 1.4),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(),
+            child: Text('Tutup',
+                style: GoogleFonts.outfit(color: AppTheme.textSecondary)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.danger,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8)),
+            ),
+            onPressed: () async {
+              Get.back();
+              final jenis = _ctrl.tipeRawat == 'RANAP' ? 'ranap' : 'ralan';
+              final tgl = data['tanggal'] ?? data['tgl_perawatan'] ?? '';
+              final jam = data['jam'] ?? data['jam_rawat'] ?? '';
+              await _ctrl.batalVerifikasiSoapie(
+                jenis: jenis,
+                tglPerawatan: tgl.toString(),
+                jamRawat: jam.toString(),
+              );
+            },
+            child: Text('Ya, Batalkan',
+                style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
+          ),
+        ],
       ),
     );
   }
